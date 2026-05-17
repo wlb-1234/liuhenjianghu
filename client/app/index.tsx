@@ -8,7 +8,6 @@ import SocialTab from './(tabs)/social';
 import ProfileTab from './(tabs)/profile';
 import { ChatScreenProps, default as ChatPage } from '@/screens/social/ChatScreen';
 import PostDetailPage from './post-detail';
-import UpgradePage from './upgrade';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 
@@ -25,7 +24,6 @@ export default function MainIndex() {
   const [chatParams, setChatParams] = useState<{ userId: number; userName: string; userAvatar: string | null }>({ userId: 0, userName: '', userAvatar: null });
   const [showPostDetail, setShowPostDetail] = useState(false);
   const [postDetailId, setPostDetailId] = useState<number>(0);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
@@ -76,10 +74,6 @@ export default function MainIndex() {
     console.log('User pressed:', userId);
   };
 
-  const handleUpgrade = () => {
-    setShowUpgrade(true);
-  };
-
   if (isLoading || !rootState?.key) {
     return (
       <View style={styles.loadingContainer}>
@@ -113,7 +107,7 @@ export default function MainIndex() {
       case 'social':
         return <SocialTab onChatPress={handleChatPress} onUserPress={handleUserPress} />;
       case 'profile':
-        return <ProfileTab onUpgrade={handleUpgrade} onLogout={handleLogout} />;
+        return <ProfileTab onLogout={handleLogout} />;
       default:
         return <HomeTab onPostPress={handlePostPress} />;
     }
@@ -180,13 +174,6 @@ export default function MainIndex() {
             onBack={handlePostDetailClose}
             onUserPress={handleUserPress}
           />
-        </Modal>
-      )}
-
-      {/* 升级会员 */}
-      {showUpgrade && (
-        <Modal visible={showUpgrade} animationType="slide">
-          <UpgradePage />
         </Modal>
       )}
     </View>
