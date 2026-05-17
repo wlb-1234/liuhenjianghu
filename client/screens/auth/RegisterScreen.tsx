@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,54 +25,6 @@ interface Props {
   onSwitchToLogin: () => void;
   onBack?: () => void;
 }
-
-// 七彩渐变颜色
-const RAINBOW_COLORS: [string, string, string, string, string, string, string, string] = [
-  '#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4',
-];
-
-// 渐变文字组件
-const FlowText = ({ text, style }: { text: string; style: any }) => {
-  const flowAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(flowAnim, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: false,
-      })
-    );
-    animation.start();
-    return () => animation.stop();
-  }, []);
-
-  const translateX = flowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-150, 150],
-  });
-
-  return (
-    <View style={styles.textWrapper}>
-      <Animated.View
-        style={[
-          styles.gradientOverlay,
-          {
-            transform: [{ translateX }],
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={RAINBOW_COLORS}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        />
-      </Animated.View>
-      <Text style={[style, styles.textFill]}>{text}</Text>
-    </View>
-  );
-};
 
 export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
   const { register } = useAuth();
@@ -305,10 +256,8 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
         >
           {/* Logo */}
           <View style={styles.logoSection}>
-            <FlowText text="流痕江湖" style={styles.appName} />
-            <View style={styles.sloganWrapper}>
-              <FlowText text="人海为江湖，留言皆流痕" style={styles.slogan} />
-            </View>
+            <Text style={styles.appName}>流痕江湖</Text>
+            <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
 
           {/* 表单 */}
@@ -319,12 +268,9 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
               end={{ x: 1, y: 1 }}
               style={styles.formGradient}
             >
-              <View style={styles.stepTitleWrapper}>
-                <FlowText 
-                  text={step === 1 ? '江湖注册' : '选择你的江湖'} 
-                  style={styles.stepTitleText} 
-                />
-              </View>
+              <Text style={styles.stepTitle}>
+                {step === 1 ? '江湖注册' : '选择你的江湖'}
+              </Text>
 
               {step === 1 ? (
                 <>
@@ -412,7 +358,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                     activeOpacity={0.8}
                   >
                     <LinearGradient
-                      colors={['#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4']}
+                      colors={['#D2691E', '#FF8C00', '#FFD700']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={styles.buttonGradient}
@@ -497,7 +443,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                       activeOpacity={0.8}
                     >
                       <LinearGradient
-                        colors={['#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4']}
+                        colors={['#D2691E', '#FF8C00', '#FFD700']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.buttonGradient}
@@ -519,7 +465,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
               >
                 <Text style={styles.switchText}>已有江湖身份？</Text>
                 <LinearGradient
-                  colors={['#FF8E53', '#FFD700']}
+                  colors={['#FF8C00', '#FFD700']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
@@ -551,45 +497,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  textWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: -150,
-    bottom: 0,
-    width: 300,
-  },
-  gradient: {
-    flex: 1,
-    width: '100%',
-  },
-  textFill: {
-    backgroundColor: 'transparent',
-  },
   appName: {
     fontSize: 42,
     fontWeight: '800',
-    letterSpacing: 8,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    color: '#2C2C2C',
+    letterSpacing: 6,
+    marginBottom: 12,
   },
   slogan: {
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: 3,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  sloganWrapper: {
-    marginTop: 12,
+    fontSize: 14,
+    color: '#A0522D',
+    letterSpacing: 4,
+    fontStyle: 'italic',
+    fontWeight: '300',
   },
   formSection: {
     borderRadius: 28,
@@ -606,27 +526,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,215,0,0.3)',
   },
-  stepTitleWrapper: {
-    alignItems: 'center',
+  stepTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#5D4037',
+    textAlign: 'center',
     marginBottom: 28,
-  },
-  stepTitleText: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 6,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    letterSpacing: 4,
   },
   inputContainer: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 15,
     color: '#A0522D',
     marginBottom: 10,
+    fontWeight: '500',
   },
   input: {
     backgroundColor: 'rgba(237,232,220,0.8)',
@@ -697,12 +612,12 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     letterSpacing: 4,
-    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 2,
   },
   switchButton: {
     marginTop: 28,
