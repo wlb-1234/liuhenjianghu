@@ -28,17 +28,52 @@ interface Props {
 }
 
 // 七彩渐变颜色
-const RAINBOW_COLORS: [string, string, string, string, string, string, string, string, string] = [
-  '#FF6B6B', // 红
-  '#FF8E53', // 橙红
-  '#FFD700', // 金色
-  '#9ACD32', // 黄绿
-  '#00CED1', // 青色
-  '#1E90FF', // 蓝色
-  '#9370DB', // 紫色
-  '#FF69B4', // 粉色
-  '#FF6B6B', // 红（循环）
+const RAINBOW_COLORS: [string, string, string, string, string, string, string, string] = [
+  '#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4',
 ];
+
+// 渐变文字组件
+const FlowText = ({ text, style }: { text: string; style: any }) => {
+  const flowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(flowAnim, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: false,
+      })
+    );
+    animation.start();
+    return () => animation.stop();
+  }, []);
+
+  const translateX = flowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-150, 150],
+  });
+
+  return (
+    <View style={styles.textWrapper}>
+      <Animated.View
+        style={[
+          styles.gradientOverlay,
+          {
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={RAINBOW_COLORS}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gradient}
+        />
+      </Animated.View>
+      <Text style={[style, styles.textFill]}>{text}</Text>
+    </View>
+  );
+};
 
 export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
   const { register } = useAuth();
@@ -51,9 +86,6 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
   const [loading, setLoading] = useState(false);
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeCooldown, setCodeCooldown] = useState(0);
-  
-  // 流动动画
-  const flowAnim = useRef(new Animated.Value(0)).current;
   
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [cities, setCities] = useState<Region[]>([]);
@@ -70,55 +102,11 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
   }, []);
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(flowAnim, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: false,
-      })
-    );
-    animation.start();
-    return () => animation.stop();
-  }, []);
-
-  useEffect(() => {
     if (codeCooldown > 0) {
       const timer = setTimeout(() => setCodeCooldown(codeCooldown - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [codeCooldown]);
-
-  // 文字七彩流动效果
-  const renderFlowText = (text: string, style: any) => {
-    return (
-      <View style={styles.flowTextContainer}>
-        <Animated.View
-          style={[
-            styles.flowGradientWrapper,
-            {
-              transform: [
-                {
-                  translateX: flowAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-200, 200],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={RAINBOW_COLORS}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.flowGradient}
-          />
-        </Animated.View>
-        <Text style={[style, styles.textOverlay]}>{text}</Text>
-        <Text style={[style, styles.textShadow]}>{text}</Text>
-      </View>
-    );
-  };
 
   const loadProvinces = async () => {
     try {
@@ -315,11 +303,9 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo - 七彩流动文字 */}
+          {/* Logo */}
           <View style={styles.logoSection}>
-            <View style={styles.titleWrapper}>
-              {renderFlowText('流痕江湖', styles.appName)}
-            </View>
+            <FlowText text="流痕江湖" style={styles.appName} />
             <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
 
@@ -331,12 +317,11 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
               end={{ x: 1, y: 1 }}
               style={styles.formGradient}
             >
-              {/* 标题 - 七彩流动 */}
               <View style={styles.stepTitleWrapper}>
-                {renderFlowText(
-                  step === 1 ? '江湖注册' : '选择你的江湖',
-                  styles.stepTitleText
-                )}
+                <FlowText 
+                  text={step === 1 ? '江湖注册' : '选择你的江湖'} 
+                  style={styles.stepTitleText} 
+                />
               </View>
 
               {step === 1 ? (
@@ -564,41 +549,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  titleWrapper: {
-    marginBottom: 8,
-  },
-  flowTextContainer: {
+  textWrapper: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flowGradientWrapper: {
+  gradientOverlay: {
     position: 'absolute',
     top: 0,
-    left: -200,
-    right: -200,
+    left: -150,
     bottom: 0,
+    width: 300,
   },
-  flowGradient: {
-    height: '100%',
-    width: 600,
+  gradient: {
+    flex: 1,
+    width: '100%',
   },
-  textOverlay: {
-    position: 'relative',
-    zIndex: 1,
-  },
-  textShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    color: 'rgba(0,0,0,0.3)',
-    zIndex: 0,
+  textFill: {
+    backgroundColor: 'transparent',
   },
   appName: {
     fontSize: 42,
     fontWeight: '800',
     letterSpacing: 8,
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   slogan: {
     fontSize: 18,
@@ -632,6 +609,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 6,
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   inputContainer: {
     marginBottom: 16,

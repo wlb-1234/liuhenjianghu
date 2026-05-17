@@ -22,16 +22,8 @@ interface Props {
 }
 
 // 七彩渐变颜色
-const RAINBOW_COLORS: [string, string, string, string, string, string, string, string, string] = [
-  '#FF6B6B', // 红
-  '#FF8E53', // 橙红
-  '#FFD700', // 金色
-  '#9ACD32', // 黄绿
-  '#00CED1', // 青色
-  '#1E90FF', // 蓝色
-  '#9370DB', // 紫色
-  '#FF69B4', // 粉色
-  '#FF6B6B', // 红（循环）
+const RAINBOW_COLORS: [string, string, string, string, string, string, string, string] = [
+  '#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4',
 ];
 
 export default function LoginScreen({ onSwitchToRegister }: Props) {
@@ -75,22 +67,21 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
     }
   };
 
-  // 文字七彩流动效果
-  const renderFlowText = (text: string, style: any) => {
+  // 渐变文字组件 - 纯文字变色，无背景
+  const FlowText = ({ text, style }: { text: string; style: any }) => {
+    const translateX = flowAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-150, 150],
+    });
+
     return (
-      <View style={styles.flowTextContainer}>
+      <View style={styles.textWrapper}>
+        {/* 渐变层 - 只覆盖文字区域 */}
         <Animated.View
           style={[
-            styles.flowGradientWrapper,
+            styles.gradientOverlay,
             {
-              transform: [
-                {
-                  translateX: flowAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-200, 200],
-                  }),
-                },
-              ],
+              transform: [{ translateX }],
             },
           ]}
         >
@@ -98,11 +89,11 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
             colors={RAINBOW_COLORS}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.flowGradient}
+            style={styles.gradient}
           />
         </Animated.View>
-        <Text style={[style, styles.textOverlay]}>{text}</Text>
-        <Text style={[style, styles.textShadow]}>{text}</Text>
+        {/* 文字层 */}
+        <Text style={[style, styles.textFill]}>{text}</Text>
       </View>
     );
   };
@@ -117,11 +108,9 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo 区域 - 七彩流动文字 */}
+          {/* Logo 区域 */}
           <View style={styles.logoSection}>
-            <View style={styles.titleWrapper}>
-              {renderFlowText('流痕江湖', styles.appName)}
-            </View>
+            <FlowText text="流痕江湖" style={styles.appName} />
             <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
 
@@ -133,9 +122,8 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
               end={{ x: 1, y: 1 }}
               style={styles.formGradient}
             >
-              {/* 登录标题 - 七彩流动 */}
               <View style={styles.loginTitleWrapper}>
-                {renderFlowText('江湖登录', styles.loginTitleText)}
+                <FlowText text="江湖登录" style={styles.loginTitleText} />
               </View>
               
               <View style={styles.inputContainer}>
@@ -165,7 +153,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 />
               </View>
 
-              {/* 七彩渐变按钮 */}
+              {/* 按钮 */}
               <TouchableOpacity
                 style={styles.loginButton}
                 onPress={handleLogin}
@@ -186,7 +174,6 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* 注册链接 */}
               <TouchableOpacity
                 style={styles.switchButton}
                 onPress={onSwitchToRegister}
@@ -227,41 +214,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
   },
-  titleWrapper: {
-    marginBottom: 8,
-  },
-  flowTextContainer: {
+  textWrapper: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flowGradientWrapper: {
+  gradientOverlay: {
     position: 'absolute',
     top: 0,
-    left: -200,
-    right: -200,
+    left: -150,
     bottom: 0,
+    width: 300,
   },
-  flowGradient: {
-    height: '100%',
-    width: 600,
+  gradient: {
+    flex: 1,
+    width: '100%',
   },
-  textOverlay: {
-    position: 'relative',
-    zIndex: 1,
-  },
-  textShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    color: 'rgba(0,0,0,0.3)',
-    zIndex: 0,
+  textFill: {
+    backgroundColor: 'transparent',
   },
   appName: {
     fontSize: 48,
     fontWeight: '800',
     letterSpacing: 8,
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   slogan: {
     fontSize: 18,
@@ -295,6 +274,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 6,
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   inputContainer: {
     marginBottom: 20,
