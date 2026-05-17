@@ -464,13 +464,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                 onPress={onSwitchToLogin}
               >
                 <Text style={styles.switchText}>已有江湖身份？</Text>
-                <LinearGradient
-                  colors={['#FF8C00', '#FFD700']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.switchLink}>立即登录</Text>
-                </LinearGradient>
+                <Text style={styles.switchLink}>立即登录</Text>
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -627,14 +621,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   switchText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#8B4513',
   },
   switchLink: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
-    textDecorationLine: 'underline',
+    color: '#FF8C00',
   },
   pickerSection: {
     marginBottom: 16,
