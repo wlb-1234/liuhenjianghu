@@ -255,213 +255,240 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
+          {/* Logo - 渐变彩色标题 */}
           <View style={styles.logoSection}>
-            <Text style={styles.appName}>流痕江湖</Text>
+            <LinearGradient
+              colors={['#FF8C00', '#FFD700', '#CD853F']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.titleGradient}
+            >
+              <Text style={styles.titleShadow}>流痕江湖</Text>
+            </LinearGradient>
             <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
 
-          {/* 表单 */}
+          {/* 表单 - 玻璃拟态卡片 */}
           <View style={styles.formSection}>
-            <Text style={styles.title}>
-              {step === 1 ? '江湖注册' : '选择你的江湖'}
-            </Text>
+            <LinearGradient
+              colors={['rgba(255,248,240,0.95)', 'rgba(253,245,230,0.95)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.formGradient}
+            >
+              {/* 标题 - 渐变彩色 */}
+              <LinearGradient
+                colors={step === 1 ? ['#FF7F50', '#FFD700'] : ['#FF8C00', '#CD853F']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.stepTitleGradient}
+              >
+                <Text style={styles.stepTitleText}>
+                  {step === 1 ? '江湖注册' : '选择你的江湖'}
+                </Text>
+              </LinearGradient>
 
-            {step === 1 ? (
-              <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>手机号</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="请输入手机号"
-                    placeholderTextColor="#A89F91"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                    maxLength={11}
-                    autoComplete="tel"
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>验证码</Text>
-                  <View style={styles.codeRow}>
+              {step === 1 ? (
+                <>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>手机号</Text>
                     <TextInput
-                      style={[styles.input, styles.codeInput]}
-                      placeholder="请输入验证码"
-                      placeholderTextColor="#A89F91"
-                      value={code}
-                      onChangeText={setCode}
-                      keyboardType="number-pad"
-                      maxLength={6}
+                      style={styles.input}
+                      placeholder="请输入手机号"
+                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      value={phone}
+                      onChangeText={setPhone}
+                      keyboardType="phone-pad"
+                      maxLength={11}
+                      autoComplete="tel"
                     />
-                    <TouchableOpacity
-                      style={styles.codeButton}
-                      onPress={handleSendCode}
-                      disabled={codeLoading || codeCooldown > 0}
-                    >
-                      {codeLoading ? (
-                        <ActivityIndicator color="#8B4513" size="small" />
-                      ) : (
-                        <Text style={styles.codeButtonText}>
-                          {codeCooldown > 0 ? `${codeCooldown}s` : '获取验证码'}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
                   </View>
-                </View>
 
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>昵称</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="江湖名号（2-20字）"
-                    placeholderTextColor="#A89F91"
-                    value={nickname}
-                    onChangeText={setNickname}
-                    maxLength={20}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>密码</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="设置密码（至少6位）"
-                    placeholderTextColor="#A89F91"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>确认密码</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="再次输入密码"
-                    placeholderTextColor="#A89F91"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                  />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.nextButton}
-                  onPress={handleNextStep}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={['#8B4513', '#A0522D']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.buttonGradient}
-                  >
-                    <Text style={styles.buttonText}>下一步</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {renderPicker(
-                  '省份',
-                  provinces,
-                  selectedProvince,
-                  handleProvinceSelect,
-                  '请选择省份'
-                )}
-                {cities.length > 0 &&
-                  renderPicker(
-                    '城市',
-                    cities,
-                    selectedCity,
-                    handleCitySelect,
-                    '请选择城市'
-                  )}
-                {districts.length > 0 &&
-                  renderPicker(
-                    '区县',
-                    districts,
-                    selectedDistrict,
-                    handleDistrictSelect,
-                    '请选择区县'
-                  )}
-                {towns.length > 0 &&
-                  renderPicker(
-                    '乡镇/街道',
-                    towns,
-                    selectedTown,
-                    handleTownSelect,
-                    '请选择乡镇'
-                  )}
-
-                <View style={styles.selectedRegion}>
-                  <Text style={styles.label}>已选区域</Text>
-                  <View style={styles.regionTags}>
-                    {selectedProvince && (
-                      <View style={styles.regionTag}>
-                        <Text style={styles.regionTagText}>{selectedProvince.name}</Text>
-                      </View>
-                    )}
-                    {selectedCity && (
-                      <View style={styles.regionTag}>
-                        <Text style={styles.regionTagText}>{selectedCity.name}</Text>
-                      </View>
-                    )}
-                    {selectedDistrict && (
-                      <View style={styles.regionTag}>
-                        <Text style={styles.regionTagText}>{selectedDistrict.name}</Text>
-                      </View>
-                    )}
-                    {selectedTown && (
-                      <View style={styles.regionTag}>
-                        <Text style={styles.regionTagText}>{selectedTown.name}</Text>
-                      </View>
-                    )}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>验证码</Text>
+                    <View style={styles.codeRow}>
+                      <TextInput
+                        style={[styles.input, styles.codeInput]}
+                        placeholder="请输入验证码"
+                        placeholderTextColor="rgba(205,133,63,0.7)"
+                        value={code}
+                        onChangeText={setCode}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                      />
+                      <TouchableOpacity
+                        style={styles.codeButton}
+                        onPress={handleSendCode}
+                        disabled={codeLoading || codeCooldown > 0}
+                      >
+                        {codeLoading ? (
+                          <ActivityIndicator color="#8B4513" size="small" />
+                        ) : (
+                          <Text style={styles.codeButtonText}>
+                            {codeCooldown > 0 ? `${codeCooldown}s` : '获取验证码'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
 
-                <View style={styles.buttonRow}>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>昵称</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="江湖名号（2-20字）"
+                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      value={nickname}
+                      onChangeText={setNickname}
+                      maxLength={20}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>密码</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="设置密码（至少6位）"
+                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>确认密码</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="再次输入密码"
+                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      secureTextEntry
+                    />
+                  </View>
+
                   <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => setStep(1)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.backButtonText}>返回</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.registerButton}
-                    onPress={handleRegister}
-                    disabled={loading}
+                    style={styles.nextButton}
+                    onPress={handleNextStep}
                     activeOpacity={0.8}
                   >
                     <LinearGradient
-                      colors={['#8B4513', '#A0522D']}
+                      colors={['#D2691E', '#FF8C00', '#FFD700']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={styles.buttonGradient}
                     >
-                      {loading ? (
-                        <ActivityIndicator color="#FDFBF7" />
-                      ) : (
-                        <Text style={styles.buttonText}>创建江湖身份</Text>
-                      )}
+                      <Text style={styles.buttonText}>下一步</Text>
                     </LinearGradient>
                   </TouchableOpacity>
-                </View>
-              </>
-            )}
+                </>
+              ) : (
+                <>
+                  {renderPicker(
+                    '省份',
+                    provinces,
+                    selectedProvince,
+                    handleProvinceSelect,
+                    '请选择省份'
+                  )}
+                  {cities.length > 0 &&
+                    renderPicker(
+                      '城市',
+                      cities,
+                      selectedCity,
+                      handleCitySelect,
+                      '请选择城市'
+                    )}
+                  {districts.length > 0 &&
+                    renderPicker(
+                      '区县',
+                      districts,
+                      selectedDistrict,
+                      handleDistrictSelect,
+                      '请选择区县'
+                    )}
+                  {towns.length > 0 &&
+                    renderPicker(
+                      '乡镇/街道',
+                      towns,
+                      selectedTown,
+                      handleTownSelect,
+                      '请选择乡镇'
+                    )}
 
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={onSwitchToLogin}
-            >
-              <Text style={styles.switchText}>
-                已有江湖身份？<Text style={styles.switchLink}>立即登录</Text>
-              </Text>
-            </TouchableOpacity>
+                  <View style={styles.selectedRegion}>
+                    <Text style={styles.label}>已选区域</Text>
+                    <View style={styles.regionTags}>
+                      {selectedProvince && (
+                        <View style={styles.regionTag}>
+                          <Text style={styles.regionTagText}>{selectedProvince.name}</Text>
+                        </View>
+                      )}
+                      {selectedCity && (
+                        <View style={styles.regionTag}>
+                          <Text style={styles.regionTagText}>{selectedCity.name}</Text>
+                        </View>
+                      )}
+                      {selectedDistrict && (
+                        <View style={styles.regionTag}>
+                          <Text style={styles.regionTagText}>{selectedDistrict.name}</Text>
+                        </View>
+                      )}
+                      {selectedTown && (
+                        <View style={styles.regionTag}>
+                          <Text style={styles.regionTagText}>{selectedTown.name}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                      style={styles.backButton}
+                      onPress={() => setStep(1)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.backButtonText}>返回</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={styles.registerButton}
+                      onPress={handleRegister}
+                      disabled={loading}
+                      activeOpacity={0.8}
+                    >
+                      <LinearGradient
+                        colors={['#D2691E', '#FF8C00', '#FFD700']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.buttonGradient}
+                      >
+                        {loading ? (
+                          <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                          <Text style={styles.buttonText}>创建江湖身份</Text>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={onSwitchToLogin}
+              >
+                <Text style={styles.switchText}>已有江湖身份？</Text>
+                <LinearGradient
+                  colors={['#FF8C00', '#FFD700']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.switchLink}>立即登录</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -486,51 +513,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  appName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2C2C2C',
-    letterSpacing: 4,
-    marginBottom: 8,
+  titleGradient: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  titleShadow: {
+    fontSize: 42,
+    fontWeight: '400',
+    letterSpacing: 8,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   slogan: {
-    fontSize: 13,
-    color: '#8B7355',
-    letterSpacing: 2,
+    fontSize: 20,
+    fontWeight: '300',
+    fontStyle: 'italic',
+    letterSpacing: 4,
+    color: '#8B4513',
+    marginTop: 8,
   },
   formSection: {
-    backgroundColor: '#FDFBF7',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 28,
+    overflow: 'hidden',
     shadowColor: '#8B4513',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#2C2C2C',
-    textAlign: 'center',
-    marginBottom: 24,
-    letterSpacing: 2,
+  formGradient: {
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.3)',
+  },
+  stepTitleGradient: {
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 28,
+  },
+  stepTitleText: {
+    fontSize: 28,
+    fontWeight: '400',
+    letterSpacing: 6,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   inputContainer: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
-    color: '#8B7355',
-    marginBottom: 8,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#A0522D',
+    marginBottom: 10,
+    textShadowColor: 'rgba(255,215,0,0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 1,
   },
   input: {
-    backgroundColor: '#EDE8DC',
-    borderRadius: 12,
+    backgroundColor: 'rgba(237,232,220,0.8)',
+    borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: '#2C2C2C',
+    color: '#5D4037',
+    borderWidth: 1,
+    borderColor: 'rgba(205,133,63,0.2)',
   },
   codeRow: {
     flexDirection: 'row',
@@ -540,11 +593,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   codeButton: {
-    backgroundColor: '#EDE8DC',
-    borderRadius: 12,
+    backgroundColor: 'rgba(237,232,220,0.9)',
+    borderRadius: 16,
     paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(205,133,63,0.3)',
   },
   codeButtonText: {
     color: '#8B4513',
@@ -552,13 +607,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   nextButton: {
-    marginTop: 16,
-    borderRadius: 24,
+    marginTop: 20,
+    borderRadius: 28,
     overflow: 'hidden',
   },
   registerButton: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 28,
     overflow: 'hidden',
   },
   pickerScrollContainer: {
@@ -568,13 +623,14 @@ const styles = StyleSheet.create({
   backButton: {
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 24,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#D4C9B8',
+    borderColor: 'rgba(139,69,19,0.3)',
     marginRight: 12,
+    backgroundColor: 'rgba(237,232,220,0.5)',
   },
   backButtonText: {
-    color: '#8B7355',
+    color: '#8B4513',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -583,27 +639,36 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   buttonGradient: {
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 28,
   },
   buttonText: {
-    color: '#FDFBF7',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 2,
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '500',
+    letterSpacing: 4,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   switchButton: {
-    marginTop: 24,
+    marginTop: 28,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
   },
   switchText: {
     fontSize: 14,
-    color: '#8B7355',
+    color: '#8B4513',
   },
   switchLink: {
-    color: '#8B4513',
+    fontSize: 14,
     fontWeight: '600',
+    color: '#FFFFFF',
+    textDecorationLine: 'underline',
+    textDecorationColor: '#FFD700',
   },
   pickerSection: {
     marginBottom: 16,
@@ -612,17 +677,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   pickerItem: {
-    backgroundColor: '#EDE8DC',
+    backgroundColor: 'rgba(237,232,220,0.8)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(205,133,63,0.2)',
   },
   pickerItemActive: {
     backgroundColor: '#8B4513',
+    borderColor: '#A0522D',
   },
   pickerText: {
-    color: '#8B7355',
+    color: '#8B4513',
     fontSize: 14,
   },
   pickerTextActive: {
@@ -638,10 +706,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   regionTag: {
-    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    backgroundColor: 'rgba(139, 69, 19, 0.15)',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(205,133,63,0.3)',
   },
   regionTagText: {
     color: '#8B4513',
