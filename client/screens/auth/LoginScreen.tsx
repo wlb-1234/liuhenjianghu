@@ -21,17 +21,17 @@ interface Props {
   onSwitchToRegister: () => void;
 }
 
-// 七彩渐变颜色元组（液体流动感）
+// 七彩渐变颜色
 const RAINBOW_COLORS: [string, string, string, string, string, string, string, string, string] = [
   '#FF6B6B', // 红
   '#FF8E53', // 橙红
-  '#FFA500', // 橙色
   '#FFD700', // 金色
   '#9ACD32', // 黄绿
   '#00CED1', // 青色
   '#1E90FF', // 蓝色
   '#9370DB', // 紫色
   '#FF69B4', // 粉色
+  '#FF6B6B', // 红（循环）
 ];
 
 export default function LoginScreen({ onSwitchToRegister }: Props) {
@@ -44,11 +44,10 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
   const flowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 创建无限流动的动画
     const animation = Animated.loop(
       Animated.timing(flowAnim, {
         toValue: 1,
-        duration: 4000,
+        duration: 3000,
         useNativeDriver: false,
       })
     );
@@ -76,11 +75,37 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
     }
   };
 
-  // 计算流动渐变偏移
-  const flowOffset = flowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 100],
-  });
+  // 文字七彩流动效果
+  const renderFlowText = (text: string, style: any) => {
+    return (
+      <View style={styles.flowTextContainer}>
+        <Animated.View
+          style={[
+            styles.flowGradientWrapper,
+            {
+              transform: [
+                {
+                  translateX: flowAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-200, 200],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={RAINBOW_COLORS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.flowGradient}
+          />
+        </Animated.View>
+        <Text style={[style, styles.textOverlay]}>{text}</Text>
+        <Text style={[style, styles.textShadow]}>{text}</Text>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -92,37 +117,15 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo 区域 - 液体七彩标题 */}
+          {/* Logo 区域 - 七彩流动文字 */}
           <View style={styles.logoSection}>
-            <View style={styles.titleContainer}>
-              <Animated.View
-                style={[
-                  styles.flowGradientBg,
-                  {
-                    transform: [{ translateX: flowOffset }],
-                  },
-                ]}
-              >
-                <LinearGradient
-                  colors={RAINBOW_COLORS}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.flowGradient}
-                />
-              </Animated.View>
-              <Text style={styles.appName}>流痕江湖</Text>
-              {/* 覆盖层增强液体效果 */}
-              <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.3)', 'transparent']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.shineOverlay}
-              />
+            <View style={styles.titleWrapper}>
+              {renderFlowText('流痕江湖', styles.appName)}
             </View>
             <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
 
-          {/* 登录表单 - 玻璃拟态卡片 */}
+          {/* 登录表单 */}
           <View style={styles.formSection}>
             <LinearGradient
               colors={['rgba(255,248,240,0.95)', 'rgba(253,245,230,0.95)']}
@@ -130,30 +133,9 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
               end={{ x: 1, y: 1 }}
               style={styles.formGradient}
             >
-              {/* 登录标题 - 七彩液体流动效果 */}
-              <View style={styles.loginTitleContainer}>
-                <Animated.View
-                  style={[
-                    styles.flowGradientBgSmall,
-                    {
-                      transform: [{ translateX: flowOffset }],
-                    },
-                  ]}
-                >
-                  <LinearGradient
-                    colors={RAINBOW_COLORS}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.flowGradientSmall}
-                  />
-                </Animated.View>
-                <Text style={styles.loginTitleText}>江湖登录</Text>
-                <LinearGradient
-                  colors={['transparent', 'rgba(255,255,255,0.4)', 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.shineOverlaySmall}
-                />
+              {/* 登录标题 - 七彩流动 */}
+              <View style={styles.loginTitleWrapper}>
+                {renderFlowText('江湖登录', styles.loginTitleText)}
               </View>
               
               <View style={styles.inputContainer}>
@@ -183,7 +165,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 />
               </View>
 
-              {/* 渐变按钮 */}
+              {/* 七彩渐变按钮 */}
               <TouchableOpacity
                 style={styles.loginButton}
                 onPress={handleLogin}
@@ -191,7 +173,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#FF6B6B', '#FF8E53', '#FFA500', '#FFD700', '#00CED1', '#1E90FF', '#9370DB']}
+                  colors={['#FF6B6B', '#FF8E53', '#FFD700', '#9ACD32', '#00CED1', '#1E90FF', '#9370DB', '#FF69B4']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.buttonGradient}
@@ -209,9 +191,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 style={styles.switchButton}
                 onPress={onSwitchToRegister}
               >
-                <Text style={styles.switchText}>
-                  还没有江湖身份？
-                </Text>
+                <Text style={styles.switchText}>还没有江湖身份？</Text>
                 <LinearGradient
                   colors={['#FF8E53', '#FFD700']}
                   start={{ x: 0, y: 0 }}
@@ -223,7 +203,6 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
             </LinearGradient>
           </View>
 
-          {/* 底部提示 */}
           <Text style={styles.footerHint}>网页端建议优先使用移动端体验更佳</Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -248,46 +227,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
   },
-  titleContainer: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 20,
-    backgroundColor: '#2C2C2C',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  titleWrapper: {
+    marginBottom: 8,
   },
-  flowGradientBg: {
+  flowTextContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flowGradientWrapper: {
     position: 'absolute',
     top: 0,
-    left: -100,
-    right: 0,
+    left: -200,
+    right: -200,
     bottom: 0,
   },
   flowGradient: {
-    width: 300,
     height: '100%',
+    width: 600,
   },
-  shineOverlay: {
+  textOverlay: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  textShadow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: 80,
+    top: 2,
+    left: 2,
+    color: 'rgba(0,0,0,0.3)',
+    zIndex: 0,
   },
   appName: {
     fontSize: 48,
     fontWeight: '800',
     letterSpacing: 8,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
   },
   slogan: {
     fontSize: 18,
@@ -312,42 +286,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,215,0,0.3)',
   },
-  loginTitleContainer: {
-    position: 'relative',
-    alignSelf: 'center',
-    overflow: 'hidden',
-    borderRadius: 16,
+  loginTitleWrapper: {
+    alignItems: 'center',
     marginBottom: 28,
-  },
-  flowGradientBgSmall: {
-    position: 'absolute',
-    top: 0,
-    left: -100,
-    right: 0,
-    bottom: 0,
-  },
-  flowGradientSmall: {
-    width: 250,
-    height: '100%',
-  },
-  shineOverlaySmall: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: 60,
   },
   loginTitleText: {
     fontSize: 32,
     fontWeight: '800',
     letterSpacing: 6,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
   },
   inputContainer: {
     marginBottom: 20,
@@ -357,9 +304,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#A0522D',
     marginBottom: 10,
-    textShadowColor: 'rgba(255,215,0,0.3)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 1,
   },
   input: {
     backgroundColor: 'rgba(237,232,220,0.8)',
@@ -390,9 +334,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: 4,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   switchButton: {
     marginTop: 28,
@@ -410,7 +354,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     textDecorationLine: 'underline',
-    textDecorationColor: '#FFD700',
   },
   footerHint: {
     marginTop: 40,
