@@ -306,7 +306,9 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
           {/* Logo */}
           <View style={styles.logoSection}>
             <FlowText text="流痕江湖" style={styles.appName} />
-            <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
+            <View style={styles.sloganWrapper}>
+              <FlowText text="人海为江湖，留言皆流痕" style={styles.slogan} />
+            </View>
           </View>
 
           {/* 表单 */}
@@ -579,10 +581,14 @@ const styles = StyleSheet.create({
   },
   slogan: {
     fontSize: 18,
-    fontWeight: '300',
-    fontStyle: 'italic',
+    fontWeight: '600',
     letterSpacing: 3,
-    color: '#8B4513',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  sloganWrapper: {
     marginTop: 12,
   },
   formSection: {
