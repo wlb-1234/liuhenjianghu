@@ -5,6 +5,7 @@ import {
   getComments, createComment, createReport
 } from '../services/userService';
 import { getMemberLevel } from '../services/memberService';
+import { checkSensitiveWords, moderateContent } from '../services/moderationService';
 
 const router = Router();
 
@@ -116,6 +117,19 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ 
         error: '您没有在该区域发帖的权限',
         code: 'REGION_NOT_ALLOWED'
+      });
+    }
+    
+    // 内容安全审核
+    const textViolation = await checkSensitiveWords(content);
+    if (!textViolation.passed) {
+      // 记录违规
+      await moderateContent('post', req.userId!, content, []);
+      return res.status(400).json({ 
+        error: '您的留言包含违规内容，请修改后重试',
+        code: 'CONTENT_VIOLATED',
+        violation_words: textViolation.words,
+        suggestion: '请删除以下违规词汇后重新发布: ' + textViolation.words.join(', ')
       });
     }
     

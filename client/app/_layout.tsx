@@ -29,6 +29,11 @@ export default function RootLayout() {
         <Stack.Screen name="chat" options={{ title: "" }} />
         <Stack.Screen name="post-detail" options={{ title: "" }} />
         <Stack.Screen name="upgrade" options={{ title: "" }} />
+        <Stack.Screen name="settings" options={{ title: "" }} />
+        <Stack.Screen name="admin" options={{ title: "" }} />
+        <Stack.Screen name="admin/dashboard" options={{ title: "" }} />
+        <Stack.Screen name="admin/users" options={{ title: "" }} />
+        <Stack.Screen name="admin/moderation" options={{ title: "" }} />
       </Stack>
       <Toast />
     </Provider>

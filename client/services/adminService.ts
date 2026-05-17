@@ -143,20 +143,64 @@ class AdminService {
     });
   }
 
-  // 获取订单列表
-  async getOrders(params: {
+  // 获取举报列表
+  async getReports(params: {
     page?: number;
     limit?: number;
     status?: number;
   } = {}): Promise<{
     code: number;
-    data?: { orders: any[]; total: number };
+    data?: { reports: any[]; total: number };
   }> {
     const query = new URLSearchParams();
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.status !== undefined) query.set('status', String(params.status));
-    return this.request(`${API_BASE}/api/v1/admin/orders?${query}`);
+    return this.request(`${API_BASE}/api/v1/moderation/reports?${query}`);
+  }
+
+  // 处理举报
+  async handleReport(reportId: number, action: string, reason?: string): Promise<{ code: number }> {
+    return this.request(`${API_BASE}/api/v1/moderation/reports/${reportId}/handle`, {
+      method: 'POST',
+      body: JSON.stringify({ action, reason }),
+    });
+  }
+
+  // 获取敏感词列表
+  async getSensitiveWords(): Promise<{ code: number; data?: { words: any[] } }> {
+    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words`);
+  }
+
+  // 添加敏感词
+  async addSensitiveWord(word: string, level?: number, category?: string): Promise<{ code: number }> {
+    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words`, {
+      method: 'POST',
+      body: JSON.stringify({ word, level, category }),
+    });
+  }
+
+  // 删除敏感词
+  async deleteSensitiveWord(id: number): Promise<{ code: number }> {
+    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // 获取违规用户列表
+  async getViolationUsers(): Promise<{
+    code: number;
+    data?: { users: any[]; stats: any };
+  }> {
+    return this.request(`${API_BASE}/api/v1/moderation/violations`);
+  }
+
+  // 处罚用户
+  async penalizeUser(userId: number, penalty: number, reason: string, days?: number): Promise<{ code: number }> {
+    return this.request(`${API_BASE}/api/v1/moderation/violations/penalize`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, penalty, reason, days }),
+    });
   }
 }
 
