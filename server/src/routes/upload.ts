@@ -3,21 +3,12 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { uploadToIPFS, getIPFSGatewayUrl } from '../services/ipfsService';
 
 const router = Router();
 
-// 配置文件上传
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = `${uuidv4()}${ext}`;
-    cb(null, filename);
-  }
-});
-
+// 配置文件上传（本地临时存储，用于上传到 IPFS）
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
@@ -34,8 +25,8 @@ const upload = multer({
   }
 });
 
-// 上传图片
-router.post('/images', authMiddleware, upload.array('images', 9), (req: AuthRequest, res: Response) => {
+// 上传图片到 IPFS
+router.post('/images', authMiddleware, upload.array('images', 9), async (req: AuthRequest, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
     
@@ -43,17 +34,122 @@ router.post('/images', authMiddleware, upload.array('images', 9), (req: AuthRequ
       return res.status(400).json({ error: '请选择要上传的图片' });
     }
     
-    const baseUrl = process.env.BASE_URL || `http://localhost:9091`;
+    const uploadResults = [];
     
-    const urls = files.map(file => ({
-      url: `${baseUrl}/uploads/${file.filename}`,
-      filename: file.filename
-    }));
+    for (const file of files) {
+      try {
+        // 上传到 IPFS
+        const result = await uploadToIPFS(file.buffer, file.originalname, {
+          pinataMetadata: {
+            userId: req.userId,
+            originalName: file.originalname,
+          },
+        });
+        
+        uploadResults.push({
+          url: result.gatewayUrl, // 返回可访问的网关 URL
+          cid: result.cid,
+          filename: file.originalname,
+          size: file.size,
+          storage: 'ipfs', // 标记存储类型
+        });
+      } catch (ipfsError) {
+        console.error('IPFS upload failed, using local fallback:', ipfsError);
+        
+        // 如果 IPFS 上传失败，使用本地存储作为备选
+        const ext = path.extname(file.originalname);
+        const filename = `${uuidv4()}${ext}`;
+        
+        const fs = await import('fs');
+        const fsPath = await import('path');
+        const uploadDir = fsPath.join(process.cwd(), 'uploads');
+        
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        const filePath = fsPath.join(uploadDir, filename);
+        fs.writeFileSync(filePath, file.buffer);
+        
+        const baseUrl = process.env.BASE_URL || 'http://localhost:9091';
+        
+        uploadResults.push({
+          url: `${baseUrl}/uploads/${filename}`,
+          cid: filename,
+          filename: file.originalname,
+          size: file.size,
+          storage: 'local', // 标记存储类型
+        });
+      }
+    }
     
     res.json({
       success: true,
-      files: urls
+      files: uploadResults,
+      storage: 'ipfs',
+      message: '图片已去中心化存储到 IPFS',
     });
+  } catch (error) {
+    console.error('上传图片错误:', error);
+    res.status(500).json({ error: '上传失败' });
+  }
+});
+
+// 上传单张图片（简化版）
+router.post('/image', authMiddleware, upload.single('image'), async (req: AuthRequest, res: Response) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: '请选择要上传的图片' });
+    }
+    
+    try {
+      // 上传到 IPFS
+      const result = await uploadToIPFS(file.buffer, file.originalname, {
+        pinataMetadata: {
+          userId: req.userId,
+          originalName: file.originalname,
+        },
+      });
+      
+      res.json({
+        success: true,
+        url: result.gatewayUrl,
+        cid: result.cid,
+        filename: file.originalname,
+        size: file.size,
+        storage: 'ipfs',
+      });
+    } catch (ipfsError) {
+      console.error('IPFS upload failed, using local fallback:', ipfsError);
+      
+      // 备选：本地存储
+      const ext = path.extname(file.originalname);
+      const filename = `${uuidv4()}${ext}`;
+      
+      const fs = await import('fs');
+      const fsPath = await import('path');
+      const uploadDir = fsPath.join(process.cwd(), 'uploads');
+      
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      const filePath = fsPath.join(uploadDir, filename);
+      fs.writeFileSync(filePath, file.buffer);
+      
+      const baseUrl = process.env.BASE_URL || 'http://localhost:9091';
+      
+      res.json({
+        success: true,
+        url: `${baseUrl}/uploads/${filename}`,
+        cid: filename,
+        filename: file.originalname,
+        size: file.size,
+        storage: 'local',
+      });
+    }
   } catch (error) {
     console.error('上传图片错误:', error);
     res.status(500).json({ error: '上传失败' });

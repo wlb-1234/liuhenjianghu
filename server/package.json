@@ -10,6 +10,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@pinata/sdk": "^2.1.0",
     "@supabase/supabase-js": "2.95.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -23,6 +24,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.22.3",
     "pg": "^8.17.2",
+    "pinata-web3": "^0.5.4",
     "uuid": "^14.0.0",
     "zod": "^4.2.1"
   },
