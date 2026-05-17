@@ -33,6 +33,7 @@ import postRoutes from './routes/posts';
 import socialRoutes from './routes/social';
 import memberRoutes from './routes/member';
 import uploadRoutes from './routes/upload';
+import adminRoutes from './routes/admin';
 
 // 使用路由
 app.use('/api/v1/auth', authRoutes);
@@ -41,6 +42,7 @@ app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/social', socialRoutes);
 app.use('/api/v1/member', memberRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // 错误处理中间件
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

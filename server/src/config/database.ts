@@ -6,11 +6,15 @@ loadEnv();
 
 const dbUrl = getDbUrl();
 
-// 解析数据库 URL
+// 解析数据库 URL - 正确处理包含查询参数的URL
 function parseDatabaseUrl(url: string) {
-  const match = url.match(/postgresql:\/\/([^:]+):([^@]+)@(.+):(\d+)\/(.+)/);
+  // 提取协议后的部分
+  const withoutProtocol = url.replace(/^postgresql:\/\//, '');
+  
+  // 匹配: user:password@host:port/database
+  const match = withoutProtocol.match(/^([^:]+):([^@]+)@(.+):(\d+)\/([^\?]+)/);
   if (!match) {
-    throw new Error('Invalid database URL');
+    throw new Error('Invalid database URL: ' + url);
   }
   return {
     user: match[1],
