@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
-import { adminService } from '@/services/adminService';
+import adminService from '@/services/adminService';
 
 interface Stats {
   totalUsers: number;
@@ -38,9 +38,17 @@ export default function AdminDashboardScreen() {
   const fetchData = useCallback(async () => {
     try {
       const res = await adminService.getStats();
-      if (res.code === 200) {
-        setStats(res.data);
-        setRecentOrders(res.data.recentOrders || []);
+      if (res.code === 200 && res.data) {
+        const data = res.data as any;
+        setStats({
+          totalUsers: parseInt(data.total?.total_users || '0'),
+          totalPosts: parseInt(data.total?.total_posts || '0'),
+          totalOrders: parseInt(data.total?.total_orders || '0'),
+          totalRevenue: parseFloat(data.total?.total_amount || '0'),
+          todayRevenue: parseFloat(data.today?.today_amount || '0'),
+          monthRevenue: parseFloat(data.month?.month_amount || '0'),
+        });
+        setRecentOrders(data.recentOrders || []);
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);

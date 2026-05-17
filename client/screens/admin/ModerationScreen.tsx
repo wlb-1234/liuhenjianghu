@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { adminService } from '@/services/adminService';
+import adminService from '@/services/adminService';
 
 interface Violation {
   id: number;
@@ -36,8 +36,10 @@ export default function ModerationScreen() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminService.getReports();
-      setReports(data.reports || []);
+      const res = await adminService.getReports();
+      if (res.code === 200 && res.data) {
+        setReports(res.data.reports || []);
+      }
     } catch (error) {
       console.error('获取举报列表失败:', error);
     } finally {
@@ -61,7 +63,7 @@ export default function ModerationScreen() {
           text: '确认',
           onPress: async () => {
             try {
-              await adminService.handleReport(id, penalty);
+              await adminService.handleReport(id, String(penalty));
               Alert.alert('操作成功', '处罚已执行');
               fetchData();
             } catch (error) {
@@ -80,7 +82,7 @@ export default function ModerationScreen() {
         text: '确认',
         onPress: async () => {
           try {
-            await adminService.handleReport(id, -1); // -1表示忽略
+            await adminService.handleReport(id, '-1'); // -1表示忽略
             Alert.alert('操作成功', '举报已忽略');
             fetchData();
           } catch (error) {

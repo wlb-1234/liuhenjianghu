@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, FlatList } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { adminService } from '@/services/adminService';
+import adminService from '@/services/adminService';
 
 interface User {
   id: number;
@@ -30,7 +30,7 @@ export default function UserManageScreen() {
     setLoading(true);
     try {
       const res = await adminService.getUsers({ keyword: searchKeyword, limit: 50 });
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         setUsers(res.data.users || []);
       }
     } catch (error) {
@@ -50,7 +50,7 @@ export default function UserManageScreen() {
           text: '确定',
           onPress: async () => {
             try {
-              const res = await adminService.updateUserLevel(userId, newLevel);
+              const res = await adminService.adjustLevel(userId, newLevel);
               if (res.code === 200) {
                 Alert.alert('成功', '会员等级已更新');
                 setSelectedUser(null);

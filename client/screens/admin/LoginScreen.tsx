@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
-import { adminService } from '@/services/adminService';
+import adminService from '@/services/adminService';
 
 export default function AdminLoginScreen() {
   const router = useSafeRouter();
