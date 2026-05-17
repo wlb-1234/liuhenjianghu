@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
 import api from '@/services/api';
 import { buildAssetUrl } from '@/utils';
 
@@ -194,7 +195,7 @@ export default function PostDetailScreen({ postId, onBack, onUserPress }: Props)
 
           <View style={styles.actionBar}>
             <TouchableOpacity style={styles.actionItem} onPress={handleLike}>
-              <Text style={styles.actionIcon}>{post.is_liked ? '♥' : '♡'}</Text>
+              <FontAwesome name={post.is_liked ? 'heart' : 'heart-o'} size={20} color="#DC2626" />
               <Text style={styles.actionText}>{post.like_count} 赞</Text>
             </TouchableOpacity>
             <View style={styles.actionItem}>

@@ -19,9 +19,10 @@ import { buildAssetUrl } from '@/utils';
 interface Props {
   onUpgrade: () => void;
   onLogout: () => void;
+  onSettings: () => void;
 }
 
-export default function ProfileScreen({ onUpgrade, onLogout }: Props) {
+export default function ProfileScreen({ onUpgrade, onLogout, onSettings }: Props) {
   const { user, logout } = useAuth();
   const [stats, setStats] = useState({
     total_posts: 0,
@@ -201,7 +202,7 @@ export default function ProfileScreen({ onUpgrade, onLogout }: Props) {
             <Text style={styles.menuText}>我的点赞</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => onSettings && onSettings()}>
             <Text style={styles.menuIcon}>设</Text>
             <Text style={styles.menuText}>设置</Text>
             <Text style={styles.menuArrow}>›</Text>
@@ -216,6 +217,8 @@ export default function ProfileScreen({ onUpgrade, onLogout }: Props) {
         <View style={styles.footer}>
           <Text style={styles.footerText}>流痕江湖 v1.0</Text>
           <Text style={styles.footerSubtext}>人海为江湖，留言皆流痕</Text>
+          <Text style={styles.footerCopyright}>(C) 2024 流痕江湖 All Rights Reserved</Text>
+          <Text style={styles.footerContact}>联系：156-1359-4588</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -477,5 +480,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#A89F91',
     marginTop: 4,
+  },
+  footerCopyright: {
+    fontSize: 11,
+    color: '#A89F91',
+    marginTop: 8,
+  },
+  footerContact: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginTop: 4,
+    fontWeight: '600',
   },
 });
