@@ -16,163 +16,179 @@
   /* Base radius */
   --radius: 0.5rem;
   --field-radius: calc(var(--radius) * 1.5);
-
+  
   /* Opacity */
   --opacity-disabled: 0.5;
 }
 
 @layer theme {
   :root {
-    @variant light {
-      /* Base Colors */
-      --background: #fafafa;
-      --foreground: var(--eclipse);
+    /* 古风武侠主题配色 - 亮色模式 */
+    
+    /* Base Colors - 宣纸墨韵 */
+    --background: #F5F0E6;        /* 宣纸白 */
+    --foreground: #2C2C2C;        /* 墨黑 */
+    
+    /* Surface - 卡片底色 */
+    --surface: #FDFBF7;           /* 米白 */
+    --surface-foreground: var(--foreground);
+    
+    /* Overlay - 弹层 */
+    --overlay: var(--surface);
+    --overlay-foreground: var(--foreground);
+    
+    --muted: #8B7355;            /* 暗棕 */
+    
+    --default: #F0EBE0;          /* 淡米色 */
+    --default-foreground: var(--foreground);
+    
+    /* Accent - 朱砂红/墨青 */
+    --accent: #8B4513;            /* 赭石色 - 古风主色 */
+    --accent-foreground: var(--snow);
+    
+    /* Form Fields */
+    --field-background: #EDE8DC;  /* 淡黄棕输入框背景 */
+    --field-foreground: #2C2C2C;
+    --field-placeholder: #A89F91;
+    --field-border: transparent;
+    
+    /* Status Colors */
+    --success: #4A7C59;           /* 松石绿 */
+    --success-foreground: var(--snow);
+    
+    --warning: #D4A03B;           /* 暗金色 */
+    --warning-foreground: #2C2C2C;
+    
+    --danger: #A63D2F;            /* 朱砂红 */
+    --danger-foreground: var(--snow);
+    
+    /* Component Colors */
+    --segment: var(--white);
+    --segment-foreground: var(--foreground);
+    
+    /* Misc Colors */
+    --border: #D4C9B8;            /* 古纸边框 */
+    --separator: #E8E0D0;
+    --focus: var(--accent);
+    --link: var(--foreground);
+    
+    /* 古风特色颜色 */
+    --cinnabar: #C0392B;          /* 朱砂红 */
+    --ink: #1A2A3A;               /* 墨色 */
+    --gold: #C9A96E;              /* 古铜金 */
+    --paper: #F5F0E6;             /* 宣纸色 */
+    --wood: #8B4513;              /* 檀木色 */
+    
+    /* Shadows - 古风柔和阴影 */
+    --surface-shadow:
+      0 2px 8px 0 rgba(139, 69, 19, 0.08),
+      0 1px 3px 0 rgba(0, 0, 0, 0.06);
+    --overlay-shadow:
+      0 4px 16px 0 rgba(139, 69, 19, 0.12),
+      0 2px 6px 0 rgba(0, 0, 0, 0.08);
+    --field-shadow:
+      0 2px 4px 0 rgba(0, 0, 0, 0.04),
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
 
-      /* Surface: Used for non-overlay components (cards, accordions, disclosure groups) */
-      --surface: var(--white);
-      --surface-foreground: var(--foreground);
-
-      /* Overlay: Used for floating/overlay components (dialogs, popovers, modals, menus) */
-      --overlay: var(--white);
-      --overlay-foreground: var(--foreground);
-
-      --muted: oklch(0.5517 0.0138 285.94);
-
-      --default: oklch(94% 0.001 286.375);
-      --default-foreground: var(--eclipse);
-
-      --accent: oklch(0.6204 0.195 253.83);
-      --accent-foreground: var(--snow);
-
-      /* Form Fields */
-      --field-background: var(--white);
-      --field-foreground: oklch(0.2103 0.0059 285.89);
-      --field-placeholder: var(--muted);
-      --field-border: transparent; /* no border by default on form fields */
-
-      /* Status Colors */
-      --success: oklch(0.7329 0.1935 150.81);
-      --success-foreground: var(--eclipse);
-
-      --warning: oklch(0.7819 0.1585 72.33);
-      --warning-foreground: var(--eclipse);
-
-      --danger: oklch(0.6532 0.2328 25.74);
-      --danger-foreground: var(--snow);
-
-      /* Component Colors */
-      --segment: var(--white);
-      --segment-foreground: var(--eclipse);
-
-      /* Misc Colors */
-      --border: oklch(90% 0.004 286.32);
-      --separator: oklch(74% 0.004 286.32);
-      --focus: var(--accent);
-      --link: var(--foreground);
-
-      /* Shadows */
-      --surface-shadow:
-        0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06),
-        0 0 1px 0 rgba(0, 0, 0, 0.06);
-      --overlay-shadow:
-        0 2px 8px 0 rgba(0, 0, 0, 0.04), 0 -6px 12px 0 rgba(0, 0, 0, 0.02),
-        0 14px 28px 0 rgba(0, 0, 0, 0.06);
-      --field-shadow:
-        0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06),
-        0 0 1px 0 rgba(0, 0, 0, 0.06);
-    }
-
-    @variant dark {
-      /* Base Colors */
-      --background: #09090b;
-      --foreground: var(--snow);
-
-      /* Surface: Used for non-overlay components (cards, accordions, disclosure groups) */
-      --surface: oklch(0.2103 0.0059 285.89);
-      --surface-foreground: var(--foreground);
-
-      /* Overlay: Used for floating/overlay components (dialogs, popovers, modals, menus) - lighter for contrast */
-      --overlay: oklch(0.2103 0.0059 285.89);
-      --overlay-foreground: var(--foreground);
-
-      --muted: oklch(70.5% 0.015 286.067);
-
-      --default: oklch(27.4% 0.006 286.033);
-      --default-foreground: var(--snow);
-
-      --accent: oklch(0.6204 0.195 253.83);
-      --accent-foreground: var(--snow);
-
-      /* Form Field Defaults - Colors (only the ones that are different from light theme) */
-      --field-background: oklch(0.2103 0.0059 285.89);
-      --field-foreground: var(--foreground);
-      --field-placeholder: var(--muted);
-      --field-border: transparent; /* no border by default on form fields */
-
-      /* Status Colors */
-      --success: oklch(0.7329 0.1935 150.81);
-      --success-foreground: var(--eclipse);
-
-      --warning: oklch(0.8203 0.1388 76.34);
-      --warning-foreground: var(--eclipse);
-
-      --danger: oklch(0.594 0.1967 24.63);
-      --danger-foreground: var(--snow);
-
-      /* Component Colors */
-      --segment: oklch(0.3964 0.01 285.93);
-      --segment-foreground: var(--foreground);
-
-      /* Misc Colors */
-      --border: oklch(28% 0.006 286.033);
-      --separator: oklch(40% 0.006 286.033);
-      --focus: var(--accent);
-      --link: var(--foreground);
-
-      /* Shadows */
-      --surface-shadow: 0 0 0 0 transparent inset; /* No shadow on dark mode */
-      --overlay-shadow: 0 0 1px 0 rgba(255, 255, 255, 0.2) inset;
-      --field-shadow: 0 0 0 0 transparent inset; /* Transparent shadow to allow ring utilities to work */
-    }
+  @variant dark {
+    /* 古风武侠主题配色 - 暗色模式（墨韵夜色） */
+    
+    /* Base Colors */
+    --background: #1A1A1F;        /* 夜色墨 */
+    --foreground: #E8E4DC;        /* 月白 */
+    
+    /* Surface */
+    --surface: #252529;
+    --surface-foreground: var(--foreground);
+    
+    /* Overlay */
+    --overlay: #2A2A2F;
+    --overlay-foreground: var(--foreground);
+    
+    --muted: #9A918A;
+    
+    --default: #2F2F35;
+    
+    --accent: #C9A96E;            /* 古铜金 */
+    --accent-foreground: #1A1A1F;
+    
+    /* Form Field Defaults */
+    --field-background: #1F1F24;
+    --field-foreground: var(--foreground);
+    --field-placeholder: #6B6560;
+    --field-border: transparent;
+    
+    /* Status Colors */
+    --success: #5B9A6F;
+    --success-foreground: #1A1A1F;
+    
+    --warning: #E0B04B;
+    --warning-foreground: #1A1A1F;
+    
+    --danger: #D45444;
+    --danger-foreground: #1A1A1F;
+    
+    /* Component Colors */
+    --segment: #2A2A2F;
+    --segment-foreground: var(--foreground);
+    
+    /* Misc Colors */
+    --border: #3A3A40;
+    --separator: #45450A;
+    --focus: var(--accent);
+    --link: var(--foreground);
+    
+    /* 古风特色颜色 */
+    --cinnabar: #D45444;          /* 朱砂红 */
+    --ink: #0D1A26;               /* 夜色墨 */
+    --gold: #C9A96E;              /* 古铜金 */
+    --paper: #F5F0E6;             /* 宣纸色 */
+    --wood: #B87333;              /* 暗金 */
+    
+    /* Shadows - 暗色阴影 */
+    --surface-shadow: 0 0 0 0 transparent inset;
+    --overlay-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+    --field-shadow: 0 0 0 0 transparent inset;
   }
 }
 
 @theme inline static {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
+  
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-foreground);
   --color-surface-hover: color-mix(in oklab, var(--surface) 92%, var(--surface-foreground) 8%);
-
+  
   --color-overlay: var(--overlay);
   --color-overlay-foreground: var(--overlay-foreground);
-
+  
   --color-muted: var(--muted);
-
+  
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-
+  
   --color-segment: var(--segment);
   --color-segment-foreground: var(--segment-foreground);
-
+  
   --color-border: var(--border);
   --color-separator: var(--separator);
   --color-focus: var(--focus);
   --color-link: var(--link);
-
+  
   --color-default: var(--default);
   --color-default-foreground: var(--default-foreground);
-
+  
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-
+  
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-
+  
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
-
+  
   /* Form Field Tokens */
   --color-field: var(--field-background, var(--default));
   --color-field-foreground: var(--field-foreground, var(--foreground));
@@ -180,89 +196,120 @@
   --color-field-border: var(--field-border, var(--border));
   --radius-field: var(--field-radius, var(--radius-xl));
   --border-width-field: var(--field-border-width, var(--border-width));
-
+  
   --shadow-surface: var(--surface-shadow);
   --shadow-overlay: var(--overlay-shadow);
   --shadow-field: var(--field-shadow);
-
+  
+  /* 古风特色颜色 */
+  --color-cinnabar: var(--cinnabar);
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+  --color-paper: var(--paper);
+  --color-wood: var(--wood);
+  
   /* Calculated Variables */
-
-  /* Colors */
-
-  /* --- background shades --- */
   --color-background-secondary: color-mix(in oklab, var(--background) 96%, var(--foreground) 4%);
   --color-background-tertiary: color-mix(in oklab, var(--background) 92%, var(--foreground) 8%);
   --color-background-inverse: var(--foreground);
-
-  /* ------------------------- */
+  
   --color-default-hover: color-mix(in oklab, var(--default) 96%, var(--default-foreground) 4%);
   --color-accent-hover: color-mix(in oklab, var(--accent) 90%, var(--accent-foreground) 10%);
-  --color-success-hover: color-mix(in oklab, var(--success) 90%, var(--success-foreground) 10%);
-  --color-warning-hover: color-mix(in oklab, var(--warning) 90%, var(--warning-foreground) 10%);
-  --color-danger-hover: color-mix(in oklab, var(--danger) 90%, var(--danger-foreground) 10%);
-
-  /* Form Field Colors */
-  --color-field-hover: color-mix(in oklab, var(--field-background, var(--default)) 90%, var(--field-foreground, var(--foreground)) 2%);
-  --color-field-focus: var(--field-background, var(--default));
-  --color-field-border-hover: color-mix(in oklab, var(--field-border, var(--border)) 88%, var(--field-foreground, var(--foreground)) 10%);
-  --color-field-border-focus: color-mix(in oklab, var(--field-border, var(--border)) 74%, var(--field-foreground, var(--foreground)) 22%);
-
-  /* Soft Colors */
-  --color-accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
-  --color-accent-soft-foreground: var(--accent);
-  --color-accent-soft-hover: color-mix(in oklab, var(--accent) 20%, transparent);
-
-  --color-danger-soft: color-mix(in oklab, var(--danger) 15%, transparent);
-  --color-danger-soft-foreground: var(--danger);
-  --color-danger-soft-hover: color-mix(in oklab, var(--danger) 20%, transparent);
-
-  --color-warning-soft: color-mix(in oklab, var(--warning) 15%, transparent);
-  --color-warning-soft-foreground: var(--warning);
-  --color-warning-soft-hover: color-mix(in oklab, var(--warning) 20%, transparent);
-
-  --color-success-soft: color-mix(in oklab, var(--success) 15%, transparent);
-  --color-success-soft-foreground: var(--success);
-  --color-success-soft-hover: color-mix(in oklab, var(--success) 20%, transparent);
-
-  /* Surface Levels - progressively darker/lighter shades for layering */
-  --color-surface-secondary: color-mix(in oklab, var(--surface) 94%, var(--surface-foreground) 6%);
-  --color-surface-tertiary: color-mix(in oklab, var(--surface) 92%, var(--surface-foreground) 8%);
-
-  /* On Surface Colors */
-  --color-on-surface: color-mix(in oklab, var(--surface) 93%, var(--surface-foreground) 7%);
-  --color-on-surface-foreground: var(--surface-foreground);
-  --color-on-surface-hover: color-mix(in oklab, var(--surface) 91%, var(--surface-foreground) 9%);
-  --color-on-surface-focus: color-mix(in oklab, var(--surface) 93%, var(--surface-foreground) 7%);
-
-  /* On Surface Colors - Secondary (on secondary surface) */
-  --color-on-surface-secondary: color-mix(in oklab, var(--surface) 87%, var(--surface-foreground) 13%);
-  --color-on-surface-secondary-foreground: var(--surface-foreground);
-  --color-on-surface-secondary-hover: color-mix(in oklab, var(--surface) 85%, var(--surface-foreground) 15%);
-  --color-on-surface-secondary-focus: color-mix(in oklab, var(--surface) 87%, var(--surface-foreground) 13%);
-
-   /* On Surface Colors - Tertiary (on tertiary surface) */
-  --color-on-surface-tertiary: color-mix(in oklab, var(--surface) 85%, var(--surface-foreground) 15%);
-  --color-on-surface-tertiary-foreground: var(--surface-foreground);
-  --color-on-surface-tertiary-hover: color-mix(in oklab, var(--surface) 84%, var(--surface-foreground) 16%);
-  --color-on-surface-tertiary-focus: color-mix(in oklab, var(--surface) 85%, var(--surface-foreground) 15%);
-
-  /* Separator Colors - Levels */
-  --color-separator-secondary: color-mix(in oklab, var(--surface) 85%, var(--surface-foreground) 15%);
-  --color-separator-tertiary: color-mix(in oklab, var(--surface) 81%, var(--surface-foreground) 19%);
-
-  /* Border Colors - Levels (progressive contrast: default → secondary → tertiary) */
-  /* Light mode: lighter → darker | Dark mode: darker → lighter */
-  --color-border-secondary: color-mix(in oklab, var(--surface) 78%, var(--surface-foreground) 22%);
-  --color-border-tertiary: color-mix(in oklab, var(--surface) 66%, var(--surface-foreground) 34%);
-
-  /* Radius and default sizes - defaults can change by just changing the --radius */
-  --radius-xs: calc(var(--radius) * 0.25); /* 0.125rem (2px) */
-  --radius-sm: calc(var(--radius) * 0.5); /* 0.25rem (4px) */
-  --radius-md: calc(var(--radius) * 0.75); /* 0.375rem (6px) */
-  --radius-lg: calc(var(--radius) * 1); /* 0.5rem (8px) */
-  --radius-xl: calc(var(--radius) * 1.5); /* 0.75rem (12px) */
-  --radius-2xl: calc(var(--radius) * 2); /* 1rem (16px) */
-  --radius-3xl: calc(var(--radius) * 3); /* 1.5rem (24px) */
-  --radius-4xl: calc(var(--radius) * 4); /* 2rem (32px) */
 }
 
+/* 古风武侠字体样式 */
+.wuxia-title {
+  font-family: system-ui;
+  letter-spacing: 2px;
+}
+
+.wuxia-text {
+  font-family: system-ui;
+  letter-spacing: 1px;
+}
+
+/* 古风卡片样式 */
+.wuxia-card {
+  background-color: var(--color-surface);
+  border-radius: 16px;
+  shadow-color: var(--ink);
+  shadow-offset: 0 2px 8px;
+  shadow-opacity: 0.08;
+  shadow-radius: 12;
+  elevation: 3;
+}
+
+/* 古风按钮样式 */
+.wuxia-button-primary {
+  background: linear-gradient(135deg, var(--wood) 0%, var(--accent) 100%);
+  border-radius: 24px;
+  padding: 14px 28px;
+  shadow-color: var(--wood);
+  shadow-offset: 0 4px 12px;
+  shadow-opacity: 0.25;
+  shadow-radius: 8;
+  elevation: 4;
+}
+
+.wuxia-button-secondary {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 14px 28px;
+}
+
+/* 古风输入框 */
+.wuxia-input {
+  background-color: var(--color-field);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: none;
+  font-size: 16px;
+  color: var(--color-field-foreground);
+}
+
+.wuxia-input::placeholder {
+  color: var(--color-field-placeholder);
+}
+
+/* 古风分割线 */
+.wuxia-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+}
+
+/* 古风标签 */
+.wuxia-tag {
+  background-color: rgba(139, 69, 19, 0.1);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--wood);
+}
+
+/* 古风头像框 */
+.wuxia-avatar {
+  border: 2px solid var(--color-paper);
+  border-radius: 50%;
+  shadow-color: var(--ink);
+  shadow-offset: 0 2px 4px;
+  shadow-opacity: 0.1;
+  shadow-radius: 4;
+}
+
+/* 古风徽章 */
+.wuxia-badge {
+  background: linear-gradient(135deg, var(--gold) 0%, #D4B896 100%);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: #3D2B1F;
+  font-weight: 600;
+}
+
+/* 会员等级徽章 */
+.member-badge-0 { background-color: #9A9A9A; color: #fff; }
+.member-badge-1 { background-color: #C9A96E; color: #3D2B1F; }
+.member-badge-2 { background-color: #D4B896; color: #3D2B1F; }
+.member-badge-3 { background-color: #E8D5B7; color: #5D4E37; }
+.member-badge-4 { background: linear-gradient(135deg, #FFD700, #FFA500); color: #3D2B1F; }

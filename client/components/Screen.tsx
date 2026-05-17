@@ -122,15 +122,15 @@ const KeyboardAwareScrollable = ({
   // 根据组件类型返回对应的 KeyboardAware 版本
   // 注意：不再使用 KeyboardAvoidingView，直接替换为增强版 ScrollView
   if (t === ScrollView) {
-    return <KeyboardAwareScrollView {...commonProps} />;
+    return <KeyboardAwareScrollView {...element.props} {...commonProps} />;
   }
 
   if (t === FlatList) {
-    return <KeyboardAwareFlatList {...commonProps} />;
+    return <KeyboardAwareFlatList {...element.props} {...commonProps} />;
   }
 
   if (t === SectionList) {
-    return <KeyboardAwareSectionList {...commonProps} />;
+    return <KeyboardAwareSectionList {...element.props} {...commonProps} />;
   }
 
   // 理论上不应运行到这里，如果是非标准组件则原样返回，仅修改样式
