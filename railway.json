@@ -1,0 +1,17 @@
+# Railway 部署配置
+# 项目根目录下创建 railway.json
+
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksPkgs": ["nodejs-20"]
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10,
+    "healthcheckPath": "/api/v1/health",
+    "healthcheckPort": 5000
+  }
+}
