@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { uploadToIPFS, getIPFSGatewayUrl } from '../services/ipfsService';
+import { uploadToOSS, generateSignedUrl } from '../services/oss';
 
 const router = Router();
 
@@ -25,7 +25,7 @@ const upload = multer({
   }
 });
 
-// 上传图片到 IPFS
+// 上传图片到 OSS
 router.post('/images', authMiddleware, upload.array('images', 9), async (req: AuthRequest, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
@@ -38,25 +38,23 @@ router.post('/images', authMiddleware, upload.array('images', 9), async (req: Au
     
     for (const file of files) {
       try {
-        // 上传到 IPFS
-        const result = await uploadToIPFS(file.buffer, file.originalname, {
-          pinataMetadata: {
-            userId: req.userId,
-            originalName: file.originalname,
-          },
-        });
+        // 上传到 OSS
+        const result = await uploadToOSS(file.buffer, file.originalname, 'posts/');
+        
+        // 为图片生成签名URL（有效期1小时）
+        const signedUrl = await generateSignedUrl(result.objectName, 3600);
         
         uploadResults.push({
-          url: result.gatewayUrl, // 返回可访问的网关 URL
-          cid: result.cid,
+          url: signedUrl, // 返回签名URL
+          objectName: result.objectName, // 存储对象名，用于后续生成新的签名URL
           filename: file.originalname,
           size: file.size,
-          storage: 'ipfs', // 标记存储类型
+          storage: 'oss', // 标记存储类型
         });
-      } catch (ipfsError) {
-        console.error('IPFS upload failed, using local fallback:', ipfsError);
+      } catch (ossError) {
+        console.error('OSS upload failed:', ossError);
         
-        // 如果 IPFS 上传失败，使用本地存储作为备选
+        // 如果 OSS 上传失败，使用本地存储作为备选
         const ext = path.extname(file.originalname);
         const filename = `${uuidv4()}${ext}`;
         
@@ -75,7 +73,6 @@ router.post('/images', authMiddleware, upload.array('images', 9), async (req: Au
         
         uploadResults.push({
           url: `${baseUrl}/uploads/${filename}`,
-          cid: filename,
           filename: file.originalname,
           size: file.size,
           storage: 'local', // 标记存储类型
@@ -86,8 +83,8 @@ router.post('/images', authMiddleware, upload.array('images', 9), async (req: Au
     res.json({
       success: true,
       files: uploadResults,
-      storage: 'ipfs',
-      message: '图片已去中心化存储到 IPFS',
+      storage: 'oss',
+      message: '图片已上传到 OSS',
     });
   } catch (error) {
     console.error('上传图片错误:', error);
@@ -105,24 +102,22 @@ router.post('/image', authMiddleware, upload.single('image'), async (req: AuthRe
     }
     
     try {
-      // 上传到 IPFS
-      const result = await uploadToIPFS(file.buffer, file.originalname, {
-        pinataMetadata: {
-          userId: req.userId,
-          originalName: file.originalname,
-        },
-      });
+      // 上传到 OSS
+      const result = await uploadToOSS(file.buffer, file.originalname, 'avatars/');
+      
+      // 为图片生成签名URL（有效期1小时）
+      const signedUrl = await generateSignedUrl(result.objectName, 3600);
       
       res.json({
         success: true,
-        url: result.gatewayUrl,
-        cid: result.cid,
+        url: signedUrl,
+        objectName: result.objectName,
         filename: file.originalname,
         size: file.size,
-        storage: 'ipfs',
+        storage: 'oss',
       });
-    } catch (ipfsError) {
-      console.error('IPFS upload failed, using local fallback:', ipfsError);
+    } catch (ossError) {
+      console.error('OSS upload failed, using local fallback:', ossError);
       
       // 备选：本地存储
       const ext = path.extname(file.originalname);
@@ -144,7 +139,6 @@ router.post('/image', authMiddleware, upload.single('image'), async (req: AuthRe
       res.json({
         success: true,
         url: `${baseUrl}/uploads/${filename}`,
-        cid: filename,
         filename: file.originalname,
         size: file.size,
         storage: 'local',

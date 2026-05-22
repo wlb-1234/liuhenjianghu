@@ -6,6 +6,7 @@ import {
 } from '../services/userService';
 import { getMemberLevel } from '../services/memberService';
 import { checkSensitiveWords, moderateContent } from '../services/moderationService';
+import { generateSignedUrl } from '../services/oss';
 
 const router = Router();
 
@@ -20,20 +21,50 @@ router.get('/', async (req: Request, res: Response) => {
       limit: parseInt(limit as string)
     });
     
+    // 为图片生成签名URL
+    const postsWithSignedUrls = await Promise.all(
+      result.posts.map(async (post: any) => {
+        let signedImages = [];
+        
+        // 如果有图片，尝试生成签名URL
+        if (post.images && post.images.length > 0) {
+          signedImages = await Promise.all(
+            post.images.map(async (img: any) => {
+              // img 可能是字符串URL，也可能是对象 {objectName, url}
+              if (typeof img === 'string') {
+                return img; // 如果是本地URL或其他外部URL，直接返回
+              } else if (img.objectName) {
+                try {
+                  return await generateSignedUrl(img.objectName, 3600);
+                } catch {
+                  return img.url || '';
+                }
+              } else if (img.url) {
+                return img.url;
+              }
+              return '';
+            })
+          );
+        }
+        
+        return {
+          id: post.id,
+          content: post.content,
+          images: signedImages,
+          region_code: post.region_code,
+          region_level: post.region_level,
+          like_count: post.like_count,
+          comment_count: post.comment_count,
+          is_pinned: post.is_pinned,
+          expire_at: post.expire_at,
+          created_at: post.created_at,
+          user: post.users
+        };
+      })
+    );
+    
     res.json({
-      posts: result.posts.map((post: any) => ({
-        id: post.id,
-        content: post.content,
-        images: post.images,
-        region_code: post.region_code,
-        region_level: post.region_level,
-        like_count: post.like_count,
-        comment_count: post.comment_count,
-        is_pinned: post.is_pinned,
-        expire_at: post.expire_at,
-        created_at: post.created_at,
-        user: post.users
-      })),
+      posts: postsWithSignedUrls,
       page: parseInt(page as string),
       hasMore: result.posts.length === parseInt(limit as string)
     });
@@ -52,11 +83,32 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: '帖子不存在' });
     }
     
+    // 为图片生成签名URL
+    let signedImages = [];
+    if (post.images && post.images.length > 0) {
+      signedImages = await Promise.all(
+        post.images.map(async (img: any) => {
+          if (typeof img === 'string') {
+            return img;
+          } else if (img.objectName) {
+            try {
+              return await generateSignedUrl(img.objectName, 3600);
+            } catch {
+              return img.url || '';
+            }
+          } else if (img.url) {
+            return img.url;
+          }
+          return '';
+        })
+      );
+    }
+    
     res.json({
       post: {
         id: post.id,
         content: post.content,
-        images: post.images,
+        images: signedImages,
         region_code: post.region_code,
         region_level: post.region_level,
         like_count: post.like_count,
