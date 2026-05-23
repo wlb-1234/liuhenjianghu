@@ -10,11 +10,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   onSwitchToRegister: () => void;
@@ -22,6 +24,7 @@ interface Props {
 
 export default function LoginScreen({ onSwitchToRegister }: Props) {
   const { login } = useAuth();
+  const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,6 +51,15 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 左上角水纹标志 */}
+      <View style={[styles.logoCorner, { top: insets.top + 10, left: 16 }]}>
+        <Image
+          source={require('@/assets/logo-water.png')}
+          style={styles.logoCornerImage}
+          resizeMode="contain"
+        />
+      </View>
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -141,6 +153,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F0E6',
+  },
+  logoCorner: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  logoCornerImage: {
+    width: 80,
+    height: 40,
   },
   keyboardView: {
     flex: 1,
