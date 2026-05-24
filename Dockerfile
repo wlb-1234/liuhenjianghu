@@ -7,11 +7,14 @@ WORKDIR /app
 # 安装 pnpm
 RUN npm install -g pnpm@9.0.0
 
-# 复制 package.json
+# 复制 package.json 和锁文件
 COPY package.json pnpm-lock.yaml ./
 COPY server/package.json ./server/
 
-# 先安装依赖（不用 frozen-lockfile）
+# 复制 patches 目录（Expo 补丁文件）
+COPY patches ./patches
+
+# 先安装依赖
 RUN pnpm install
 
 # 复制源代码
@@ -29,7 +32,7 @@ WORKDIR /app
 # 只复制 package.json
 COPY server/package.json ./server/
 
-# 安装生产依赖（不用 frozen-lockfile）
+# 安装生产依赖
 RUN npm install -g pnpm@9.0.0 && pnpm install --prod
 
 # 复制构建产物
