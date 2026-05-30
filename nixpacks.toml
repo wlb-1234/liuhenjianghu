@@ -1,16 +1,19 @@
-[phases.setup]
-nixPkgs = ['nodejs-20_x']
+providers = ["node"]
 
-[phases.install]
+[ phases.setup ]
+env = {
+  NODE_VERSION = "20"
+}
+
+[ phases.install ]
 cmds = [
-  'cd server',
-  'npm config set ignore-scripts true',
-  'npm install --legacy-peer-deps',
-  'npm rebuild'
+  "cd server",
+  "npm config set ignore-scripts true",
+  "npm install --legacy-peer-deps"
 ]
 
-[phases.build]
-cmds = ['cd server && npm run build']
+[ phases.build ]
+cmds = ["cd server && npm run build"]
 
 [start]
-cmd = 'cd server && npm start'
+cmd = "cd server && npm start"
