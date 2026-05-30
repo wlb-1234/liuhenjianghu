@@ -3,7 +3,8 @@
   "build": {
     "builder": "NIXPACKS",
     "nixpacksPkgs": ["nodejs_20"],
-    "buildCommand": "cd server && npm install && npm run build",
+    "nixpacksTxt": "",
+    "buildCommand": "node --version && cd server && npm install && npm run build",
     "startCommand": "cd server && npm start"
   },
   "deploy": {
