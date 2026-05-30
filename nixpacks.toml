@@ -1,15 +1,12 @@
 providers = ["node"]
 
-[ phases.setup ]
-env = {
-  NODE_VERSION = "20"
-}
+[vars]
+NODE_VERSION = "20"
 
 [ phases.install ]
 cmds = [
   "cd server",
-  "npm config set ignore-scripts true",
-  "npm install --legacy-peer-deps"
+  "npm install --ignore-scripts --legacy-peer-deps"
 ]
 
 [ phases.build ]
