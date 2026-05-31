@@ -89,6 +89,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_BACKEND_BASE_URL": "https://adequate-perfection-production.up.railway.app"
     }
   }
 }
