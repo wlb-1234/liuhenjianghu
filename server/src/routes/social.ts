@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { 
-  getUserById, getUserByPhone,
   toggleFollow, getFollowers, getFollowings, isFollowing,
   getConversations, getMessages, sendMessage, getUnreadCount
 } from '../services/socialService';
+import { getUserById, getUserByPhone } from '../services/userService';
 
 const router = Router();
 
@@ -15,9 +15,9 @@ router.get('/followings', authMiddleware, async (req: AuthRequest, res: Response
     
     res.json({
       users: followings.map((item: any) => ({
-        id: item.users.id,
-        nickname: item.users.nickname,
-        avatar: item.users.avatar,
+        id: item.users?.id || item.id,
+        nickname: item.users?.nickname || item.nickname,
+        avatar: item.users?.avatar || item.avatar,
         created_at: item.created_at
       }))
     });
@@ -34,9 +34,9 @@ router.get('/followers', authMiddleware, async (req: AuthRequest, res: Response)
     
     res.json({
       users: followers.map((item: any) => ({
-        id: item.users.id,
-        nickname: item.users.nickname,
-        avatar: item.users.avatar,
+        id: item.users?.id || item.id,
+        nickname: item.users?.nickname || item.nickname,
+        avatar: item.users?.avatar || item.avatar,
         created_at: item.created_at
       }))
     });
@@ -60,11 +60,11 @@ router.post('/follow/:userId', authMiddleware, async (req: AuthRequest, res: Res
       return res.status(404).json({ error: '用户不存在' });
     }
     
-    const result = await toggleFollow(req.userId!, targetUserId);
+    const followed = await toggleFollow(req.userId!, targetUserId);
     
     res.json({
       success: true,
-      followed: result.followed
+      followed
     });
   } catch (error) {
     console.error('关注操作错误:', error);
@@ -98,7 +98,7 @@ router.get('/users/:id', authMiddleware, async (req: AuthRequest, res: Response)
       user: {
         id: user.id,
         nickname: user.nickname,
-        avatar: user.avatar,
+        avatar: user.avatar_url,
         member_level: user.member_level,
         total_likes: user.total_likes,
         total_posts: user.total_posts,
@@ -139,7 +139,7 @@ router.get('/messages/:userId', authMiddleware, async (req: AuthRequest, res: Re
         content: msg.content,
         is_read: msg.is_read,
         created_at: msg.created_at,
-        sender: msg.sender,
+        sender_id: msg.sender_id,
         is_mine: msg.sender_id === req.userId
       }))
     });
@@ -174,7 +174,7 @@ router.post('/messages/:userId', authMiddleware, async (req: AuthRequest, res: R
         content: message.content,
         is_read: false,
         created_at: message.created_at,
-        sender: req.user,
+        sender_id: req.userId,
         is_mine: true
       }
     });
