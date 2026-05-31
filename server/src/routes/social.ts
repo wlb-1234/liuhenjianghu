@@ -4,7 +4,7 @@ import {
   getUserById, getUserByPhone,
   toggleFollow, getFollowers, getFollowings, isFollowing,
   getConversations, getMessages, sendMessage, getUnreadCount
-} from '../services/userService';
+} from '../services/socialService';
 
 const router = Router();
 

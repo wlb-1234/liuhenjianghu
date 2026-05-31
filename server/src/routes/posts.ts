@@ -3,7 +3,7 @@ import { authMiddlewareWithUser as authMiddleware, AuthRequest } from '../middle
 import { 
   getPosts, getPostById, createPost, toggleLike, isLiked,
   getComments, createComment, createReport
-} from '../services/userService';
+} from '../services/postService';
 import { getMemberLevel } from '../services/memberService';
 import { checkSensitiveWords, moderateContent } from '../services/moderationService';
 import { generateSignedUrl } from '../services/oss';
