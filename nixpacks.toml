@@ -2,15 +2,16 @@ providers = ["node"]
 
 [vars]
 NODE_VERSION = "20"
+HUSKY = "0"
 
 [ phases.install ]
 cmds = [
   "cd server",
-  "npm install --ignore-scripts --legacy-peer-deps"
+  "npm install --legacy-peer-deps"
 ]
 
 [ phases.build ]
-cmds = ["cd server && npm run build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "cd server && npm start"
+cmd = "npm start"
