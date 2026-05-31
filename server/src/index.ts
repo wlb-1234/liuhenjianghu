@@ -1,10 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
-
-// 加载环境变量
-loadEnv();
 
 const app = express();
 const PORT = process.env.PORT || 9091;
@@ -17,7 +13,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 静态文件服务
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// 健康检查
+// 健康检查（独立于数据库）
 app.get('/api/v1/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -26,7 +22,7 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-// 导入路由
+// 导入路由（延迟加载，避免启动时就连接数据库）
 import authRoutes from './routes/auth';
 import regionRoutes from './routes/regions';
 import postRoutes from './routes/posts';
@@ -37,7 +33,6 @@ import adminRoutes from './routes/admin';
 import moderationRoutes from './routes/moderation';
 import paymentRoutes from './routes/payment';
 
-// 使用路由
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/regions', regionRoutes);
 app.use('/api/v1/posts', postRoutes);
@@ -48,32 +43,15 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/moderation', moderationRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 
-// 错误处理中间件
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('服务器错误:', err);
-  res.status(500).json({ error: '服务器内部错误' });
-});
-
-// 启动服务器
 app.listen(PORT, () => {
-  console.log(`
-  ╔═══════════════════════════════════════════════╗
-  ║                                               ║
-  ║     🗡️  流痕江湖 API 服务已启动 🗡️              ║
-  ║                                               ║
-  ║     📍 端口: ${PORT}                             ║
-  ║     🌐 地址: http://localhost:${PORT}           ║
-  ║                                               ║
-  ╚═══════════════════════════════════════════════╝
-  `);
-  
-  // 测试数据库连接
-  try {
-    const dbUrl = getDbUrl();
-    console.log('✅ 数据库连接信息已加载');
-  } catch (error) {
-    console.error('❌ 数据库连接信息加载失败:', error);
-  }
+  console.log('');
+  console.log('╔════════════════════════════════════════════╗');
+  console.log('║      🗡️  流痕江湖 API 服务已启动      🗡️');
+  console.log('╠════════════════════════════════════════════╣');
+  console.log(`║  📍 端口: ${PORT}                             ║`);
+  console.log(`║  🌐 地址: http://localhost:${PORT}           ║`);
+  console.log('╚════════════════════════════════════════════╝');
+  console.log('');
 });
 
 export default app;

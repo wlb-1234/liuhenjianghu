@@ -1,72 +1,47 @@
 import { Pool } from 'pg';
 import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
 
-// 加载环境变量
-loadEnv();
+// 延迟加载环境变量和数据库连接
+let dbUrl: string | null = null;
 
-const dbUrl = getDbUrl();
-
-// 解析数据库 URL - 正确处理包含查询参数的URL
-function parseDatabaseUrl(url: string) {
-  // 提取协议后的部分
-  const withoutProtocol = url.replace(/^postgresql:\/\//, '');
-  
-  // 匹配: user:password@host:port/database
-  const match = withoutProtocol.match(/^([^:]+):([^@]+)@(.+):(\d+)\/([^\?]+)/);
-  if (!match) {
-    throw new Error('Invalid database URL: ' + url);
+function loadDatabaseConfig() {
+  if (!dbUrl) {
+    try {
+      loadEnv();
+      dbUrl = getDbUrl();
+    } catch (e) {
+      console.warn('⚠️ 数据库配置加载失败:', e);
+      dbUrl = '';
+    }
   }
-  return {
-    user: match[1],
-    password: match[2],
-    host: match[3],
-    port: parseInt(match[4]),
-    database: match[5]
-  };
+  return dbUrl;
 }
 
-const parsedConfig = parseDatabaseUrl(dbUrl);
-
-// 导出数据库配置供直接使用
-export const dbConfig = {
-  host: parsedConfig.host,
-  port: parsedConfig.port,
-  database: parsedConfig.database,
-  user: parsedConfig.user,
-  password: parsedConfig.password
-};
-
-let pool: Pool | null = null;
-
 export function getPool(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      database: dbConfig.database,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      ssl: {
-        rejectUnauthorized: false
-      },
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000
-    });
+  const config = loadDatabaseConfig();
+  if (!config) {
+    throw new Error('数据库未配置');
   }
-  return pool;
+
+  return new Pool({
+    connectionString: config,
+    ssl: { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
+  });
 }
 
 export async function testConnection() {
-  const p = getPool();
   try {
+    const p = getPool();
     const result = await p.query('SELECT NOW()');
     console.log('✅ 数据库连接成功:', result.rows[0].now);
     return true;
   } catch (error) {
-    console.error('❌ 数据库连接失败:', error);
+    console.warn('⚠️ 数据库连接失败:', error);
     return false;
   }
 }
 
-export default { getPool, testConnection, dbConfig };
+export default { getPool, testConnection };

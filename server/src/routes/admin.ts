@@ -7,7 +7,12 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'admin-secret-key';
 
 // 获取连接池
-const pool = () => getPool();
+let pool: ReturnType<typeof getPool> | null = null;
+
+function getPoolInstance() {
+  if (!pool) pool = getPool();
+  return pool;
+}
 
 // 管理员登录
 router.post('/login', async (req: Request, res: Response) => {
@@ -20,7 +25,7 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    const p = pool();
+    const p = getPoolInstance();
     console.log('Pool:', !!p);
     
     const result = await p.query(
@@ -107,7 +112,7 @@ router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
     }
 
     // 总收益
-    const totalResult = await pool().query(
+    const totalResult = await getPoolInstance().query(
       `SELECT 
         COALESCE(SUM(amount), 0) as total_amount,
         COALESCE(SUM(platform_amount), 0) as total_platform,
@@ -118,7 +123,7 @@ router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
     );
 
     // 按等级统计
-    const byLevelResult = await pool().query(
+    const byLevelResult = await getPoolInstance().query(
       `SELECT 
         level,
         COUNT(*) as orders,
@@ -131,7 +136,7 @@ router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
     );
 
     // 按月统计
-    const byMonthResult = await pool().query(
+    const byMonthResult = await getPoolInstance().query(
       `SELECT 
         TO_CHAR(created_at, 'YYYY-MM') as month,
         COUNT(*) as orders,
@@ -146,7 +151,7 @@ router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
     );
 
     // 今日收益
-    const todayResult = await pool().query(
+    const todayResult = await getPoolInstance().query(
       `SELECT 
         COALESCE(SUM(amount), 0) as today_amount,
         COUNT(*) as today_orders
@@ -155,7 +160,7 @@ router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
     );
 
     // 本月收益
-    const monthResult = await pool().query(
+    const monthResult = await getPoolInstance().query(
       `SELECT 
         COALESCE(SUM(amount), 0) as month_amount,
         COUNT(*) as month_orders
@@ -202,13 +207,13 @@ router.get('/users', verifyAdmin, async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    const countResult = await pool().query(
+    const countResult = await getPoolInstance().query(
       `SELECT COUNT(*) as total FROM users u ${whereClause}`,
       params
     );
 
     params.push(Number(limit), offset);
-    const result = await pool().query(
+    const result = await getPoolInstance().query(
       `SELECT 
         u.id, u.phone, u.nickname, u.avatar, u.member_level,
         u.member_expire_at, u.total_posts, u.total_likes,
@@ -249,7 +254,7 @@ router.post('/adjust-level', verifyAdmin, async (req: Request, res: Response) =>
     }
 
     // 获取用户当前信息
-    const userResult = await pool().query('SELECT * FROM users WHERE id = $1', [userId]);
+    const userResult = await getPoolInstance().query('SELECT * FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       res.json({ code: 404, message: '用户不存在' });
       return;
@@ -266,7 +271,7 @@ router.post('/adjust-level', verifyAdmin, async (req: Request, res: Response) =>
       expireAt.setMonth(expireAt.getMonth() + 1);
     }
 
-    await pool().query(
+    await getPoolInstance().query(
       `UPDATE users 
        SET member_level = $1, member_expire_at = $2, updated_at = CURRENT_TIMESTAMP
        WHERE id = $3`,
@@ -274,7 +279,7 @@ router.post('/adjust-level', verifyAdmin, async (req: Request, res: Response) =>
     );
 
     // 记录操作日志
-    await pool().query(
+    await getPoolInstance().query(
       `INSERT INTO admin_logs (admin_id, action, target_user_id, old_value, new_value, reason)
        VALUES ($1, 'adjust_level', $2, $3, $4, $5)`,
       [adminId, userId, oldLevel, level, reason || '管理员调整']
@@ -318,13 +323,13 @@ router.get('/orders', verifyAdmin, async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    const countResult = await pool().query(
+    const countResult = await getPoolInstance().query(
       `SELECT COUNT(*) as total FROM orders o ${whereClause}`,
       params
     );
 
     params.push(Number(limit), offset);
-    const result = await pool().query(
+    const result = await getPoolInstance().query(
       `SELECT 
         o.*, u.nickname, u.phone,
         ml.name as level_name
@@ -357,7 +362,7 @@ router.post('/create-order', async (req: Request, res: Response) => {
   try {
     const { userId, level, months = 1 } = req.body;
 
-    const levelResult = await pool().query(
+    const levelResult = await getPoolInstance().query(
       'SELECT * FROM member_levels WHERE level = $1',
       [level]
     );
@@ -372,7 +377,7 @@ router.post('/create-order', async (req: Request, res: Response) => {
     const transactionId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // 创建订单
-    const orderResult = await pool().query(
+    const orderResult = await getPoolInstance().query(
       `INSERT INTO orders (user_id, level, price, months, status, transaction_id)
        VALUES ($1, $2, $3, $4, 1, $5) RETURNING *`,
       [userId, level, price, months, transactionId]
@@ -385,7 +390,7 @@ router.post('/create-order', async (req: Request, res: Response) => {
     const creatorAmount = price * creatorRatio;
 
     // 记录收益
-    await pool().query(
+    await getPoolInstance().query(
       `INSERT INTO earnings (order_id, amount, platform_ratio, creator_ratio, platform_amount, creator_amount, level)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [orderResult.rows[0].id, price, platformRatio, creatorRatio, platformAmount, creatorAmount, level]
@@ -395,7 +400,7 @@ router.post('/create-order', async (req: Request, res: Response) => {
     const expireAt = new Date();
     expireAt.setMonth(expireAt.getMonth() + months);
 
-    await pool().query(
+    await getPoolInstance().query(
       `UPDATE users SET member_level = $1, member_expire_at = $2 WHERE id = $3`,
       [level, expireAt, userId]
     );

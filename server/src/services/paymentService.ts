@@ -1,15 +1,25 @@
 import { Pool } from 'pg';
 import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
 
-// 加载环境变量
-loadEnv();
-const dbUrl = getDbUrl();
+// 延迟初始化
+let pool: Pool | null = null;
 
-// 创建连接池
-const pool = new Pool({
-  connectionString: dbUrl,
-  ssl: { rejectUnauthorized: false }
-});
+function getPool(): Pool {
+  if (!pool) {
+    try {
+      loadEnv();
+      const dbUrl = getDbUrl();
+      pool = new Pool({
+        connectionString: dbUrl,
+        ssl: { rejectUnauthorized: false }
+      });
+    } catch (e) {
+      console.error('数据库初始化失败:', e);
+      throw e;
+    }
+  }
+  return pool;
+}
 
 // 订单状态
 export type OrderStatus = 'pending' | 'unpaid' | 'paid' | 'cancelled' | 'refunded';
@@ -29,98 +39,75 @@ export interface PaymentOrder {
   expire_time: Date;
   transaction_id: string | null;
   created_at: Date;
-  updated_at: Date;
 }
 
-// 生成订单号
-function generateOrderNo(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `LJ${timestamp}${random}`.toUpperCase();
+export async function getMemberLevelConfig(level: number) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT * FROM member_levels WHERE level = $1',
+    [level]
+  );
+  return result.rows[0];
 }
 
-// 创建订单
 export async function createOrder(
   userId: number,
   memberLevel: number,
   amount: number,
   paymentMethod: PaymentMethod
-): Promise<PaymentOrder> {
-  const orderNo = generateOrderNo();
+) {
+  const p = getPool();
+  const orderNo = `ORD${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   const expireTime = new Date();
-  expireTime.setMinutes(expireTime.getMinutes() + 30); // 30分钟过期
+  expireTime.setMinutes(expireTime.getMinutes() + 30);
 
-  const { rows } = await pool.query(
-    `INSERT INTO payment_orders 
-     (order_no, user_id, member_level, amount, payment_method, status, expire_time) 
-     VALUES ($1, $2, $3, $4, $5, 'pending', $6) 
+  const result = await p.query(
+    `INSERT INTO payment_orders (order_no, user_id, member_level, amount, payment_method, status, expire_time, created_at)
+     VALUES ($1, $2, $3, $4, $5, 'pending', $6, NOW())
      RETURNING *`,
     [orderNo, userId, memberLevel, amount, paymentMethod, expireTime]
   );
-
-  return rows[0];
+  return result.rows[0];
 }
 
-// 获取订单
-export async function getOrderByNo(orderNo: string): Promise<PaymentOrder | null> {
-  const { rows } = await pool.query(
+export async function getOrderByNo(orderNo: string) {
+  const p = getPool();
+  const result = await p.query(
     'SELECT * FROM payment_orders WHERE order_no = $1',
     [orderNo]
   );
-  return rows.length > 0 ? rows[0] : null;
+  return result.rows[0];
 }
 
-// 获取用户订单列表
-export async function getUserOrders(userId: number): Promise<PaymentOrder[]> {
-  const { rows } = await pool.query(
+export async function getUserOrders(userId: number) {
+  const p = getPool();
+  const result = await p.query(
     'SELECT * FROM payment_orders WHERE user_id = $1 ORDER BY created_at DESC',
     [userId]
   );
-  return rows;
+  return result.rows;
 }
 
-// 更新订单状态
 export async function updateOrderStatus(
   orderNo: string,
   status: OrderStatus,
   transactionId?: string
-): Promise<PaymentOrder | null> {
-  let query = 'UPDATE payment_orders SET status = $1, updated_at = NOW()';
-  const params: any[] = [status];
-
-  if (status === 'paid') {
-    query += ', pay_time = NOW()';
-  }
-
-  if (transactionId) {
-    query += ', transaction_id = $2';
-    params.push(transactionId);
-  }
-
-  query += ' WHERE order_no = $' + (params.length + 1) + ' RETURNING *';
-  params.push(orderNo);
-
-  const { rows } = await pool.query(query, params);
-  return rows.length > 0 ? rows[0] : null;
-}
-
-// 模拟支付（用于测试）
-export async function simulatePayment(orderNo: string): Promise<boolean> {
-  const order = await getOrderByNo(orderNo);
-  if (!order || order.status !== 'pending') {
-    return false;
-  }
-
-  const transactionId = `SIM${Date.now()}${Math.random().toString(36).substring(2, 6)}`.toUpperCase();
-  await updateOrderStatus(orderNo, 'paid', transactionId);
-  return true;
-}
-
-// 获取会员等级配置
-export async function getMemberLevelConfig(level: number): Promise<{ name: string; price: number } | null> {
-  const { rows } = await pool.query(
-    'SELECT name, price FROM member_levels WHERE level = $1',
-    [level]
+) {
+  const p = getPool();
+  const result = await p.query(
+    `UPDATE payment_orders SET status = $2, transaction_id = $3, pay_time = CASE WHEN $2 = 'paid' THEN NOW() ELSE pay_time END
+     WHERE order_no = $1 RETURNING *`,
+    [orderNo, status, transactionId || null]
   );
-  return rows.length > 0 ? rows[0] : null;
+  return result.rows[0];
+}
+
+export async function simulatePayment(orderNo: string) {
+  const p = getPool();
+  const result = await p.query(
+    `UPDATE payment_orders SET status = 'paid', pay_time = NOW(), transaction_id = 'TEST' || NOW()::text
+     WHERE order_no = $1 AND status = 'pending' RETURNING *`,
+    [orderNo]
+  );
+  return result.rows.length > 0;
 }
