@@ -31,13 +31,21 @@ export async function getUserByPhone(phone: string) {
   return result.rows[0];
 }
 
-export async function createUser(phone: string, nickname: string) {
+export async function createUser(data: {
+  phone: string;
+  nickname: string;
+  password_hash: string;
+  province_code?: string;
+  city_code?: string;
+  district_code?: string;
+  town_code?: string;
+}) {
   const p = getPool();
   const result = await p.query(
-    `INSERT INTO users (phone, nickname, avatar_url, member_level, status, created_at, updated_at)
-     VALUES ($1, $2, $3, 0, 1, NOW(), NOW())
+    `INSERT INTO users (phone, nickname, password_hash, province_code, city_code, district_code, town_code, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
      RETURNING *`,
-    [phone, nickname, '']
+    [data.phone, data.nickname, data.password_hash, data.province_code || null, data.city_code || null, data.district_code || null, data.town_code || null]
   );
   return result.rows[0];
 }
