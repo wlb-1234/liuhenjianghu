@@ -23,11 +23,11 @@ router.post('/send-code', async (req: Request, res: Response) => {
     // 这里简化为直接返回验证码用于测试
     console.log(`验证码 ${code} 已发送至 ${phone}`);
     
+    // 始终返回验证码用于测试
     res.json({ 
       success: true, 
       message: '验证码已发送',
-      // 测试环境下返回验证码
-      code: process.env.NODE_ENV === 'development' ? code : undefined
+      code: code
     });
   } catch (error) {
     console.error('发送验证码错误:', error);
