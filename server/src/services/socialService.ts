@@ -1,13 +1,14 @@
 import { Pool } from 'pg';
-import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
 
 // 延迟初始化
 let pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!pool) {
-    loadEnv();
-    const dbUrl = getDbUrl();
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      throw new Error('DATABASE_URL not configured');
+    }
     pool = new Pool({
       connectionString: dbUrl,
       ssl: { rejectUnauthorized: false }
