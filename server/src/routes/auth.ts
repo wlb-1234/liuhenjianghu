@@ -107,9 +107,9 @@ router.post('/register', async (req: Request, res: Response) => {
       token,
       user: userInfo
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('注册错误:', error);
-    res.status(500).json({ error: '注册失败' });
+    res.status(500).json({ error: '注册失败: ' + (error?.message || error?.code || '未知错误') });
   }
 });
 
