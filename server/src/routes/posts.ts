@@ -195,4 +195,27 @@ router.post('/:id/comments', authMiddleware, async (req: AuthRequest, res: Respo
   }
 });
 
+// 删除帖子
+router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const post = await getPostById(postId);
+    
+    if (!post) {
+      return res.status(404).json({ error: '帖子不存在' });
+    }
+    
+    if (post.user_id !== req.userId) {
+      return res.status(403).json({ error: '只能删除自己的帖子' });
+    }
+    
+    await deletePost(postId);
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('删除帖子错误:', error);
+    res.status(500).json({ error: error.message || '删除帖子失败' });
+  }
+});
+
 export default router;
