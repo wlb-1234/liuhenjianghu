@@ -19,33 +19,28 @@ function getPool(): Pool {
 
 // 获取帖子列表
 export async function getPosts(options: {
-  regionId?: number;
+  region_code?: string;
   userId?: number;
   page?: number;
   pageSize?: number;
-  sortBy?: 'latest' | 'hot';
 }) {
   const p = getPool();
-  const { regionId, userId, page = 1, pageSize = 20, sortBy = 'latest' } = options;
+  const { region_code, userId, page = 1, pageSize = 20 } = options;
   const offset = (page - 1) * pageSize;
   
   let query = `
-    SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar,
-           r.name as region_name,
-           (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
-           (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
+    SELECT p.*, u.nickname as author_nickname, u.avatar as author_avatar, u.total_likes as author_likes
     FROM posts p
     JOIN users u ON p.user_id = u.id
-    LEFT JOIN regions r ON p.region_id = r.id
-    WHERE p.status = 'published'
+    WHERE p.status = 1 AND p.expire_at > NOW()
   `;
   
   const params: any[] = [];
   let idx = 1;
   
-  if (regionId) {
-    query += ` AND p.region_id = $${idx++}`;
-    params.push(regionId);
+  if (region_code) {
+    query += ` AND p.region_code = $${idx++}`;
+    params.push(region_code);
   }
   
   if (userId) {
@@ -53,30 +48,20 @@ export async function getPosts(options: {
     params.push(userId);
   }
   
-  if (sortBy === 'latest') {
-    query += ' ORDER BY p.created_at DESC';
-  } else {
-    query += ' ORDER BY like_count DESC, p.created_at DESC';
-  }
-  
-  query += ` LIMIT $${idx++} OFFSET $${idx++}`;
+  query += ` ORDER BY p.is_pinned DESC, p.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
   params.push(pageSize, offset);
   
   const result = await p.query(query, params);
-  return result.rows;
+  return { posts: result.rows };
 }
 
 // 获取单个帖子
 export async function getPostById(postId: number) {
   const p = getPool();
   const result = await p.query(`
-    SELECT p.*, u.nickname as author_nickname, u.avatar_url as author_avatar,
-           r.name as region_name,
-           (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
-           (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
+    SELECT p.*, u.nickname as author_nickname, u.avatar as author_avatar
     FROM posts p
     JOIN users u ON p.user_id = u.id
-    LEFT JOIN regions r ON p.region_id = r.id
     WHERE p.id = $1
   `, [postId]);
   return result.rows[0];
@@ -85,18 +70,29 @@ export async function getPostById(postId: number) {
 // 创建帖子
 export async function createPost(data: {
   userId: number;
-  regionId?: number;
-  title?: string;
+  region_code: string;
+  region_level: number;
   content: string;
-  images?: string[];
-  tags?: string[];
+  images?: any[];
 }) {
   const p = getPool();
+  
+  // 计算过期时间
+  const expireAt = new Date();
+  expireAt.setHours(expireAt.getHours() + 24);
+  
   const result = await p.query(`
-    INSERT INTO posts (user_id, region_id, title, content, images, tags, status, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, 'published', NOW(), NOW())
+    INSERT INTO posts (user_id, content, images, region_code, region_level, status, expire_at, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, 1, $6, NOW(), NOW())
     RETURNING *
-  `, [data.userId, data.regionId, data.title, data.content, data.images || [], data.tags || []]);
+  `, [data.userId, data.content, JSON.stringify(data.images || []), data.region_code, data.region_level, expireAt]);
+  
+  // 更新用户发帖计数
+  await p.query(`
+    UPDATE users SET total_posts = total_posts + 1, today_post_count = today_post_count + 1, last_post_date = CURRENT_DATE
+    WHERE id = $1
+  `, [data.userId]);
+  
   return result.rows[0];
 }
 
@@ -106,20 +102,19 @@ export async function toggleLike(userId: number, postId: number) {
   
   // 检查是否已点赞
   const existing = await p.query(
-    'SELECT * FROM likes WHERE user_id = $1 AND post_id = $2',
+    'SELECT id FROM likes WHERE user_id = $1 AND post_id = $2',
     [userId, postId]
   );
   
   if (existing.rows.length > 0) {
     // 取消点赞
     await p.query('DELETE FROM likes WHERE user_id = $1 AND post_id = $2', [userId, postId]);
+    await p.query('UPDATE posts SET like_count = like_count - 1 WHERE id = $1', [postId]);
     return false;
   } else {
     // 添加点赞
-    await p.query(
-      'INSERT INTO likes (user_id, post_id, created_at) VALUES ($1, $2, NOW())',
-      [userId, postId]
-    );
+    await p.query('INSERT INTO likes (user_id, post_id) VALUES ($1, $2)', [userId, postId]);
+    await p.query('UPDATE posts SET like_count = like_count + 1 WHERE id = $1', [postId]);
     return true;
   }
 }
@@ -128,56 +123,57 @@ export async function toggleLike(userId: number, postId: number) {
 export async function isLiked(userId: number, postId: number) {
   const p = getPool();
   const result = await p.query(
-    'SELECT * FROM likes WHERE user_id = $1 AND post_id = $2',
+    'SELECT id FROM likes WHERE user_id = $1 AND post_id = $2',
     [userId, postId]
   );
   return result.rows.length > 0;
 }
 
-// 获取评论列表
-export async function getComments(postId: number, page = 1, pageSize = 20) {
+// 获取评论
+export async function getComments(postId: number) {
   const p = getPool();
-  const offset = (page - 1) * pageSize;
   const result = await p.query(`
-    SELECT c.*, u.nickname as author_nickname, u.avatar_url as author_avatar
+    SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
     FROM comments c
     JOIN users u ON c.user_id = u.id
-    WHERE c.post_id = $1 AND c.parent_id IS NULL
-    ORDER BY c.created_at DESC
-    LIMIT $2 OFFSET $3
-  `, [postId, pageSize, offset]);
+    WHERE c.post_id = $1 AND c.status = 1
+    ORDER BY c.created_at ASC
+  `, [postId]);
   return result.rows;
 }
 
 // 创建评论
 export async function createComment(data: {
-  userId: number;
   postId: number;
-  parentId?: number;
+  userId: number;
   content: string;
+  parentId?: number;
 }) {
   const p = getPool();
   const result = await p.query(`
-    INSERT INTO comments (user_id, post_id, parent_id, content, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO comments (post_id, user_id, content, parent_id, created_at)
+    VALUES ($1, $2, $3, $4, NOW())
     RETURNING *
-  `, [data.userId, data.postId, data.parentId || null, data.content]);
+  `, [data.postId, data.userId, data.content, data.parentId || null]);
+  
+  // 更新评论计数
+  await p.query('UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1', [data.postId]);
+  
   return result.rows[0];
 }
 
 // 创建举报
 export async function createReport(data: {
+  postId?: number;
+  commentId?: number;
   userId: number;
-  targetType: 'post' | 'comment';
-  targetId: number;
   reason: string;
-  description?: string;
 }) {
   const p = getPool();
   const result = await p.query(`
-    INSERT INTO reports (user_id, target_type, target_id, reason, description, status, created_at)
-    VALUES ($1, $2, $3, $4, $5, 'pending', NOW())
+    INSERT INTO reports (post_id, comment_id, user_id, reason, created_at)
+    VALUES ($1, $2, $3, $4, NOW())
     RETURNING *
-  `, [data.userId, data.targetType, data.targetId, data.reason, data.description || '']);
+  `, [data.postId || null, data.commentId || null, data.userId, data.reason]);
   return result.rows[0];
 }
