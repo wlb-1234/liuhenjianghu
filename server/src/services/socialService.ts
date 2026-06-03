@@ -47,7 +47,7 @@ export async function getFollowers(userId: number, page = 1, pageSize = 20) {
   const p = getPool();
   const offset = (page - 1) * pageSize;
   const result = await p.query(`
-    SELECT u.id, u.nickname, u.avatar_url, u.bio, u.member_level,
+    SELECT u.id, u.nickname, u.avatar, u.member_level,
            EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as is_following
     FROM users u
     JOIN follows f ON u.id = f.follower_id
@@ -63,7 +63,7 @@ export async function getFollowings(userId: number, page = 1, pageSize = 20) {
   const p = getPool();
   const offset = (page - 1) * pageSize;
   const result = await p.query(`
-    SELECT u.id, u.nickname, u.avatar_url, u.bio, u.member_level,
+    SELECT u.id, u.nickname, u.avatar, u.member_level,
            EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = u.id) as is_following
     FROM users u
     JOIN follows f ON u.id = f.following_id
@@ -140,4 +140,14 @@ export async function getUnreadCount(userId: number) {
     [userId]
   );
   return parseInt(result.rows[0].count);
+}
+
+// 取消关注
+export async function unfollow(followerId: number, followingId: number) {
+  const p = getPool();
+  await p.query(
+    'DELETE FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+  return true;
 }

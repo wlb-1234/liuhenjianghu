@@ -62,12 +62,21 @@ router.post('/follow/:userId', authMiddleware, async (req: AuthRequest, res: Res
     
     const followed = await toggleFollow(req.userId!, targetUserId);
     
-    res.json({
-      success: true,
-      followed
-    });
+    res.json({ success: true });
   } catch (error) {
     console.error('关注操作错误:', error);
+    res.status(500).json({ error: '操作失败' });
+  }
+});
+
+// 取消关注
+router.delete('/follow/:userId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const targetUserId = parseInt(req.params.userId as string);
+    await unfollow(req.userId!, targetUserId);
+    res.json({ success: true, followed: false });
+  } catch (error) {
+    console.error('取消关注错误:', error);
     res.status(500).json({ error: '操作失败' });
   }
 });
