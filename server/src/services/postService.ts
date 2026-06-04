@@ -29,7 +29,7 @@ export async function getPosts(options: {
   const offset = (page - 1) * pageSize;
   
   let query = `
-    SELECT p.*, u.nickname as author_nickname, u.avatar as author_avatar, u.total_likes as author_likes
+    SELECT p.*, u.nickname as author_nickname, u.avatar as author_avatar
     FROM posts p
     JOIN users u ON p.user_id = u.id
     WHERE p.status = 1 AND p.expire_at > NOW()
