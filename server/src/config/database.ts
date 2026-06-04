@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
+import { loadEnv } from 'coze-coding-dev-sdk';
 
 // 延迟加载环境变量和数据库连接
 let dbUrl: string | null = null;
@@ -8,7 +8,8 @@ function loadDatabaseConfig() {
   if (!dbUrl) {
     try {
       loadEnv();
-      dbUrl = getDbUrl();
+      // 优先读取 CUSTOM_DATABASE_URL，否则读取 DATABASE_URL
+      dbUrl = process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL || '';
     } catch (e) {
       console.warn('⚠️ 数据库配置加载失败:', e);
       dbUrl = '';
