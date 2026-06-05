@@ -1,434 +1,505 @@
-import { Router, Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
+import { Router } from 'express';
+import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
-import { getPool } from '../config/database';
+import crypto from 'crypto';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'admin-secret-key';
 
-// 获取连接池
-let pool: ReturnType<typeof getPool> | null = null;
-
-function getPoolInstance() {
-  if (!pool) pool = getPool();
-  return pool;
-}
-
-// 管理员登录
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    console.log('Admin login request:', req.body);
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      res.json({ code: 400, message: '用户名和密码不能为空' });
-      return;
-    }
-
-    const p = getPoolInstance();
-    console.log('Pool:', !!p);
-    
-    const result = await p.query(
-      'SELECT * FROM admins WHERE username = $1',
-      [username]
-    );
-    console.log('Query result:', result.rows.length);
-
-    if (result.rows.length === 0) {
-      res.json({ code: 401, message: '用户名或密码错误' });
-      return;
-    }
-
-    const admin = result.rows[0];
-    console.log('Admin found:', admin.username);
-    const isMatch = await bcrypt.compare(password, admin.password_hash);
-    console.log('Password match:', isMatch);
-
-    if (!isMatch) {
-      res.json({ code: 401, message: '用户名或密码错误' });
-      return;
-    }
-
-    const token = jwt.sign(
-      { adminId: admin.id, role: admin.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      code: 200,
-      message: '登录成功',
-      data: {
-        token,
-        admin: {
-          id: admin.id,
-          username: admin.username,
-          nickname: admin.nickname,
-          role: admin.role,
-        },
-      },
-    });
-  } catch (error) {
-    console.error('Admin login error:', error);
-    res.json({ code: 500, message: '服务器错误: ' + (error as Error).message });
-  }
+// Create single pool instance using environment variable
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-// 验证管理员token
-const verifyAdmin = async (req: Request, res: Response, next: Function) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      res.json({ code: 401, message: '未登录' });
-      return;
-    }
+async function query(text: string, params?: any[]) {
+  const result = await pool.query(text, params);
+  return result;
+}
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { adminId: number; role: string };
-    (req as any).adminId = decoded.adminId;
-    (req as any).adminRole = decoded.role;
+// Middleware to verify admin auth
+const verifyAdmin = async (req: any, res: any, next: Function) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'liuhen-secret-key') as any;
+    
+    const admins = await query('SELECT * FROM admins WHERE id = $1', [decoded.adminId || decoded.userId]);
+    
+    if (admins.rows.length === 0) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    req.admin = admins.rows[0];
     next();
   } catch (error) {
-    res.json({ code: 401, message: 'Token无效' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-// 获取收益统计
-router.get('/stats', verifyAdmin, async (req: Request, res: Response) => {
+// Admin login
+router.post('/login', async (req: any, res: any) => {
   try {
-    const { startDate, endDate } = req.query;
-
-    let dateFilter = '';
-    const params: any[] = [];
-
-    if (startDate && endDate) {
-      dateFilter = 'WHERE created_at >= $1 AND created_at <= $2';
-      params.push(startDate, endDate);
-    } else if (startDate) {
-      dateFilter = 'WHERE created_at >= $1';
-      params.push(startDate);
-    } else if (endDate) {
-      dateFilter = 'WHERE created_at <= $1';
-      params.push(endDate);
+    const username = req.body.username;
+    const password = req.body.password;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Missing credentials' });
     }
-
-    // 总收益
-    const totalResult = await getPoolInstance().query(
-      `SELECT 
-        COALESCE(SUM(amount), 0) as total_amount,
-        COALESCE(SUM(platform_amount), 0) as total_platform,
-        COALESCE(SUM(creator_amount), 0) as total_creator,
-        COUNT(*) as total_orders
-       FROM earnings ${dateFilter}`,
-      params
+    
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    const admins = await query(
+      'SELECT id, username, role FROM admins WHERE username = $1 AND password_hash = $2',
+      [username, passwordHash]
     );
-
-    // 按等级统计
-    const byLevelResult = await getPoolInstance().query(
-      `SELECT 
-        level,
-        COUNT(*) as orders,
-        COALESCE(SUM(amount), 0) as amount,
-        COALESCE(SUM(platform_amount), 0) as platform_amount,
-        COALESCE(SUM(creator_amount), 0) as creator_amount
-       FROM earnings ${dateFilter}
-       GROUP BY level ORDER BY level`,
-      params
+    
+    if (admins.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const admin = admins.rows[0];
+    const token = jwt.sign(
+      { adminId: admin.id, username: admin.username, role: admin.role },
+      process.env.JWT_SECRET || 'liuhen-secret-key',
+      { expiresIn: '7d' }
     );
-
-    // 按月统计
-    const byMonthResult = await getPoolInstance().query(
-      `SELECT 
-        TO_CHAR(created_at, 'YYYY-MM') as month,
-        COUNT(*) as orders,
-        COALESCE(SUM(amount), 0) as amount,
-        COALESCE(SUM(platform_amount), 0) as platform_amount,
-        COALESCE(SUM(creator_amount), 0) as creator_amount
-       FROM earnings ${dateFilter}
-       GROUP BY TO_CHAR(created_at, 'YYYY-MM')
-       ORDER BY month DESC
-       LIMIT 12`,
-      params
+    
+    await query(
+      'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
+      [admin.id, 'login', 'admin login']
     );
-
-    // 今日收益
-    const todayResult = await getPoolInstance().query(
-      `SELECT 
-        COALESCE(SUM(amount), 0) as today_amount,
-        COUNT(*) as today_orders
-       FROM earnings
-       WHERE DATE(created_at) = CURRENT_DATE`
-    );
-
-    // 本月收益
-    const monthResult = await getPoolInstance().query(
-      `SELECT 
-        COALESCE(SUM(amount), 0) as month_amount,
-        COUNT(*) as month_orders
-       FROM earnings
-       WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)`
-    );
-
+    
     res.json({
-      code: 200,
-      data: {
-        total: totalResult.rows[0],
-        today: todayResult.rows[0],
-        month: monthResult.rows[0],
-        byLevel: byLevelResult.rows,
-        byMonth: byMonthResult.rows,
-      },
+      success: true,
+      token,
+      admin: { id: admin.id, username: admin.username, role: admin.role }
     });
   } catch (error) {
-    console.error('Get stats error:', error);
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 获取用户列表
-router.get('/users', verifyAdmin, async (req: Request, res: Response) => {
+// ==================== Statistics ====================
+
+// Get dashboard stats
+router.get('/stats', verifyAdmin, async (req, res) => {
   try {
-    const { page = 1, limit = 20, keyword, level } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
-
-    let whereClause = '';
-    const params: any[] = [];
-    let paramIndex = 1;
-
-    if (keyword) {
-      whereClause += `WHERE (u.phone LIKE $${paramIndex} OR u.nickname LIKE $${paramIndex})`;
-      params.push(`%${keyword}%`);
-      paramIndex++;
-    }
-
-    if (level !== undefined) {
-      whereClause += whereClause ? ' AND' : 'WHERE';
-      whereClause += ` u.member_level = $${paramIndex}`;
-      params.push(Number(level));
-      paramIndex++;
-    }
-
-    const countResult = await getPoolInstance().query(
-      `SELECT COUNT(*) as total FROM users u ${whereClause}`,
-      params
+    const totalUsers = await query('SELECT COUNT(*) as count FROM public.users WHERE id > 0');
+    const todayUsers = await query(
+      "SELECT COUNT(*) as count FROM public.users WHERE DATE(created_at) = CURRENT_DATE"
     );
-
-    params.push(Number(limit), offset);
-    const result = await getPoolInstance().query(
-      `SELECT 
-        u.id, u.phone, u.nickname, u.avatar, u.member_level,
-        u.member_expire_at, u.total_posts, u.total_likes,
-        u.created_at,
-        ml.name as level_name
-       FROM users u
-       LEFT JOIN member_levels ml ON ml.level = u.member_level
-       ${whereClause}
-       ORDER BY u.created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      params
+    const monthUsers = await query(
+      "SELECT COUNT(*) as count FROM public.users WHERE DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)"
     );
-
+    const totalPosts = await query('SELECT COUNT(*) as count FROM posts');
+    const todayPosts = await query(
+      "SELECT COUNT(*) as count FROM posts WHERE DATE(created_at) = CURRENT_DATE"
+    );
+    const activeUsers = await query(
+      "SELECT COUNT(*) as count FROM public.users WHERE updated_at >= CURRENT_DATE - INTERVAL '7 days'"
+    );
+    const todayActiveUsers = await query(
+      "SELECT COUNT(*) as count FROM public.users WHERE DATE(updated_at) = CURRENT_DATE"
+    );
+    const totalEarnings = await query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM earnings'
+    );
+    const monthEarnings = await query(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM earnings WHERE DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)"
+    );
+    const todayEarnings = await query(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM earnings WHERE DATE(created_at) = CURRENT_DATE"
+    );
+    const memberDistribution = await query(`
+      SELECT ml.name, ml.level, COUNT(u.id) as user_count
+      FROM member_levels ml
+      LEFT JOIN users u ON u.member_level = ml.level
+      GROUP BY ml.level, ml.name
+      ORDER BY ml.level
+    `);
+    
     res.json({
-      code: 200,
+      success: true,
       data: {
-        list: result.rows,
-        total: parseInt(countResult.rows[0].total),
-        page: Number(page),
-        limit: Number(limit),
-      },
+        users: {
+          total: parseInt(totalUsers.rows[0].count),
+          today: parseInt(todayUsers.rows[0].count),
+          thisMonth: parseInt(monthUsers.rows[0].count),
+          active: parseInt(activeUsers.rows[0].count),
+          activeToday: parseInt(todayActiveUsers.rows[0].count)
+        },
+        posts: {
+          total: parseInt(totalPosts.rows[0].count),
+          today: parseInt(todayPosts.rows[0].count)
+        },
+        earnings: {
+          total: parseFloat(totalEarnings.rows[0].total),
+          thisMonth: parseFloat(monthEarnings.rows[0].total),
+          today: parseFloat(todayEarnings.rows[0].total)
+        },
+        memberDistribution: memberDistribution.rows
+      }
     });
   } catch (error) {
-    console.error('Get users error:', error);
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 调整用户会员等级
-router.post('/adjust-level', verifyAdmin, async (req: Request, res: Response) => {
+// Get trend data
+router.get('/stats/trend', verifyAdmin, async (req: any, res) => {
   try {
-    const { userId, level, reason } = req.body;
-    const adminId = (req as any).adminId;
-
-    if (!userId || level === undefined) {
-      res.json({ code: 400, message: '参数不完整' });
-      return;
-    }
-
-    // 获取用户当前信息
-    const userResult = await getPoolInstance().query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0) {
-      res.json({ code: 404, message: '用户不存在' });
-      return;
-    }
-
-    const user = userResult.rows[0];
-    const oldLevel = user.member_level;
-
-    // 更新用户等级
-    let expireAt = null;
-    if (level > 0) {
-      // 设置过期时间（默认1个月）
-      expireAt = new Date();
-      expireAt.setMonth(expireAt.getMonth() + 1);
-    }
-
-    await getPoolInstance().query(
-      `UPDATE users 
-       SET member_level = $1, member_expire_at = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3`,
-      [level, expireAt, userId]
-    );
-
-    // 记录操作日志
-    await getPoolInstance().query(
-      `INSERT INTO admin_logs (admin_id, action, target_user_id, old_value, new_value, reason)
-       VALUES ($1, 'adjust_level', $2, $3, $4, $5)`,
-      [adminId, userId, oldLevel, level, reason || '管理员调整']
-    );
-
+    const days = req.query.days || '7';
+    const daysNum = parseInt(days as string);
+    
+    const userTrend = await query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM public.users
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${daysNum} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `);
+    
+    const postTrend = await query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM posts
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${daysNum} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `);
+    
+    const earningTrend = await query(`
+      SELECT DATE(created_at) as date, SUM(amount) as total
+      FROM earnings
+      WHERE created_at >= CURRENT_DATE - INTERVAL '${daysNum} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date
+    `);
+    
     res.json({
-      code: 200,
-      message: '调整成功',
+      success: true,
       data: {
-        userId,
-        oldLevel,
-        newLevel: level,
-      },
+        userTrend: userTrend.rows,
+        postTrend: postTrend.rows,
+        earningTrend: earningTrend.rows
+      }
     });
   } catch (error) {
-    console.error('Adjust level error:', error);
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('Trend error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 获取订单列表
-router.get('/orders', verifyAdmin, async (req: Request, res: Response) => {
-  try {
-    const { page = 1, limit = 20, status, userId } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+// ==================== User Management ====================
 
-    let whereClause = '';
+// Get user list
+router.get('/users', verifyAdmin, async (req: any, res: any) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = 'WHERE u.id > 0';
     const params: any[] = [];
     let paramIndex = 1;
-
-    if (status !== undefined) {
-      whereClause += `WHERE o.status = $${paramIndex}`;
-      params.push(Number(status));
+    
+    if (req.query.keyword) {
+      whereClause += ` AND (u.phone ILIKE $${paramIndex} OR u.nickname ILIKE $${paramIndex})`;
+      params.push(`%${req.query.keyword}%`);
       paramIndex++;
     }
-
-    if (userId) {
-      whereClause += whereClause ? ' AND' : 'WHERE';
-      whereClause += ` o.user_id = $${paramIndex}`;
-      params.push(Number(userId));
+    
+    if (req.query.memberLevel) {
+      whereClause += ` AND u.member_level = $${paramIndex}`;
+      params.push(parseInt(req.query.memberLevel as string));
       paramIndex++;
     }
-
-    const countResult = await getPoolInstance().query(
-      `SELECT COUNT(*) as total FROM orders o ${whereClause}`,
+    
+    if (req.query.status === 'banned') {
+      whereClause += ` AND u.member_expire_at < NOW()`;
+    }
+    
+    const countResult = await query(
+      `SELECT COUNT(*) as total FROM public.users u ${whereClause}`,
       params
     );
-
-    params.push(Number(limit), offset);
-    const result = await getPoolInstance().query(
-      `SELECT 
-        o.*, u.nickname, u.phone,
-        ml.name as level_name
-       FROM orders o
-       LEFT JOIN users u ON u.id = o.user_id
-       LEFT JOIN member_levels ml ON ml.level = o.level
-       ${whereClause}
-       ORDER BY o.created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      params
-    );
-
+    
+    params.push(limit, offset);
+    const users = await query(`
+      SELECT u.id, u.phone, u.nickname, u.member_level, 
+             u.created_at, u.updated_at,
+             ml.name as member_level_name,
+             (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
+      FROM public.users u
+      LEFT JOIN member_levels ml ON u.member_level = ml.level
+      ${whereClause}
+      ORDER BY u.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, params);
+    
     res.json({
-      code: 200,
+      success: true,
       data: {
-        list: result.rows,
+        users: users.rows,
         total: parseInt(countResult.rows[0].total),
-        page: Number(page),
-        limit: Number(limit),
-      },
+        page,
+        limit
+      }
     });
   } catch (error) {
-    console.error('Get orders error:', error);
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('User list error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 创建订单（模拟支付）
-router.post('/create-order', async (req: Request, res: Response) => {
+// Get single user detail
+router.get('/users/:id', verifyAdmin, async (req, res) => {
   try {
-    const { userId, level, months = 1 } = req.body;
-
-    const levelResult = await getPoolInstance().query(
-      'SELECT * FROM member_levels WHERE level = $1',
-      [level]
-    );
-
-    if (levelResult.rows.length === 0) {
-      res.json({ code: 404, message: '会员等级不存在' });
-      return;
+    const { id } = req.params;
+    
+    const user = await query(`
+      SELECT u.id, u.phone, u.nickname, u.member_level, u.member_expire_at,
+             u.created_at, u.updated_at,
+             ml.name as member_level_name, ml.post_expire_hours, ml.max_posts_per_day
+      FROM public.users u
+      LEFT JOIN member_levels ml ON u.member_level = ml.level
+      WHERE u.id = $1
+    `, [id]);
+    
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
-
-    const memberLevel = levelResult.rows[0];
-    const price = memberLevel.price * months;
-    const transactionId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // 创建订单
-    const orderResult = await getPoolInstance().query(
-      `INSERT INTO orders (user_id, level, price, months, status, transaction_id)
-       VALUES ($1, $2, $3, $4, 1, $5) RETURNING *`,
-      [userId, level, price, months, transactionId]
-    );
-
-    // 计算分成
-    const platformRatio = 0.30;
-    const creatorRatio = 0.70;
-    const platformAmount = price * platformRatio;
-    const creatorAmount = price * creatorRatio;
-
-    // 记录收益
-    await getPoolInstance().query(
-      `INSERT INTO earnings (order_id, amount, platform_ratio, creator_ratio, platform_amount, creator_amount, level)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [orderResult.rows[0].id, price, platformRatio, creatorRatio, platformAmount, creatorAmount, level]
-    );
-
-    // 更新用户会员等级
-    const expireAt = new Date();
-    expireAt.setMonth(expireAt.getMonth() + months);
-
-    await getPoolInstance().query(
-      `UPDATE users SET member_level = $1, member_expire_at = $2 WHERE id = $3`,
-      [level, expireAt, userId]
-    );
-
+    
+    const userStats = await query(`
+      SELECT 
+        (SELECT COUNT(*) FROM posts WHERE user_id = $1) as post_count,
+        (SELECT COUNT(*) FROM likes WHERE user_id = $1) as like_count
+    `, [id]);
+    
     res.json({
-      code: 200,
-      message: '订单创建成功',
-      data: orderResult.rows[0],
+      success: true,
+      data: {
+        ...user.rows[0],
+        stats: userStats.rows[0]
+      }
     });
   } catch (error) {
-    console.error('Create order error:', error);
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('User detail error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 获取平台分成比例
-router.get('/platform-config', verifyAdmin, async (req: Request, res: Response) => {
+// Update user member level
+router.put('/users/:id/level', verifyAdmin, async (req: any, res: any) => {
   try {
+    const { id } = req.params;
+    const level = req.body.level;
+    
+    if (level === undefined) {
+      return res.status(400).json({ error: 'Missing level' });
+    }
+    
+    const levelCheck = await query('SELECT * FROM member_levels WHERE level = $1', [level]);
+    if (levelCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid level' });
+    }
+    
+    await query(
+      'UPDATE users SET member_level = $1, updated_at = NOW() WHERE id = $2',
+      [level, id]
+    );
+    
+    await query(
+      'INSERT INTO admin_logs (admin_id, action, target_user_id, reason) VALUES ($1, $2, $3, $4)',
+      [req.admin.id, 'change_level', parseInt(id), JSON.stringify({ newLevel: level })]
+    );
+    
+    res.json({ success: true, message: 'Level updated' });
+  } catch (error) {
+    console.error('Update level error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Ban/unban user
+router.put('/users/:id/status', verifyAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const banned = req.body.banned;
+    const reason = req.body.reason || '';
+    
+    // member_expire_at: null or past = normal, future date = member active
+    // For ban: set member_expire_at to past date
+    const memberExpireAt = banned ? new Date(Date.now() - 24 * 60 * 60 * 1000) : null;
+    
+    await query(
+      'UPDATE public.users SET member_expire_at = $1, updated_at = NOW() WHERE id = $2',
+      [memberExpireAt, id]
+    );
+    
+    await query(
+      'INSERT INTO admin_logs (admin_id, action, target_user_id, reason) VALUES ($1, $2, $3, $4)',
+      [req.admin.id, banned ? 'ban_user' : 'unban_user', parseInt(id), reason]
+    );
+    
+    res.json({ success: true, message: banned ? 'User banned' : 'User unbanned' });
+  } catch (error) {
+    console.error('Update status error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== Member Levels ====================
+
+// Get member levels list
+router.get('/member-levels', verifyAdmin, async (req, res) => {
+  try {
+    const levels = await query(`
+      SELECT ml.*, 
+             (SELECT COUNT(*) FROM public.users WHERE member_level = ml.level) as user_count
+      FROM member_levels ml
+      ORDER BY ml.level
+    `);
+    
+    res.json({ success: true, data: levels.rows });
+  } catch (error) {
+    console.error('Member levels error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update member level config
+router.put('/member-levels/:level', verifyAdmin, async (req: any, res: any) => {
+  try {
+    const level = req.params.level;
+    const body = req.body;
+    
+    await query(`
+      UPDATE member_levels 
+      SET name = COALESCE($1, name),
+          post_expire_hours = COALESCE($2, post_expire_hours),
+          max_posts_per_day = COALESCE($3, max_posts_per_day),
+          can_use_ai = COALESCE($4, can_use_ai),
+          monthly_price = COALESCE($5, monthly_price),
+          annual_price = COALESCE($6, annual_price),
+          updated_at = NOW()
+      WHERE level = $7
+    `, [
+      body.name, 
+      body.post_expire_hours, 
+      body.max_posts_per_day, 
+      body.can_use_ai, 
+      body.monthly_price, 
+      body.annual_price,
+      level
+    ]);
+    
+    await query(
+      'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
+      [req.admin.id, 'update_member_level', JSON.stringify(body)]
+    );
+    
+    res.json({ success: true, message: 'Level config updated' });
+  } catch (error) {
+    console.error('Update member level error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== Earnings ====================
+
+// Get earnings records
+router.get('/earnings', verifyAdmin, async (req: any, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+    
+    let whereClause = 'WHERE 1=1';
+    const params: any[] = [];
+    let paramIndex = 1;
+    
+    if (req.query.type) {
+      whereClause += ` AND e.type = $${paramIndex}`;
+      params.push(req.query.type);
+      paramIndex++;
+    }
+    
+    if (req.query.startDate) {
+      whereClause += ` AND DATE(e.created_at) >= $${paramIndex}`;
+      params.push(req.query.startDate);
+      paramIndex++;
+    }
+    
+    if (req.query.endDate) {
+      whereClause += ` AND DATE(e.created_at) <= $${paramIndex}`;
+      params.push(req.query.endDate);
+      paramIndex++;
+    }
+    
+    const countResult = await query(
+      `SELECT COUNT(*) as total FROM earnings e ${whereClause}`,
+      params
+    );
+    
+    params.push(limit, offset);
+    const earnings = await query(`
+      SELECT e.*
+      FROM earnings e
+      ${whereClause}
+      ORDER BY e.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, params);
+    
     res.json({
-      code: 200,
+      success: true,
       data: {
-        platformRatio: 0.30,
-        creatorRatio: 0.70,
-        description: '平台收取30%服务费，创作者获得70%收益',
-      },
+        earnings: earnings.rows,
+        total: parseInt(countResult.rows[0].total),
+        page,
+        limit
+      }
     });
   } catch (error) {
-    res.json({ code: 500, message: '服务器错误' });
+    console.error('Earnings error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== Admin Logs ====================
+
+// Get admin logs
+router.get('/logs', verifyAdmin, async (req: any, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = (page - 1) * limit;
+    
+    const logs = await query(`
+      SELECT al.*, a.username as admin_username
+      FROM admin_logs al
+      LEFT JOIN admins a ON al.admin_id = a.id
+      ORDER BY al.created_at DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    
+    const countResult = await query('SELECT COUNT(*) as total FROM admin_logs');
+    
+    res.json({
+      success: true,
+      data: {
+        logs: logs.rows,
+        total: parseInt(countResult.rows[0].total),
+        page,
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Logs error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

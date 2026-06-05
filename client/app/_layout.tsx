@@ -34,6 +34,8 @@ export default function RootLayout() {
         <Stack.Screen name="admin/dashboard" options={{ title: "" }} />
         <Stack.Screen name="admin/users" options={{ title: "" }} />
         <Stack.Screen name="admin/moderation" options={{ title: "" }} />
+        <Stack.Screen name="admin/members" options={{ title: "" }} />
+        <Stack.Screen name="admin/logs" options={{ title: "" }} />
       </Stack>
       <Toast />
     </Provider>

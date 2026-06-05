@@ -1,65 +1,39 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
-import adminService from '@/services/adminService';
-
-interface Stats {
-  totalUsers: number;
-  totalPosts: number;
-  totalOrders: number;
-  totalRevenue: number;
-  todayRevenue: number;
-  monthRevenue: number;
-}
-
-interface RecentOrder {
-  id: number;
-  user_nickname: string;
-  level: number;
-  price: string;
-  created_at: string;
-}
+import adminService, { AdminStats } from '@/services/adminService';
 
 export default function AdminDashboardScreen() {
   const router = useSafeRouter();
-  const [stats, setStats] = useState<Stats>({
-    totalUsers: 0,
-    totalPosts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    todayRevenue: 0,
-    monthRevenue: 0,
-  });
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const res = await adminService.getStats();
-      if (res.code === 200 && res.data) {
-        const data = res.data as any;
-        setStats({
-          totalUsers: parseInt(data.total?.total_users || '0'),
-          totalPosts: parseInt(data.total?.total_posts || '0'),
-          totalOrders: parseInt(data.total?.total_orders || '0'),
-          totalRevenue: parseFloat(data.total?.total_amount || '0'),
-          todayRevenue: parseFloat(data.today?.today_amount || '0'),
-          monthRevenue: parseFloat(data.month?.month_amount || '0'),
-        });
-        setRecentOrders(data.recentOrders || []);
+      if (res.success && res.data) {
+        setStats(res.data);
+      } else if (res.error) {
+        Alert.alert('错误', res.error);
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchStats();
+  }, [fetchStats]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchStats();
+  }, [fetchStats]);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -102,127 +76,130 @@ export default function AdminDashboardScreen() {
           </View>
         </View>
 
-        {/* Tab 切换 */}
-        <View className="flex-row bg-stone-800 px-4 pb-2">
-          <TouchableOpacity
-            className={`px-4 py-2 mr-2 rounded-t-lg ${activeTab === 'overview' ? 'bg-amber-600' : 'bg-stone-700'}`}
-            onPress={() => setActiveTab('overview')}
-          >
-            <Text className={activeTab === 'overview' ? 'text-white font-bold' : 'text-stone-400'}>总览</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 mr-2 rounded-t-lg ${activeTab === 'users' ? 'bg-amber-600' : 'bg-stone-700'}`}
-            onPress={() => setActiveTab('users')}
-          >
-            <Text className={activeTab === 'users' ? 'text-white font-bold' : 'text-stone-400'}>用户管理</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 rounded-t-lg ${activeTab === 'members' ? 'bg-amber-600' : 'bg-stone-700'}`}
-            onPress={() => setActiveTab('members')}
-          >
-            <Text className={activeTab === 'members' ? 'text-white font-bold' : 'text-stone-400'}>会员管理</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView className="flex-1 p-4">
-          {activeTab === 'overview' && (
-            <>
-              {/* 收益统计 */}
-              <View className="mb-4">
-                <Text className="text-lg font-bold text-white mb-3">收益概览</Text>
-                <View className="flex-row flex-wrap">
-                  <View className="w-1/2 pr-2 mb-3">
-                    <View className="bg-amber-900/30 rounded-xl p-4 border border-amber-700/50">
-                      <Text className="text-amber-400 text-2xl font-bold">{stats.totalRevenue.toFixed(2)}</Text>
-                      <Text className="text-stone-400 mt-1">累计收益 (元)</Text>
-                    </View>
-                  </View>
-                  <View className="w-1/2 pl-2 mb-3">
-                    <View className="bg-emerald-900/30 rounded-xl p-4 border border-emerald-700/50">
-                      <Text className="text-emerald-400 text-2xl font-bold">{stats.todayRevenue.toFixed(2)}</Text>
-                      <Text className="text-stone-400 mt-1">今日收益 (元)</Text>
-                    </View>
-                  </View>
-                  <View className="w-1/2 pr-2">
-                    <View className="bg-blue-900/30 rounded-xl p-4 border border-blue-700/50">
-                      <Text className="text-blue-400 text-2xl font-bold">{stats.monthRevenue.toFixed(2)}</Text>
-                      <Text className="text-stone-400 mt-1">本月收益 (元)</Text>
-                    </View>
-                  </View>
-                  <View className="w-1/2 pl-2">
-                    <View className="bg-purple-900/30 rounded-xl p-4 border border-purple-700/50">
-                      <Text className="text-purple-400 text-2xl font-bold">{stats.totalOrders}</Text>
-                      <Text className="text-stone-400 mt-1">总订单数</Text>
-                    </View>
+        <ScrollView
+          className="flex-1 p-4"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#d97706"
+            />
+          }
+        >
+          {/* 统计卡片 */}
+          <View className="mb-4">
+            <Text className="text-lg font-bold text-stone-200 mb-3">数据概览</Text>
+            <View className="flex-row flex-wrap -mx-2">
+              {/* 用户统计 */}
+              <View className="w-1/2 px-2 mb-4">
+                <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
+                  <Text className="text-stone-400 text-sm">用户总数</Text>
+                  <Text className="text-3xl font-bold text-amber-500 mt-1">
+                    {stats?.users.total || 0}
+                  </Text>
+                  <View className="flex-row mt-2">
+                    <Text className="text-stone-500 text-xs">今日 +{stats?.users.today || 0}</Text>
+                    <Text className="text-stone-500 text-xs ml-4">本月 +{stats?.users.thisMonth || 0}</Text>
                   </View>
                 </View>
               </View>
 
-              {/* 平台统计 */}
-              <View className="mb-4">
-                <Text className="text-lg font-bold text-white mb-3">平台统计</Text>
-                <View className="flex-row flex-wrap">
-                  <View className="w-1/2 pr-2 mb-3">
-                    <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
-                      <Text className="text-stone-400 text-2xl font-bold">{stats.totalUsers}</Text>
-                      <Text className="text-stone-500 mt-1">注册用户</Text>
-                    </View>
-                  </View>
-                  <View className="w-1/2 pl-2 mb-3">
-                    <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
-                      <Text className="text-stone-400 text-2xl font-bold">{stats.totalPosts}</Text>
-                      <Text className="text-stone-500 mt-1">总留言数</Text>
-                    </View>
+              {/* 帖子统计 */}
+              <View className="w-1/2 px-2 mb-4">
+                <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
+                  <Text className="text-stone-400 text-sm">帖子总数</Text>
+                  <Text className="text-3xl font-bold text-emerald-500 mt-1">
+                    {stats?.posts.total || 0}
+                  </Text>
+                  <View className="flex-row mt-2">
+                    <Text className="text-stone-500 text-xs">今日 +{stats?.posts.today || 0}</Text>
                   </View>
                 </View>
               </View>
 
-              {/* 近期订单 */}
-              <View>
-                <Text className="text-lg font-bold text-white mb-3">近期订单</Text>
-                <View className="bg-stone-800 rounded-xl border border-stone-700">
-                  {recentOrders.length > 0 ? (
-                    recentOrders.map((order, index) => (
-                      <View
-                        key={order.id}
-                        className={`p-4 ${index < recentOrders.length - 1 ? 'border-b border-stone-700' : ''}`}
-                      >
-                        <View className="flex-row justify-between items-center">
-                          <View>
-                            <Text className="text-white">{order.user_nickname || '用户'}</Text>
-                            <Text className="text-stone-500 text-sm mt-1">
-                              L{order.level} · {order.price}元
-                            </Text>
-                          </View>
-                          <Text className="text-stone-500 text-sm">
-                            {new Date(order.created_at).toLocaleDateString()}
-                          </Text>
-                        </View>
-                      </View>
-                    ))
-                  ) : (
-                    <View className="p-4 items-center">
-                      <Text className="text-stone-500">暂无订单</Text>
-                    </View>
-                  )}
+              {/* 活跃用户 */}
+              <View className="w-1/2 px-2 mb-4">
+                <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
+                  <Text className="text-stone-400 text-sm">活跃用户（7日）</Text>
+                  <Text className="text-3xl font-bold text-blue-500 mt-1">
+                    {stats?.users.active || 0}
+                  </Text>
+                  <View className="flex-row mt-2">
+                    <Text className="text-stone-500 text-xs">今日活跃 {stats?.users.activeToday || 0}</Text>
+                  </View>
                 </View>
               </View>
-            </>
-          )}
 
-          {activeTab === 'users' && (
-            <View className="items-center justify-center py-20">
-              <Text className="text-stone-400 mb-4">用户列表功能开发中</Text>
-              <Text className="text-stone-500 text-sm">可在下方搜索用户</Text>
+              {/* 收入统计 */}
+              <View className="w-1/2 px-2 mb-4">
+                <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
+                  <Text className="text-stone-400 text-sm">总收入</Text>
+                  <Text className="text-3xl font-bold text-rose-500 mt-1">
+                    ¥{(stats?.earnings.total || 0).toFixed(2)}
+                  </Text>
+                  <View className="flex-row mt-2">
+                    <Text className="text-stone-500 text-xs">本月 ¥{(stats?.earnings.thisMonth || 0).toFixed(2)}</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          )}
+          </View>
 
-          {activeTab === 'members' && (
-            <View className="items-center justify-center py-20">
-              <Text className="text-stone-400 mb-4">会员管理功能开发中</Text>
-              <Text className="text-stone-500 text-sm">可在下方调整用户等级</Text>
+          {/* 会员分布 */}
+          <View className="mb-4">
+            <Text className="text-lg font-bold text-stone-200 mb-3">会员分布</Text>
+            <View className="bg-stone-800 rounded-xl p-4 border border-stone-700">
+              {stats?.memberDistribution.map((item, index) => (
+                <View key={index} className="flex-row justify-between items-center py-2 border-b border-stone-700 last:border-b-0">
+                  <Text className="text-stone-300">{item.name}</Text>
+                  <View className="flex-row items-center">
+                    <Text className="text-amber-500 font-bold mr-2">{item.user_count}</Text>
+                    <Text className="text-stone-500 text-sm">人</Text>
+                  </View>
+                </View>
+              ))}
             </View>
-          )}
+          </View>
+
+          {/* 快捷入口 */}
+          <View className="mb-4">
+            <Text className="text-lg font-bold text-stone-200 mb-3">快捷入口</Text>
+            <View className="flex-row -mx-2">
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/users')}
+              >
+                <Text className="text-2xl mb-2">👥</Text>
+                <Text className="text-stone-200 font-medium">用户管理</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/members')}
+              >
+                <Text className="text-2xl mb-2">👑</Text>
+                <Text className="text-stone-200 font-medium">会员等级</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row -mx-2 mt-4">
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/logs')}
+              >
+                <Text className="text-2xl mb-2">📋</Text>
+                <Text className="text-stone-200 font-medium">操作日志</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/moderation')}
+              >
+                <Text className="text-2xl mb-2">🛡️</Text>
+                <Text className="text-stone-200 font-medium">内容审核</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </ScrollView>
       </View>
     </Screen>

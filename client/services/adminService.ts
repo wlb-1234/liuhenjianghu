@@ -3,48 +3,57 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9091';
 
 export interface AdminStats {
-  total: {
-    total_amount: string;
-    total_platform: string;
-    total_creator: string;
-    total_orders: string;
+  users: {
+    total: number;
+    today: number;
+    thisMonth: number;
+    active: number;
+    activeToday: number;
   };
-  today: {
-    today_amount: string;
-    today_orders: string;
+  posts: {
+    total: number;
+    today: number;
   };
-  month: {
-    month_amount: string;
-    month_orders: string;
+  earnings: {
+    total: number;
+    thisMonth: number;
+    today: number;
   };
-  byLevel: Array<{
+  memberDistribution: Array<{
+    name: string;
     level: number;
-    orders: string;
-    amount: string;
-    platform_amount: string;
-    creator_amount: string;
+    user_count: string;
   }>;
-  byMonth: Array<{
-    month: string;
-    orders: string;
-    amount: string;
-  }>;
+}
+
+export interface AdminInfo {
+  id: number;
+  username: string;
+  role: string;
 }
 
 export interface UserInfo {
   id: number;
   phone: string;
   nickname: string;
-  avatar: string | null;
   member_level: number;
-  member_expire_at: string | null;
-  province: string;
-  city: string;
-  district: string;
-  town: string;
+  member_level_name?: string;
+  member_expire_at?: string;
   created_at: string;
-  total_posts: number;
-  total_likes: number;
+  updated_at?: string;
+  post_count?: string;
+}
+
+export interface MemberLevel {
+  id: number;
+  level: number;
+  name: string;
+  price: string;
+  region_limit: number;
+  daily_limit: number;
+  retention_days: number;
+  can_pin: boolean;
+  user_count: string;
 }
 
 class AdminService {
@@ -58,13 +67,14 @@ class AdminService {
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
-      if (data.code === 200 && data.data?.token) {
-        this.token = data.data.token;
-        await AsyncStorage.setItem('admin_token', data.data.token);
+      if (data.success && data.token) {
+        this.token = data.token;
+        await AsyncStorage.setItem('admin_token', data.token);
+        return { success: true, data: { admin: data.admin, token: data.token } };
       }
-      return data;
+      return { success: false, error: data.error || '登录失败' };
     } catch (error) {
-      return { code: 500, message: '请求失败' };
+      return { success: false, error: '请求失败' };
     }
   }
 
@@ -79,10 +89,10 @@ class AdminService {
         const data = await res.json();
         return data;
       } catch {
-        return { code: 401 };
+        return { success: false };
       }
     }
-    return { code: 401 };
+    return { success: false };
   }
 
   async logout() {
@@ -98,16 +108,17 @@ class AdminService {
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
     }
+
     try {
       const res = await fetch(url, { ...options, headers });
       return await res.json();
     } catch (error) {
-      return { code: 500, message: '请求失败' };
+      return { success: false, error: '请求失败' };
     }
   }
 
   // 获取统计数据
-  async getStats(): Promise<{ code: number; data?: AdminStats }> {
+  async getStats(): Promise<{ success: boolean; data?: AdminStats; error?: string }> {
     return this.request(`${API_BASE}/api/v1/admin/stats`);
   }
 
@@ -116,93 +127,62 @@ class AdminService {
     page?: number;
     limit?: number;
     keyword?: string;
-    level?: number;
-  } = {}): Promise<{ code: number; data?: { users: UserInfo[]; total: number } }> {
+    memberLevel?: number;
+  } = {}): Promise<{ success: boolean; data?: { users: UserInfo[]; total: number }; error?: string }> {
     const query = new URLSearchParams();
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.keyword) query.set('keyword', params.keyword);
-    if (params.level !== undefined) query.set('level', String(params.level));
+    if (params.memberLevel !== undefined) query.set('memberLevel', String(params.memberLevel));
     return this.request(`${API_BASE}/api/v1/admin/users?${query}`);
   }
 
   // 获取单个用户详情
-  async getUser(userId: number): Promise<{ code: number; data?: UserInfo }> {
+  async getUser(userId: number): Promise<{ success: boolean; data?: UserInfo; error?: string }> {
     return this.request(`${API_BASE}/api/v1/admin/users/${userId}`);
   }
 
   // 调整用户会员等级
-  async adjustLevel(
-    userId: number,
-    level: number,
-    months: number = 1
-  ): Promise<{ code: number; message?: string }> {
+  async adjustLevel(userId: number, level: number, months: number = 1): Promise<{ success: boolean; message?: string }> {
     return this.request(`${API_BASE}/api/v1/admin/users/${userId}/level`, {
       method: 'PUT',
       body: JSON.stringify({ level, months }),
     });
   }
 
-  // 获取举报列表
-  async getReports(params: {
-    page?: number;
-    limit?: number;
-    status?: number;
-  } = {}): Promise<{
-    code: number;
-    data?: { reports: any[]; total: number };
-  }> {
+  // 解禁用户
+  async unbanUser(userId: number): Promise<{ success: boolean; message?: string }> {
+    return this.request(`${API_BASE}/api/v1/admin/users/${userId}/ban`, {
+      method: 'PUT',
+      body: JSON.stringify({ banned: false }),
+    });
+  }
+
+  // 获取会员等级列表
+  async getMemberLevels(): Promise<{ success: boolean; data?: MemberLevel[]; error?: string }> {
+    return this.request(`${API_BASE}/api/v1/admin/member-levels`);
+  }
+
+  // 更新会员等级
+  async updateMemberLevel(levelId: number, data: Partial<MemberLevel>): Promise<{ success: boolean; message?: string }> {
+    return this.request(`${API_BASE}/api/v1/admin/member-levels/${levelId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // 获取管理日志
+  async getLogs(params: { page?: number; limit?: number } = {}): Promise<{ success: boolean; data?: any; error?: string }> {
     const query = new URLSearchParams();
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
-    if (params.status !== undefined) query.set('status', String(params.status));
-    return this.request(`${API_BASE}/api/v1/moderation/reports?${query}`);
+    return this.request(`${API_BASE}/api/v1/admin/logs?${query}`);
   }
 
-  // 处理举报
-  async handleReport(reportId: number, action: string, reason?: string): Promise<{ code: number }> {
-    return this.request(`${API_BASE}/api/v1/moderation/reports/${reportId}/handle`, {
-      method: 'POST',
-      body: JSON.stringify({ action, reason }),
-    });
-  }
-
-  // 获取敏感词列表
-  async getSensitiveWords(): Promise<{ code: number; data?: { words: any[] } }> {
-    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words`);
-  }
-
-  // 添加敏感词
-  async addSensitiveWord(word: string, level?: number, category?: string): Promise<{ code: number }> {
-    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words`, {
-      method: 'POST',
-      body: JSON.stringify({ word, level, category }),
-    });
-  }
-
-  // 删除敏感词
-  async deleteSensitiveWord(id: number): Promise<{ code: number }> {
-    return this.request(`${API_BASE}/api/v1/moderation/sensitive-words/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // 获取违规用户列表
-  async getViolationUsers(): Promise<{
-    code: number;
-    data?: { users: any[]; stats: any };
-  }> {
-    return this.request(`${API_BASE}/api/v1/moderation/violations`);
-  }
-
-  // 处罚用户
-  async penalizeUser(userId: number, penalty: number, reason: string, days?: number): Promise<{ code: number }> {
-    return this.request(`${API_BASE}/api/v1/moderation/violations/penalize`, {
-      method: 'POST',
-      body: JSON.stringify({ userId, penalty, reason, days }),
-    });
+  // 获取趋势数据
+  async getTrend(days: number = 7): Promise<{ success: boolean; data?: any; error?: string }> {
+    return this.request(`${API_BASE}/api/v1/admin/stats/trend?days=${days}`);
   }
 }
 
-const adminService = new AdminService();
-export default adminService;
+export default new AdminService();
