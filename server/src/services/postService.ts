@@ -67,7 +67,7 @@ export async function getPostById(postId: number) {
   return result.rows[0];
 }
 
-// 创建帖子
+// 创建帖子 - 带区域权限检查
 export async function createPost(data: {
   userId: number;
   region_code: string;
@@ -76,6 +76,26 @@ export async function createPost(data: {
   images?: any[];
 }) {
   const p = getPool();
+  
+  // 获取用户信息及区域
+  const userResult = await p.query(`
+    SELECT u.*, ml.level as member_level, ml.region_limit
+    FROM users u
+    LEFT JOIN member_levels ml ON u.level = ml.level
+    WHERE u.id = $1
+  `, [data.userId]);
+  
+  if (userResult.rows.length === 0) {
+    throw new Error('用户不存在');
+  }
+  
+  const user = userResult.rows[0];
+  const regionLimit = user.region_limit || 1;
+  
+  // region_level: 1=镇, 2=县, 3=市, 4=省
+  if (data.region_level > regionLimit) {
+    throw new Error(`您的会员等级(可访问${regionLimit}级区域)无法在此区域(${data.region_level}级)发帖`);
+  }
   
   // 计算过期时间
   const expireAt = new Date();
