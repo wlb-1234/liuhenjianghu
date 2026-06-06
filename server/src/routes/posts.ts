@@ -8,8 +8,8 @@ import { getUserById } from '../services/userService';
 
 const router = Router();
 
-// 获取帖子列表
-router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+// 获取帖子列表（公开，无需登录）
+router.get('/', async (req: any, res: Response) => {
   try {
     const { region_code, userId, page, pageSize } = req.query;
     
@@ -20,9 +20,9 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       pageSize: pageSize ? parseInt(pageSize as string) : 20
     });
     
-    // 检查用户是否点赞
+    // 检查用户是否点赞（未登录时不检查）
     const posts = await Promise.all(result.posts.map(async (post: any) => {
-      const liked = await isLiked(req.userId!, post.id);
+      const liked = req.userId ? await isLiked(req.userId, post.id) : false;
       return {
         id: post.id,
         content: post.content,
@@ -58,8 +58,8 @@ router.get('/mine', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// 获取单个帖子
-router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+// 获取单个帖子（公开，无需登录）
+router.get('/:id', async (req: any, res: Response) => {
   try {
     const post = await getPostById(parseInt(req.params.id));
     
@@ -67,7 +67,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: '帖子不存在' });
     }
     
-    const liked = await isLiked(req.userId!, post.id);
+    const liked = req.userId ? await isLiked(req.userId, post.id) : false;
     
     res.json({
       post: {
