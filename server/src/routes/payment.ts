@@ -1,23 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
-import { loadEnv, getDbUrl } from 'coze-coding-dev-sdk';
+import { getPool } from '../config/database';
 
 const router = Router();
-
-// 延迟初始化
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    loadEnv();
-    const dbUrl = getDbUrl();
-    pool = new Pool({
-      connectionString: dbUrl,
-      ssl: { rejectUnauthorized: false }
-    });
-  }
-  return pool;
-}
 
 // 导入服务
 import { 

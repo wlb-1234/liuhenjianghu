@@ -1,21 +1,4 @@
-import { Pool } from 'pg';
-
-// 延迟初始化
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      throw new Error('DATABASE_URL not configured');
-    }
-    pool = new Pool({
-      connectionString: dbUrl,
-      ssl: { rejectUnauthorized: false }
-    });
-  }
-  return pool;
-}
+import { getPool } from '../config/database';
 
 // 获取帖子列表
 export async function getPosts(options: {

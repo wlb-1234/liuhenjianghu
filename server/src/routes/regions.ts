@@ -1,24 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
+import { getPool } from '../config/database';
 
 const router = Router();
-
-// 延迟初始化数据库连接
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      throw new Error('DATABASE_URL not configured');
-    }
-    pool = new Pool({
-      connectionString: dbUrl,
-      ssl: { rejectUnauthorized: false }
-    });
-  }
-  return pool;
-}
 
 // 行政区划数据（内置数据，支持离线使用）
 const regionsData = {

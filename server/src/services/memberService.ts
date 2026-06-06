@@ -1,26 +1,4 @@
-import { Pool } from 'pg';
-
-// 延迟初始化
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    try {
-      const dbUrl = process.env.DATABASE_URL;
-      if (!dbUrl) {
-        throw new Error('DATABASE_URL not configured');
-      }
-      pool = new Pool({
-        connectionString: dbUrl,
-        ssl: { rejectUnauthorized: false }
-      });
-    } catch (e) {
-      console.error('数据库初始化失败:', e);
-      throw e;
-    }
-  }
-  return pool;
-}
+import { getPool } from '../config/database';
 
 export async function getMemberLevel(level: number) {
   const p = getPool();

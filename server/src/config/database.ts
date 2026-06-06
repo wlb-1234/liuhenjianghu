@@ -1,25 +1,53 @@
 import { Pool } from 'pg';
-import { loadEnv } from 'coze-coding-dev-sdk';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-// 延迟加载环境变量和数据库连接
-let dbUrl: string | null = null;
+// 获取当前文件的目录
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-function loadDatabaseConfig() {
-  if (!dbUrl) {
+function loadEnvFile(): void {
+  // 尝试多个可能的 .env 文件位置
+  const possiblePaths = [
+    resolve(__dirname, '../../.env'),      // 从 dist/config/ 向上两级
+    resolve(__dirname, '../.env'),          // 从 dist/config/ 向上一级
+    resolve(process.cwd(), '.env'),        // 当前工作目录
+    '/workspace/projects/server/.env',      // 绝对路径
+  ];
+  
+  for (const envPath of possiblePaths) {
     try {
-      loadEnv();
-      // 优先读取 CUSTOM_DATABASE_URL，否则读取 DATABASE_URL
-      dbUrl = process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL || '';
+      const content = readFileSync(envPath, 'utf-8');
+      content.split('\n').forEach(line => {
+        const [key, ...valueParts] = line.split('=');
+        if (key && valueParts.length > 0) {
+          const value = valueParts.join('=').trim();
+          if (!process.env[key.trim()]) {
+            process.env[key.trim()] = value;
+          }
+        }
+      });
+      console.log(`✅ 已加载环境变量: ${envPath}`);
+      return;
     } catch (e) {
-      console.warn('⚠️ 数据库配置加载失败:', e);
-      dbUrl = '';
+      // 继续尝试下一个路径
     }
+  }
+  console.warn('⚠️ 未找到 .env 文件，使用系统环境变量');
+}
+
+function getDatabaseUrl(): string {
+  loadEnvFile();
+  const dbUrl = process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL;
+  if (!dbUrl) {
+    throw new Error('DATABASE_URL 环境变量未设置');
   }
   return dbUrl;
 }
 
 export function getPool(): Pool {
-  const config = loadDatabaseConfig();
+  const config = getDatabaseUrl();
   if (!config) {
     throw new Error('数据库未配置');
   }
