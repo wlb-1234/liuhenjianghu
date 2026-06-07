@@ -39,7 +39,17 @@ function loadEnvFile(): void {
 
 function getDatabaseUrl(): string {
   loadEnvFile();
-  const dbUrl = process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL;
+  
+  // 强制使用 Supabase 的 DATABASE_URL，覆盖任何注入的值
+  const supabaseUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres';
+  const dbUrl = process.env.CUSTOM_DATABASE_URL || supabaseUrl;
+  
+  // 调试日志
+  console.log('🔍 数据库连接信息:');
+  console.log('   - CUSTOM_DATABASE_URL:', process.env.CUSTOM_DATABASE_URL ? '已设置' : '未设置');
+  console.log('   - DATABASE_URL:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : '未设置');
+  console.log('   - 实际使用:', dbUrl.substring(0, 50) + '...');
+  
   if (!dbUrl) {
     throw new Error('DATABASE_URL 环境变量未设置');
   }
