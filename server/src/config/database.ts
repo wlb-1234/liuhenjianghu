@@ -40,9 +40,27 @@ function getDatabaseUrl(): string {
   let dbUrl = process.env.DATABASE_URL;
   
   if (!dbUrl || dbUrl.trim() === '' || dbUrl.startsWith('ppostgresql')) {
-    // 使用 Supabase 直接连接（正确的 IP 13.114.6.6 + 端口 5432）
-    dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@13.114.6.6:5432/postgres?sslmode=disable';
-    console.log('⚠️ 环境变量无效，使用 Supabase 直连 IP');
+    // 优先使用 Supabase 直连 IP
+    const supabaseUrl = process.env.COZE_SUPABASE_URL;
+    if (supabaseUrl) {
+      // 从 Supabase URL 提取项目引用 ID
+      const refId = supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1];
+      if (refId) {
+        // 使用 Supabase 提供的直连信息
+        dbUrl = `postgresql://postgres:${process.env.COZE_SUPABASE_SERVICE_ROLE_KEY || 'demo'}@db.${refId}.supabase:5432/postgres`;
+      }
+    }
+    
+    // 如果没有有效的 Supabase URL，尝试使用 Railway 提供的连接
+    if (!dbUrl || dbUrl.startsWith('ppostgresql') || !dbUrl.includes('supabase')) {
+      dbUrl = process.env.DATABASE_URL || `postgresql://postgres.hmlqsbhbbclbzfuutrie:${process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App'}@13.114.6.6:5432/postgres?sslmode=disable`;
+    }
+  }
+  
+  // 确保 URL 有效
+  if (!dbUrl || !dbUrl.startsWith('postgresql')) {
+    console.error('❌ 无法获取有效的数据库连接字符串');
+    throw new Error('DATABASE_URL not configured');
   }
   
   // 提取主机名用于日志
@@ -52,7 +70,6 @@ function getDatabaseUrl(): string {
     console.log('   - 主机:', url.hostname);
     console.log('   - 端口:', url.port || '5432');
     console.log('   - 数据库:', url.pathname.replace('/', ''));
-    console.log('   - 连接字符串:', url.protocol + '//' + url.username + ':***@' + url.host + url.pathname);
   } catch (e) {
     console.log('🔍 数据库连接字符串:', dbUrl.substring(0, 50) + '...');
   }
