@@ -60,17 +60,23 @@ router.post('/login', async (req: any, res: any) => {
     }
     
     const admin = admins.rows[0];
+    
+    // 生成 JWT token
     const token = jwt.sign(
       { adminId: admin.id, username: admin.username, role: admin.role },
       process.env.JWT_SECRET || 'liuhen-secret-key',
       { expiresIn: '7d' }
     );
-    
-    await query(
+
+    // 更新最后登录时间（失败不影响登录）
+    query('UPDATE admins SET last_login = NOW() WHERE id = $1', [admin.id]).catch(() => {});
+
+    // 记录登录日志（失败不影响登录）
+    query(
       'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
       [admin.id, 'login', 'admin login']
-    );
-    
+    ).catch((e: any) => console.log('Admin log insert failed:', e?.message));
+
     res.json({
       success: true,
       token,
