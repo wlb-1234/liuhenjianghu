@@ -23,27 +23,12 @@ function getDatabaseUrl(): string {
     }
   }
   
-  // 备用：使用 Supabase 直接连接
+  // 备用：使用 Supabase 直接连接地址
   const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-  const supabaseUrl = process.env.COZE_SUPABASE_URL || '';
+  const fallbackUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres?sslmode=require`;
   
-  // 从 Supabase URL 提取项目引用
-  const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\./);
-  const projectRef = refMatch ? refMatch[1] : 'hmlqsbhbbclbzfuutrie';
-  
-  // 尝试使用 Supabase 的不同端点
-  const endpoints = [
-    `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@aws-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require`,
-    `postgresql://postgres:${dbPassword}@db.${projectRef}.supabase:5432/postgres?sslmode=disable`,
-    `postgresql://postgres:${dbPassword}@13.114.6.6:5432/postgres?sslmode=disable`
-  ];
-  
-  console.log('⚠️ Railway 未注入数据库 URL，尝试备用连接...');
-  console.log('   当前 DATABASE_URL:', process.env.DATABASE_URL);
-  console.log('   当前 POSTGRES_URL:', process.env.POSTGRES_URL);
-  
-  // 返回第一个备用地址
-  return endpoints[0];
+  console.log('⚠️ 未检测到数据库 URL，使用备用连接...');
+  return fallbackUrl;
 }
 
 // 单例 Pool
