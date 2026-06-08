@@ -6,6 +6,8 @@ import path from 'path';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
 import logsRouter from './middleware/logger';
+import { rateLimiters } from './middleware/rateLimiter';
+import { createCacheRouter } from './middleware/cache';
 
 const app = express();
 const PORT = process.env.PORT || 9091;
@@ -55,6 +57,7 @@ app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/sensitive-words', sensitiveWordsRoutes);
 app.use('/api/v1/logs', logsRouter);
+app.use('/api/v1/cache', createCacheRouter());
 
 // 错误处理（放在所有路由之后）
 app.use(notFoundHandler);
