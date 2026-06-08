@@ -1,5 +1,4 @@
-// 用户统计服务
-import { supabase } from '../storage/database/supabase-client';
+const supabase = getSupabaseClient();
 
 // 用户等级配置
 export const UserLevel = {
@@ -41,6 +40,7 @@ export interface UserStats {
 // 获取用户统计
 export const getUserStats = async (userId: string): Promise<UserStats | null> => {
   try {
+    const supabase = getSupabaseClient();
     // 获取用户基本信息
     const { data: user, error: userError } = await supabase
       .from('users')
@@ -126,6 +126,7 @@ export const getUserStats = async (userId: string): Promise<UserStats | null> =>
 // 获取用户排行榜
 export const getUserLeaderboard = async (type: 'exp' | 'posts' | 'likes' | 'followers' = 'exp', limit: number = 10) => {
   try {
+    const supabase = getSupabaseClient();
     const { data: users } = await supabase
       .from('users')
       .select('id, username, avatar, exp, createdAt')
@@ -173,6 +174,7 @@ export const getUserLeaderboard = async (type: 'exp' | 'posts' | 'likes' | 'foll
 // 获取运营数据概览
 export const getOperationStats = async () => {
   try {
+    const supabase = getSupabaseClient();
     // 总用户数
     const { count: totalUsers } = await supabase
       .from('users')
