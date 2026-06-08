@@ -37,24 +37,14 @@ function loadEnvFile(): void {
 function getDatabaseUrl(): string {
   loadEnvFile();
   
+  // Railway 会自动注入 DATABASE_URL 环境变量
   let dbUrl = process.env.DATABASE_URL;
   
-  if (!dbUrl || dbUrl.trim() === '' || dbUrl.startsWith('ppostgresql')) {
-    // 优先使用 Supabase 直连 IP
-    const supabaseUrl = process.env.COZE_SUPABASE_URL;
-    if (supabaseUrl) {
-      // 从 Supabase URL 提取项目引用 ID
-      const refId = supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1];
-      if (refId) {
-        // 使用 Supabase 提供的直连信息
-        dbUrl = `postgresql://postgres:${process.env.COZE_SUPABASE_SERVICE_ROLE_KEY || 'demo'}@db.${refId}.supabase:5432/postgres`;
-      }
-    }
-    
-    // 如果没有有效的 Supabase URL，尝试使用 Railway 提供的连接
-    if (!dbUrl || dbUrl.startsWith('ppostgresql') || !dbUrl.includes('supabase')) {
-      dbUrl = process.env.DATABASE_URL || `postgresql://postgres.hmlqsbhbbclbzfuutrie:${process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App'}@13.114.6.6:5432/postgres?sslmode=disable`;
-    }
+  // 如果没有，使用 Supabase 直连地址
+  if (!dbUrl || dbUrl.trim() === '') {
+    const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
+    dbUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@aws-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require`;
+    console.log('⚠️ 使用 Supabase Pooler 直连地址');
   }
   
   // 确保 URL 有效
@@ -91,8 +81,6 @@ export function getPool(): Pool {
   
   poolInstance = new Pool({
     connectionString: dbUrl,
-    // 不启用 SSL，让连接使用纯 TCP
-    ssl: false,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
