@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { 
   getPosts, createPost, toggleLike, isLiked,
-  getComments, createComment, getPostById
+  getComments, createComment, getPostById, deletePost
 } from '../services/postService';
 import { getUserById } from '../services/userService';
 
