@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 // Create single pool instance using environment variable
 const pool = new Pool({
@@ -24,7 +25,7 @@ const verifyAdmin = async (req: any, res: any, next: Function) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'liuhen-secret-key') as any;
+const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
     
     const admins = await query('SELECT * FROM admins WHERE id = $1', [decoded.adminId || decoded.userId]);
     
@@ -64,7 +65,7 @@ router.post('/login', async (req: any, res: any) => {
     // 生成 JWT token
     const token = jwt.sign(
       { adminId: admin.id, username: admin.username, role: admin.role },
-      process.env.JWT_SECRET || 'liuhen-secret-key',
+      JWT_SECRET,
       { expiresIn: '7d' }
     );
 

@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 export interface AuthRequest extends Request {
   userId?: number;
+  adminId?: number;
   user?: any;
 }
 
@@ -22,9 +23,18 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     }
     
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId?: number; adminId?: number; username?: string; role?: string };
     
-    req.userId = decoded.userId;
+    // 同时支持普通用户 token (userId) 和管理员 token (adminId)
+    if (decoded.userId) {
+      req.userId = decoded.userId;
+    } else if (decoded.adminId) {
+      req.adminId = decoded.adminId;
+      req.userId = decoded.adminId; // 管理员也赋值给 userId 便于后续逻辑处理
+    } else {
+      return res.status(401).json({ error: '无效的 token' });
+    }
+    
     next();
   } catch (error) {
     return res.status(401).json({ error: '登录已过期，请重新登录' });
