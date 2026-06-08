@@ -37,18 +37,16 @@ function loadEnvFile(): void {
 function getDatabaseUrl(): string {
   loadEnvFile();
   
-  // 优先使用环境变量
-  let dbUrl = process.env.DATABASE_URL;
-  
-  // 如果没有设置，或者 URL 无效，使用硬编码的 Supabase 连接
-  if (!dbUrl || dbUrl.startsWith('p')) {
-    // 硬编码 Supabase PostgreSQL 连接（使用 IPv4）
-    dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@13.114.6.6:5432/postgres?sslmode=disable';
-    console.log('⚠️ 环境变量无效，使用硬编码的 Supabase 连接');
-  }
+  // 使用 Supabase Pooler 地址（端口 65432）和 SSL
+  // Pooler 负责连接池管理
+  const dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@aws-1-ap-northeast-1.pooler.supabase.com:65432/postgres?sslmode=require';
   
   console.log('🔍 数据库连接信息:');
-  console.log('   - DATABASE_URL:', dbUrl.substring(0, 60) + '...');
+  console.log('   - 主机: aws-1-ap-northeast-1.pooler.supabase.com');
+  console.log('   - 端口: 65432 (PgBouncer)');
+  console.log('   - 数据库: postgres');
+  console.log('   - SSL: require');
+  console.log('   - 连接字符串: postgresql://postgres.hmlqsbhbbclbzfuutrie:***@pooler.supabase.com:65432/postgres');
   
   return dbUrl;
 }
@@ -64,22 +62,19 @@ export function getPool(): Pool {
   const dbUrl = getDatabaseUrl();
   
   console.log('🔍 创建数据库连接池...');
-  console.log('   - 连接字符串:', dbUrl);
   
   poolInstance = new Pool({
     connectionString: dbUrl,
-    ssl: false, // 禁用 SSL 以简化连接
+    ssl: {
+      rejectUnauthorized: false, // 允许自签名证书
+    },
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 20000,
+    connectionTimeoutMillis: 30000, // 增加超时时间
   });
   
   poolInstance.on('error', (err) => {
     console.error('❌ 数据库连接池错误:', err.message);
-  });
-  
-  poolInstance.on('connect', () => {
-    console.log('✅ 新数据库连接已建立');
   });
   
   console.log('✅ 数据库连接池已创建');
