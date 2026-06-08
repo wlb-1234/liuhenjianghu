@@ -1,342 +1,689 @@
-import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { Screen } from '@/components/Screen';
-import adminService from '@/services/adminService';
+import adminService, {
+  ReportInfo,
+  ModerationStats,
+  SensitiveWord,
+} from '@/services/adminService';
 
-interface Violation {
-  id: number;
-  user_id: number;
-  post_id: number | null;
-  violation_type: string;
-  content: string;
-  penalty: number;
-  status: number;
-  created_at: string;
-}
-
-const PENALTY_TEXT: Record<number, string> = {
-  0: '警告',
-  1: '删帖',
-  2: '禁言',
-  3: '封号'
+const REPORT_TYPE_NAMES: Record<number, string> = {
+  1: '帖子',
+  2: '评论',
+  3: '用户',
 };
 
-const PENALTY_COLORS: Record<number, string> = {
-  0: '#8B7355',
-  1: '#C9A96E',
-  2: '#B8860B',
-  3: '#8B0000'
+const REPORT_REASON_NAMES: Record<number, string> = {
+  1: '垃圾广告',
+  2: '色情低俗',
+  3: '暴力血腥',
+  4: '诈骗欺诈',
+  5: '侵权抄袭',
+  99: '其他',
+};
+
+const REPORT_STATUS_NAMES: Record<number, { text: string; color: string }> = {
+  1: { text: '待处理', color: '#FF9800' },
+  2: { text: '已处理', color: '#4CAF50' },
+  3: { text: '已驳回', color: '#9E9E9E' },
 };
 
 export default function ModerationScreen() {
-  const [reports, setReports] = useState<Violation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'reports' | 'violations'>('reports');
+  const [activeTab, setActiveTab] = useState<'reports' | 'words'>('reports');
+  const [stats, setStats] = useState<ModerationStats | null>(null);
+  const [reports, setReports] = useState<ReportInfo[]>([]);
+  const [sensitiveWords, setSensitiveWords] = useState<SensitiveWord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<number | undefined>(undefined);
+  const [newWord, setNewWord] = useState('');
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await adminService.getReports();
-      if (res.code === 200 && res.data) {
-        setReports(res.data.reports || []);
-      }
-    } catch (error) {
-      console.error('获取举报列表失败:', error);
-    } finally {
-      setLoading(false);
+  // 加载统计数据
+  const loadStats = async () => {
+    const result = await adminService.getModerationStats();
+    if (result.success && result.data) {
+      setStats(result.data);
     }
+  };
+
+  // 加载举报列表
+  const loadReports = async (reset = false) => {
+    const newPage = reset ? 1 : page;
+    const result = await adminService.getReports({
+      page: newPage,
+      limit: 10,
+      status: filterStatus,
+    });
+
+    if (result.success && result.data) {
+      if (reset) {
+        setReports(result.data.reports);
+        setPage(2);
+      } else {
+        setReports(prev => [...prev, ...result.data!.reports]);
+        setPage(newPage + 1);
+      }
+      setHasMore(result.data.reports.length === 10);
+    }
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  // 加载敏感词列表
+  const loadSensitiveWords = async () => {
+    const result = await adminService.getSensitiveWords();
+    if (result.success && result.data) {
+      setSensitiveWords(result.data.words);
+    }
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  // 刷新
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (activeTab === 'reports') {
+      await loadReports(true);
+    } else {
+      await loadSensitiveWords();
+    }
+    await loadStats();
+  };
+
+  // 加载更多
+  const onLoadMore = async () => {
+    if (!hasMore || loading) return;
+    setLoading(true);
+    await loadReports(false);
+  };
+
+  // 初始加载
+  useEffect(() => {
+    loadStats();
+    loadReports(true);
   }, []);
 
+  // 切换 Tab
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000); // 30秒刷新
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    setLoading(true);
+    if (activeTab === 'reports') {
+      loadReports(true);
+    } else {
+      loadSensitiveWords();
+    }
+  }, [activeTab, filterStatus]);
 
-  const handlePenalty = async (id: number, penalty: number) => {
+  // 处理举报
+  const handleReport = async (report: ReportInfo, action: 'dismiss' | 'delete' | 'ban') => {
+    const actionNames = { dismiss: '驳回', delete: '删除内容', ban: '封禁用户' };
+    const confirmActions: Record<string, string> = {
+      dismiss: '确定要驳回这条举报吗？',
+      delete: '确定要删除该内容吗？',
+      ban: '确定要封禁该用户吗？',
+    };
+
     Alert.alert(
-      '确认处罚',
-      `确定对该用户进行"${PENALTY_TEXT[penalty]}"处罚吗？`,
+      `处理举报 - ${actionNames[action]}`,
+      confirmActions[action],
       [
         { text: '取消', style: 'cancel' },
         {
-          text: '确认',
+          text: '确定',
+          style: action === 'ban' ? 'destructive' : 'default',
           onPress: async () => {
-            try {
-              await adminService.handleReport(id, String(penalty));
-              Alert.alert('操作成功', '处罚已执行');
-              fetchData();
-            } catch (error) {
-              Alert.alert('操作失败', '请重试');
+            const result = await adminService.handleReport(report.id, action);
+            if (result.success) {
+              Alert.alert('成功', '处理成功');
+              onRefresh();
+            } else {
+              Alert.alert('失败', result.error || '处理失败');
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
-  const handleIgnore = async (id: number) => {
-    Alert.alert('忽略举报', '确定忽略该举报吗？', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '确认',
-        onPress: async () => {
-          try {
-            await adminService.handleReport(id, '-1'); // -1表示忽略
-            Alert.alert('操作成功', '举报已忽略');
-            fetchData();
-          } catch (error) {
-            Alert.alert('操作失败', '请重试');
-          }
-        }
-      }
-    ]);
+  // 添加敏感词
+  const addSensitiveWord = async () => {
+    if (!newWord.trim()) {
+      Alert.alert('提示', '请输入敏感词');
+      return;
+    }
+    const result = await adminService.addSensitiveWord(newWord.trim());
+    if (result.success) {
+      setNewWord('');
+      loadSensitiveWords();
+      loadStats();
+      Alert.alert('成功', '敏感词已添加');
+    } else {
+      Alert.alert('失败', result.error || '添加失败');
+    }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('zh-CN');
+  // 删除敏感词
+  const deleteSensitiveWord = async (word: SensitiveWord) => {
+    Alert.alert(
+      '确认删除',
+      `确定要删除敏感词"${word.word}"吗？`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '删除',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await adminService.deleteSensitiveWord(word.id);
+            if (result.success) {
+              loadSensitiveWords();
+              loadStats();
+              Alert.alert('成功', '敏感词已删除');
+            } else {
+              Alert.alert('失败', result.error || '删除失败');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const renderItem = ({ item }: { item: Violation }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {item.violation_type === 'spam' ? '垃圾广告' :
-             item.violation_type === 'illegal' ? '违法内容' :
-             item.violation_type === 'political' ? '政治敏感' :
-             item.violation_type === 'porn' ? '淫秽内容' : '其他'}
+  // 渲染统计卡片
+  const renderStats = () => {
+    if (!stats) return null;
+    return (
+      <View style={styles.statsContainer}>
+        <TouchableOpacity
+          style={[styles.statCard, filterStatus === 1 && styles.statCardActive]}
+          onPress={() => setFilterStatus(filterStatus === 1 ? undefined : 1)}
+        >
+          <Text style={styles.statNumber}>{stats.pendingReports}</Text>
+          <Text style={styles.statLabel}>待处理举报</Text>
+        </TouchableOpacity>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{stats.todayReports}</Text>
+          <Text style={styles.statLabel}>今日举报</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{stats.weekReports}</Text>
+          <Text style={styles.statLabel}>本周举报</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{stats.sensitiveWordsCount}</Text>
+          <Text style={styles.statLabel}>敏感词库</Text>
+        </View>
+      </View>
+    );
+  };
+
+  // 渲染举报列表项
+  const renderReportItem = (report: ReportInfo) => {
+    const statusInfo = REPORT_STATUS_NAMES[report.status] || { text: '未知', color: '#999' };
+    return (
+      <View key={report.id} style={styles.reportCard}>
+        <View style={styles.reportHeader}>
+          <View style={styles.reportType}>
+            <Text style={styles.reportTypeText}>{REPORT_TYPE_NAMES[report.type] || '未知'}</Text>
+            <Text style={[styles.reportStatus, { color: statusInfo.color }]}>{statusInfo.text}</Text>
+          </View>
+          <Text style={styles.reportTime}>
+            {new Date(report.created_at).toLocaleDateString()}
           </Text>
         </View>
-        <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
+
+        <Text style={styles.reportReason}>
+          举报原因：{REPORT_REASON_NAMES[report.reason] || report.reason_text || '未知'}
+        </Text>
+
+        {report.reason_text && report.reason === 99 && (
+          <Text style={styles.reportDetail}>详细说明：{report.reason_text}</Text>
+        )}
+
+        {report.content && (
+          <View style={styles.reportContent}>
+            <Text style={styles.reportContentLabel}>被举报内容：</Text>
+            <Text style={styles.reportContentText} numberOfLines={3}>
+              {report.content}
+            </Text>
+          </View>
+        )}
+
+        {report.reporter_phone && (
+          <Text style={styles.reportReporter}>举报人：{report.reporter_phone}</Text>
+        )}
+
+        {report.status === 1 && (
+          <View style={styles.reportActions}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.dismissBtn]}
+              onPress={() => handleReport(report, 'dismiss')}
+            >
+              <Text style={styles.dismissBtnText}>驳回</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.deleteBtn]}
+              onPress={() => handleReport(report, 'delete')}
+            >
+              <Text style={styles.deleteBtnText}>删除内容</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.banBtn]}
+              onPress={() => handleReport(report, 'ban')}
+            >
+              <Text style={styles.banBtnText}>封禁用户</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {report.status !== 1 && (
+          <View style={styles.reportResult}>
+            <Text style={styles.reportResultText}>
+              处理结果：{report.handle_result === 'dismissed' ? '已驳回' : report.handle_result === 'deleted' ? '已删除内容' : '已封禁用户'}
+            </Text>
+            {report.handle_reason && (
+              <Text style={styles.reportResultReason}>原因：{report.handle_reason}</Text>
+            )}
+          </View>
+        )}
       </View>
-      
-      <Text style={styles.content} numberOfLines={3}>{item.content}</Text>
-      
-      {item.post_id && (
-        <TouchableOpacity style={styles.linkBtn}>
-          <Text style={styles.linkText}>查看原帖 #{item.post_id}</Text>
-        </TouchableOpacity>
-      )}
-      
-      <View style={styles.actionRow}>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.ignoreBtn]}
-          onPress={() => handleIgnore(item.id)}
-        >
-          <Text style={styles.ignoreText}>忽略</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.warnBtn]}
-          onPress={() => handlePenalty(item.id, 0)}
-        >
-          <Text style={styles.warnText}>警告</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.deleteBtn]}
-          onPress={() => handlePenalty(item.id, 1)}
-        >
-          <Text style={styles.deleteText}>删帖</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.banBtn]}
-          onPress={() => handlePenalty(item.id, 3)}
-        >
-          <Text style={styles.banText}>封号</Text>
+    );
+  };
+
+  // 渲染敏感词管理
+  const renderSensitiveWords = () => (
+    <View style={styles.wordsContainer}>
+      <View style={styles.wordInputContainer}>
+        <View style={styles.wordInput}>
+          <TextInput
+            style={styles.wordInputField}
+            placeholder="输入敏感词"
+            value={newWord}
+            onChangeText={setNewWord}
+            autoCapitalize="none"
+          />
+        </View>
+        <TouchableOpacity style={styles.addWordBtn} onPress={addSensitiveWord}>
+          <Text style={styles.addWordBtnText}>添加</Text>
         </TouchableOpacity>
       </View>
+
+      <ScrollView
+        style={styles.wordsList}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {sensitiveWords.map(word => (
+          <View key={word.id} style={styles.wordItem}>
+            <View style={styles.wordInfo}>
+              <Text style={styles.wordText}>{word.word}</Text>
+              <Text style={styles.wordLevel}>
+                {word.level === 1 ? '敏感' : word.level === 2 ? '违规' : '严重'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteWordBtn}
+              onPress={() => deleteSensitiveWord(word)}
+            >
+              <Text style={styles.deleteWordBtnText}>删除</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+        {sensitiveWords.length === 0 && (
+          <Text style={styles.emptyText}>暂无敏感词</Text>
+        )}
+      </ScrollView>
     </View>
   );
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>内容审核</Text>
-        <Text style={styles.subtitle}>处理举报 · 维护社区</Text>
-      </View>
+      <View style={styles.container}>
+        {/* 统计卡片 */}
+        {renderStats()}
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
-          onPress={() => setActiveTab('reports')}
-        >
-          <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
-            待处理 ({reports.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Tab 切换 */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'reports' && styles.tabActive]}
+            onPress={() => setActiveTab('reports')}
+          >
+            <Text style={[styles.tabText, activeTab === 'reports' && styles.tabTextActive]}>
+              举报管理
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'words' && styles.tabActive]}
+            onPress={() => setActiveTab('words')}
+          >
+            <Text style={[styles.tabText, activeTab === 'words' && styles.tabTextActive]}>
+              敏感词库
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {loading && reports.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>加载中...</Text>
-        </View>
-      ) : reports.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>无事</Text>
-          <Text style={styles.emptyText}>暂无待处理的举报</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={reports}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          refreshing={loading}
-          onRefresh={fetchData}
-        />
-      )}
+        {/* 内容 */}
+        {activeTab === 'reports' ? (
+          <FlatList
+            data={reports}
+            keyExtractor={item => String(item.id)}
+            renderItem={({ item }) => renderReportItem(item)}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            onEndReached={onLoadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={
+              loading && reports.length > 0 ? (
+                <ActivityIndicator style={styles.loadingMore} />
+              ) : null
+            }
+            ListEmptyComponent={
+              !loading ? <Text style={styles.emptyText}>暂无举报</Text> : null
+            }
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          renderSensitiveWords()
+        )}
+
+        {loading && reports.length === 0 && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4A90D9" />
+          </View>
+        )}
+      </View>
     </Screen>
   );
 }
 
+import { FlatList, TextInput } from 'react-native';
+
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(139, 115, 85, 0.2)',
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  title: {
-    fontSize: 28,
+  statsContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: '#FFF',
+    marginBottom: 8,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#F8F8F8',
+    marginHorizontal: 4,
+  },
+  statCardActive: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FF9800',
+  },
+  statNumber: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#3D2914',
-    fontFamily: 'serif',
+    color: '#333',
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#8B7355',
+  statLabel: {
+    fontSize: 11,
+    color: '#666',
     marginTop: 4,
   },
-  tabBar: {
+  tabContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(139, 115, 85, 0.2)',
+    borderBottomColor: '#EEE',
   },
   tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: 'rgba(139, 115, 85, 0.1)',
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  activeTab: {
-    backgroundColor: '#3D2914',
+  tabActive: {
+    borderBottomColor: '#4A90D9',
   },
   tabText: {
-    fontSize: 14,
-    color: '#8B7355',
+    fontSize: 15,
+    color: '#666',
   },
-  activeTabText: {
-    color: '#FFF',
+  tabTextActive: {
+    color: '#4A90D9',
+    fontWeight: '600',
   },
-  list: {
-    padding: 16,
+  listContent: {
+    padding: 12,
   },
-  card: {
+  reportCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 115, 85, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  cardHeader: {
+  reportHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  badge: {
-    backgroundColor: '#C9A96E',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#8B7355',
-  },
-  content: {
-    fontSize: 15,
-    color: '#3D2914',
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  linkBtn: {
-    backgroundColor: 'rgba(139, 115, 85, 0.1)',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#8B7355',
-    textAlign: 'center',
-  },
-  actionRow: {
+  reportType: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+    alignItems: 'center',
+  },
+  reportTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 10,
+  },
+  reportStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  reportTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  reportReason: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 6,
+  },
+  reportDetail: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 6,
+  },
+  reportContent: {
+    backgroundColor: '#F8F8F8',
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  reportContentLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
+  },
+  reportContentText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  reportReporter: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+  },
+  reportActions: {
+    flexDirection: 'row',
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+    paddingTop: 14,
   },
   actionBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
+    marginHorizontal: 4,
   },
-  ignoreBtn: {
-    backgroundColor: 'rgba(139, 115, 85, 0.1)',
+  dismissBtn: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#DDD',
   },
-  warnBtn: {
-    backgroundColor: '#D4A574',
+  dismissBtnText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
   },
   deleteBtn: {
-    backgroundColor: '#B8860B',
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+  },
+  deleteBtnText: {
+    color: '#F57C00',
+    fontSize: 14,
+    fontWeight: '500',
   },
   banBtn: {
-    backgroundColor: '#8B0000',
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1,
+    borderColor: '#EF9A9A',
   },
-  ignoreText: {
+  banBtnText: {
+    color: '#D32F2F',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  reportResult: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+  },
+  reportResultText: {
     fontSize: 13,
-    color: '#8B7355',
-    fontWeight: '600',
+    color: '#4CAF50',
   },
-  warnText: {
-    fontSize: 13,
-    color: '#FFF',
-    fontWeight: '600',
+  reportResultReason: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
   },
-  deleteText: {
-    fontSize: 13,
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  banText: {
-    fontSize: 13,
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  empty: {
+  wordsContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
+    padding: 16,
   },
-  emptyIcon: {
-    fontSize: 48,
-    color: '#C9A96E',
+  wordInputContainer: {
+    flexDirection: 'row',
     marginBottom: 16,
   },
+  wordInput: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    marginRight: 10,
+  },
+  wordInputField: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  addWordBtn: {
+    backgroundColor: '#4A90D9',
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  addWordBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  wordsList: {
+    flex: 1,
+  },
+  wordItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 14,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  wordInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  wordText: {
+    fontSize: 15,
+    color: '#333',
+    flex: 1,
+  },
+  wordLevel: {
+    fontSize: 12,
+    color: '#F57C00',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 10,
+  },
+  deleteWordBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 4,
+    backgroundColor: '#FFEBEE',
+  },
+  deleteWordBtnText: {
+    color: '#D32F2F',
+    fontSize: 13,
+  },
   emptyText: {
-    fontSize: 16,
-    color: '#8B7355',
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 14,
+    marginTop: 40,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  loadingMore: {
+    paddingVertical: 20,
   },
 });

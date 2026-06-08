@@ -32,6 +32,8 @@ import uploadRoutes from './routes/upload';
 import adminRoutes from './routes/admin';
 import moderationRoutes from './routes/moderation';
 import paymentRoutes from './routes/payment';
+import reportsRoutes from './routes/reports';
+import sensitiveWordsRoutes from './routes/sensitiveWords';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/regions', regionRoutes);
@@ -42,6 +44,8 @@ app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/moderation', moderationRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/reports', reportsRoutes);
+app.use('/api/v1/sensitive-words', sensitiveWordsRoutes);
 
 app.listen(PORT, () => {
   console.log('');
