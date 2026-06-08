@@ -44,6 +44,7 @@ import moderationRoutes from './routes/moderation';
 import paymentRoutes from './routes/payment';
 import reportsRoutes from './routes/reports';
 import sensitiveWordsRoutes from './routes/sensitiveWords';
+import userStatsRoutes from './routes/userStats';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/regions', regionRoutes);
@@ -56,6 +57,7 @@ app.use('/api/v1/moderation', moderationRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/sensitive-words', sensitiveWordsRoutes);
+app.use('/api/v1/user-stats', userStatsRoutes);
 app.use('/api/v1/logs', logsRouter);
 app.use('/api/v1/cache', createCacheRouter());
 
