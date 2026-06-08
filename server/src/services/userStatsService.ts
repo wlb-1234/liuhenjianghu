@@ -1,6 +1,19 @@
 import { getSupabaseClient } from '../storage/database/supabase-client';
 
-const supabase = getSupabaseClient();
+// 延迟初始化，避免启动时就检查环境变量
+let supabase: ReturnType<typeof getSupabaseClient> | null = null;
+
+function getClient() {
+  if (!supabase) {
+    try {
+      supabase = getSupabaseClient();
+    } catch (e) {
+      console.warn('Supabase client initialization deferred:', (e as Error).message);
+      return null;
+    }
+  }
+  return supabase;
+}
 
 // 用户等级配置
 export const UserLevel = {
