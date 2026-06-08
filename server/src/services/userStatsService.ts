@@ -1,3 +1,5 @@
+import { getSupabaseClient } from '../storage/database/supabase-client';
+
 const supabase = getSupabaseClient();
 
 // 用户等级配置
