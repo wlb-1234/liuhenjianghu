@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
+// 错误处理和日志
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/logger';
+import logsRouter from './middleware/logger';
+
 const app = express();
 const PORT = process.env.PORT || 9091;
 
@@ -12,6 +17,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// 请求日志中间件
+app.use(requestLogger);
 
 // 健康检查（独立于数据库）
 app.get('/api/v1/health', (req, res) => {
@@ -46,6 +54,11 @@ app.use('/api/v1/moderation', moderationRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/sensitive-words', sensitiveWordsRoutes);
+app.use('/api/v1/logs', logsRouter);
+
+// 错误处理（放在所有路由之后）
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log('');
