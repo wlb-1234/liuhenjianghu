@@ -29,6 +29,16 @@ check_command() {
 check_command "pnpm"
 check_command "npm"
 
+# Railway 可能把代码放在 /app/workspace/projects/ 或直接 /app/
+if [ -d "/app/workspace/projects/server" ]; then
+  SERVER_DIR="/app/workspace/projects/server"
+elif [ -d "/app/server" ]; then
+  SERVER_DIR="/app/server"
+else
+  SERVER_DIR="$ROOT_DIR/server"
+fi
+
+info "Server 目录: $SERVER_DIR"
 info "开始执行：pnpm run start (server)"
-(pushd "$ROOT_DIR/server" > /dev/null && PORT="$PORT" pnpm run start; popd > /dev/null) || error "服务启动失败"
+(pushd "$SERVER_DIR" > /dev/null && PORT="$PORT" pnpm run start; popd > /dev/null) || error "服务启动失败"
 info "服务启动完成！\n"

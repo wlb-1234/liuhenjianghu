@@ -41,7 +41,18 @@ info "==================== 依赖安装完成！====================\n"
 
 info "==================== dist打包 ===================="
 info "开始执行：pnpm run build (server)"
-(pushd "$ROOT_DIR/server" > /dev/null && pnpm run build; popd > /dev/null) || error "dist打包失败"
+
+# Railway 可能把代码放在 /app/workspace/projects/ 或直接 /app/
+if [ -d "/app/workspace/projects/server" ]; then
+  SERVER_DIR="/app/workspace/projects/server"
+elif [ -d "/app/server" ]; then
+  SERVER_DIR="/app/server"
+else
+  SERVER_DIR="$ROOT_DIR/server"
+fi
+
+info "Server 目录: $SERVER_DIR"
+(pushd "$SERVER_DIR" > /dev/null && pnpm run build; popd > /dev/null) || error "dist打包失败"
 info "==================== dist打包完成！====================\n"
 
 info "下一步：执行 ./prod_run.sh 启动服务"
