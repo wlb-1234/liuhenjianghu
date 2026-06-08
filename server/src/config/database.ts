@@ -6,65 +6,36 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function loadEnvFile(): void {
-  const possiblePaths = [
-    resolve(__dirname, '../../.env'),
-    resolve(__dirname, '../.env'),
-    resolve(process.cwd(), '.env'),
-    '/workspace/projects/server/.env',
-  ];
-  
-  for (const envPath of possiblePaths) {
-    try {
-      const content = readFileSync(envPath, 'utf-8');
-      content.split('\n').forEach(line => {
-        const [key, ...valueParts] = line.split('=');
-        if (key && valueParts.length > 0) {
-          const value = valueParts.join('=').trim();
-          if (!process.env[key.trim()]) {
-            process.env[key.trim()] = value;
-          }
-        }
-      });
-      console.log(`✅ 已加载环境变量: ${envPath}`);
-      return;
-    } catch (e) {
-      // 继续
-    }
-  }
-}
-
+// Railway 会自动注入这些环境变量，直接使用即可
 function getDatabaseUrl(): string {
-  loadEnvFile();
+  // Railway 注入的环境变量
+  const dbUrl = process.env.DATABASE_URL;
   
-  // Railway 会自动注入 DATABASE_URL 环境变量
-  let dbUrl = process.env.DATABASE_URL;
-  
-  // 如果没有，使用 Supabase 直连地址
-  if (!dbUrl || dbUrl.trim() === '') {
-    const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-    dbUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@aws-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require`;
-    console.log('⚠️ 使用 Supabase Pooler 直连地址');
+  // 如果有 Railway 注入的 DATABASE_URL，直接使用
+  if (dbUrl && dbUrl.startsWith('postgresql')) {
+    try {
+      const url = new URL(dbUrl);
+      console.log('🔍 使用 Railway DATABASE_URL:');
+      console.log('   - 主机:', url.hostname);
+      console.log('   - 端口:', url.port || '5432');
+      console.log('   - 数据库:', url.pathname.replace('/', ''));
+    } catch (e) {
+      console.log('🔍 DATABASE_URL:', dbUrl.substring(0, 50) + '...');
+    }
+    return dbUrl;
   }
   
-  // 确保 URL 有效
-  if (!dbUrl || !dbUrl.startsWith('postgresql')) {
-    console.error('❌ 无法获取有效的数据库连接字符串');
-    throw new Error('DATABASE_URL not configured');
-  }
+  // 备用：使用 Supabase 直连地址
+  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
+  const fallbackUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@aws-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require`;
   
-  // 提取主机名用于日志
+  console.log('🔍 使用 Supabase 直连地址');
   try {
-    const url = new URL(dbUrl);
-    console.log('🔍 数据库连接信息:');
+    const url = new URL(fallbackUrl);
     console.log('   - 主机:', url.hostname);
-    console.log('   - 端口:', url.port || '5432');
-    console.log('   - 数据库:', url.pathname.replace('/', ''));
-  } catch (e) {
-    console.log('🔍 数据库连接字符串:', dbUrl.substring(0, 50) + '...');
-  }
+  } catch (e) {}
   
-  return dbUrl;
+  return fallbackUrl;
 }
 
 // 单例 Pool
