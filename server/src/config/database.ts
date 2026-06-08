@@ -1,34 +1,14 @@
 import { Pool } from 'pg';
 
-// Railway 注入的数据库连接环境变量名
-const DB_ENV_VARS = [
-  'DATABASE_URL',
-  'POSTGRES_URL', 
-  'SUPABASE_DB_URL',
-  'DB_URL'
-];
-
 function getDatabaseUrl(): string {
-  // 尝试多个可能的数据库 URL 环境变量
-  for (const envVar of DB_ENV_VARS) {
-    const dbUrl = process.env[envVar];
-    if (dbUrl && dbUrl.startsWith('postgresql')) {
-      try {
-        const url = new URL(dbUrl);
-        console.log(`🔍 使用 ${envVar}:`);
-        console.log('   - 主机:', url.hostname);
-        console.log('   - 端口:', url.port || '5432');
-      } catch (e) {}
-      return dbUrl;
-    }
-  }
-  
-  // 备用：使用 Supabase 直接连接地址
+  // 直接使用 Supabase 直连地址（固定）
   const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-  const fallbackUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres?sslmode=require`;
   
-  console.log('⚠️ 未检测到数据库 URL，使用备用连接...');
-  return fallbackUrl;
+  // 使用 Supabase 的直接数据库连接地址
+  const directUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres?sslmode=require`;
+  
+  console.log('🔍 使用 Supabase 直连地址');
+  return directUrl;
 }
 
 // 单例 Pool
