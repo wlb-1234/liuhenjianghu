@@ -1,5 +1,5 @@
 // 用户统计服务
-import { supabase } from './supabase';
+import { supabase } from '../storage/database/supabase-client';
 
 // 用户等级配置
 export const UserLevel = {
