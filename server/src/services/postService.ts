@@ -64,7 +64,7 @@ export async function createPost(data: {
   const userResult = await p.query(`
     SELECT u.*, ml.level as member_level, ml.region_limit
     FROM users u
-    LEFT JOIN member_levels ml ON u.level = ml.level
+    LEFT JOIN member_levels ml ON u.member_level = ml.level
     WHERE u.id = $1
   `, [data.userId]);
   
@@ -88,7 +88,7 @@ export async function createPost(data: {
     INSERT INTO posts (user_id, content, images, region_code, region_level, status, expire_at, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, 1, $6, NOW(), NOW())
     RETURNING *
-  `, [data.userId, data.content, JSON.stringify(data.images || []), data.region_code, data.region_level, expireAt]);
+  `, [data.userId, data.content, Array.isArray(data.images) ? data.images : [], data.region_code, data.region_level, expireAt]);
   
   // 更新用户发帖计数
   await p.query(`

@@ -25,9 +25,14 @@ const verifyAdmin = async (req: any, res: any, next: Function) => {
   }
 
   try {
-const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const adminId = decoded.adminId || decoded.userId;
     
-    const admins = await query('SELECT * FROM admins WHERE id = $1', [decoded.adminId || decoded.userId]);
+    if (!adminId) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    const admins = await query('SELECT * FROM admins WHERE id = $1', [adminId]);
     
     if (admins.rows.length === 0) {
       return res.status(403).json({ error: 'Forbidden' });
@@ -72,11 +77,15 @@ router.post('/login', async (req: any, res: any) => {
     // 更新最后登录时间（失败不影响登录）
     query('UPDATE admins SET last_login = NOW() WHERE id = $1', [admin.id]).catch(() => {});
 
-    // 记录登录日志（失败不影响登录）
-    query(
-      'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
-      [admin.id, 'login', 'admin login']
-    ).catch((e: any) => console.log('Admin log insert failed:', e?.message));
+    // 记录登录日志（失败不影响登录）- 使用 try/catch 包装
+    try {
+      await query(
+        'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
+        [admin.id, 'login', 'admin login']
+      );
+    } catch (e) {
+      console.log('Admin log insert failed (ignored):', (e as Error).message);
+    }
 
     res.json({
       success: true,
@@ -299,179 +308,53 @@ router.get('/users/:id', verifyAdmin, async (req, res) => {
   }
 });
 
-// Update user member level
-router.put('/users/:id/level', verifyAdmin, async (req: any, res: any) => {
-  try {
-    const { id } = req.params;
-    const level = req.body.level;
-    
-    if (level === undefined) {
-      return res.status(400).json({ error: 'Missing level' });
-    }
-    
-    const levelCheck = await query('SELECT * FROM member_levels WHERE level = $1', [level]);
-    if (levelCheck.rows.length === 0) {
-      return res.status(400).json({ error: 'Invalid level' });
-    }
-    
-    await query(
-      'UPDATE users SET member_level = $1, updated_at = NOW() WHERE id = $2',
-      [level, id]
-    );
-    
-    await query(
-      'INSERT INTO admin_logs (admin_id, action, target_user_id, reason) VALUES ($1, $2, $3, $4)',
-      [req.admin.id, 'change_level', parseInt(id), JSON.stringify({ newLevel: level })]
-    );
-    
-    res.json({ success: true, message: 'Level updated' });
-  } catch (error) {
-    console.error('Update level error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+// ==================== Post Management ====================
 
-// Ban/unban user
-router.put('/users/:id/status', verifyAdmin, async (req: any, res: any) => {
-  try {
-    const { id } = req.params;
-    const banned = req.body.banned;
-    const reason = req.body.reason || '';
-    
-    // member_expire_at: null or past = normal, future date = member active
-    // For ban: set member_expire_at to past date
-    const memberExpireAt = banned ? new Date(Date.now() - 24 * 60 * 60 * 1000) : null;
-    
-    await query(
-      'UPDATE public.users SET member_expire_at = $1, updated_at = NOW() WHERE id = $2',
-      [memberExpireAt, id]
-    );
-    
-    await query(
-      'INSERT INTO admin_logs (admin_id, action, target_user_id, reason) VALUES ($1, $2, $3, $4)',
-      [req.admin.id, banned ? 'ban_user' : 'unban_user', parseInt(id), reason]
-    );
-    
-    res.json({ success: true, message: banned ? 'User banned' : 'User unbanned' });
-  } catch (error) {
-    console.error('Update status error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ==================== Member Levels ====================
-
-// Get member levels list
-router.get('/member-levels', verifyAdmin, async (req, res) => {
-  try {
-    const levels = await query(`
-      SELECT ml.*, 
-             (SELECT COUNT(*) FROM public.users WHERE member_level = ml.level) as user_count
-      FROM member_levels ml
-      ORDER BY ml.level
-    `);
-    
-    res.json({ success: true, data: levels.rows });
-  } catch (error) {
-    console.error('Member levels error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Update member level config
-router.put('/member-levels/:level', verifyAdmin, async (req: any, res: any) => {
-  try {
-    const level = req.params.level;
-    const body = req.body;
-    
-    await query(`
-      UPDATE member_levels 
-      SET name = COALESCE($1, name),
-          post_expire_hours = COALESCE($2, post_expire_hours),
-          max_posts_per_day = COALESCE($3, max_posts_per_day),
-          can_use_ai = COALESCE($4, can_use_ai),
-          monthly_price = COALESCE($5, monthly_price),
-          annual_price = COALESCE($6, annual_price),
-          updated_at = NOW()
-      WHERE level = $7
-    `, [
-      body.name, 
-      body.post_expire_hours, 
-      body.max_posts_per_day, 
-      body.can_use_ai, 
-      body.monthly_price, 
-      body.annual_price,
-      level
-    ]);
-    
-    await query(
-      'INSERT INTO admin_logs (admin_id, action, reason) VALUES ($1, $2, $3)',
-      [req.admin.id, 'update_member_level', JSON.stringify(body)]
-    );
-    
-    res.json({ success: true, message: 'Level config updated' });
-  } catch (error) {
-    console.error('Update member level error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ==================== Earnings ====================
-
-// Get earnings records
-router.get('/earnings', verifyAdmin, async (req: any, res) => {
+// Get all posts
+router.get('/posts', verifyAdmin, async (req: any, res: any) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = (page - 1) * limit;
     
-    let whereClause = 'WHERE 1=1';
-    const params: any[] = [];
-    let paramIndex = 1;
-    
-    if (req.query.type) {
-      whereClause += ` AND e.type = $${paramIndex}`;
-      params.push(req.query.type);
-      paramIndex++;
-    }
-    
-    if (req.query.startDate) {
-      whereClause += ` AND DATE(e.created_at) >= $${paramIndex}`;
-      params.push(req.query.startDate);
-      paramIndex++;
-    }
-    
-    if (req.query.endDate) {
-      whereClause += ` AND DATE(e.created_at) <= $${paramIndex}`;
-      params.push(req.query.endDate);
-      paramIndex++;
-    }
-    
-    const countResult = await query(
-      `SELECT COUNT(*) as total FROM earnings e ${whereClause}`,
-      params
-    );
-    
-    params.push(limit, offset);
-    const earnings = await query(`
-      SELECT e.*
-      FROM earnings e
-      ${whereClause}
-      ORDER BY e.created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `, params);
+    const countResult = await query('SELECT COUNT(*) as total FROM posts');
+    const posts = await query(`
+      SELECT p.*, u.nickname, u.phone
+      FROM posts p
+      LEFT JOIN public.users u ON p.user_id = u.id
+      ORDER BY p.created_at DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
     
     res.json({
       success: true,
       data: {
-        earnings: earnings.rows,
+        posts: posts.rows,
         total: parseInt(countResult.rows[0].total),
         page,
         limit
       }
     });
   } catch (error) {
-    console.error('Earnings error:', error);
+    console.error('Post list error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete post
+router.delete('/posts/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await query('DELETE FROM posts WHERE id = $1', [id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    
+    res.json({ success: true, message: 'Post deleted' });
+  } catch (error) {
+    console.error('Delete post error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -479,21 +362,20 @@ router.get('/earnings', verifyAdmin, async (req: any, res) => {
 // ==================== Admin Logs ====================
 
 // Get admin logs
-router.get('/logs', verifyAdmin, async (req: any, res) => {
+router.get('/logs', verifyAdmin, async (req: any, res: any) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = (page - 1) * limit;
     
+    const countResult = await query('SELECT COUNT(*) as total FROM admin_logs');
     const logs = await query(`
-      SELECT al.*, a.username as admin_username
-      FROM admin_logs al
-      LEFT JOIN admins a ON al.admin_id = a.id
-      ORDER BY al.created_at DESC
+      SELECT l.*, a.username
+      FROM admin_logs l
+      LEFT JOIN admins a ON l.admin_id = a.id
+      ORDER BY l.created_at DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
-    
-    const countResult = await query('SELECT COUNT(*) as total FROM admin_logs');
     
     res.json({
       success: true,
@@ -505,7 +387,7 @@ router.get('/logs', verifyAdmin, async (req: any, res) => {
       }
     });
   } catch (error) {
-    console.error('Logs error:', error);
+    console.error('Log list error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

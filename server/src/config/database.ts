@@ -40,9 +40,9 @@ function getDatabaseUrl(): string {
   let dbUrl = process.env.DATABASE_URL;
   
   if (!dbUrl || dbUrl.trim() === '' || dbUrl.startsWith('ppostgresql')) {
-    // 使用 Supabase 直接连接（正确的 IP 57.182.231.186 + 端口 5432 + SSL 禁用）
-    dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@57.182.231.186:5432/postgres?sslmode=disable';
-    console.log('⚠️ 环境变量无效，使用 Supabase 备用连接 IP');
+    // 使用 Supabase 直接连接（正确的 IP 13.114.6.6 + 端口 5432）
+    dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@13.114.6.6:5432/postgres?sslmode=disable';
+    console.log('⚠️ 环境变量无效，使用 Supabase 直连 IP');
   }
   
   // 提取主机名用于日志
