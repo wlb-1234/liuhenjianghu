@@ -37,16 +37,25 @@ function loadEnvFile(): void {
 function getDatabaseUrl(): string {
   loadEnvFile();
   
-  // 使用 Supabase Pooler 地址（端口 65432）和 SSL
-  // Pooler 负责连接池管理
-  const dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@aws-1-ap-northeast-1.pooler.supabase.com:65432/postgres?sslmode=require';
+  let dbUrl = process.env.DATABASE_URL;
   
-  console.log('🔍 数据库连接信息:');
-  console.log('   - 主机: aws-1-ap-northeast-1.pooler.supabase.com');
-  console.log('   - 端口: 65432 (PgBouncer)');
-  console.log('   - 数据库: postgres');
-  console.log('   - SSL: require');
-  console.log('   - 连接字符串: postgresql://postgres.hmlqsbhbbclbzfuutrie:***@pooler.supabase.com:65432/postgres');
+  if (!dbUrl || dbUrl.trim() === '') {
+    // 使用 Supabase 直接连接（IP + 端口 5432 + SSL 禁用）
+    dbUrl = 'postgresql://postgres.hmlqsbhbbclbzfuutrie:Liuhen2026App@13.114.6.6:5432/postgres?sslmode=disable';
+    console.log('⚠️ 环境变量为空，使用硬编码的 Supabase 连接');
+  }
+  
+  // 提取主机名用于日志
+  try {
+    const url = new URL(dbUrl);
+    console.log('🔍 数据库连接信息:');
+    console.log('   - 主机:', url.hostname);
+    console.log('   - 端口:', url.port || '5432');
+    console.log('   - 数据库:', url.pathname.replace('/', ''));
+    console.log('   - 连接字符串:', url.protocol + '//' + url.username + ':***@' + url.host + url.pathname);
+  } catch (e) {
+    console.log('🔍 数据库连接字符串:', dbUrl.substring(0, 50) + '...');
+  }
   
   return dbUrl;
 }
@@ -65,12 +74,11 @@ export function getPool(): Pool {
   
   poolInstance = new Pool({
     connectionString: dbUrl,
-    ssl: {
-      rejectUnauthorized: false, // 允许自签名证书
-    },
+    // 不启用 SSL，让连接使用纯 TCP
+    ssl: false,
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000, // 增加超时时间
+    connectionTimeoutMillis: 30000,
   });
   
   poolInstance.on('error', (err) => {
@@ -89,7 +97,7 @@ export async function query(text: string, params?: any[]) {
 export async function testConnection() {
   try {
     const pool = getPool();
-    const result = await pool.query('SELECT NOW(), current_database(), inet_server_addr()');
+    const result = await pool.query('SELECT NOW(), current_database()');
     console.log('✅ 数据库连接成功:', result.rows[0]);
     return true;
   } catch (error: any) {
