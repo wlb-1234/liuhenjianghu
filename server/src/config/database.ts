@@ -3,8 +3,8 @@ import { Pool } from 'pg';
 function getDatabaseUrl(): string {
   const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
   
-  // 使用 Supabase 备用连接 IP
-  const directIp = '57.182.231.186';
+  // 使用 Supabase 主库 IP
+const directIp = '172.35.242.99';
   
   console.log(`🔍 使用 Supabase 直连 IP: ${directIp}`);
   
