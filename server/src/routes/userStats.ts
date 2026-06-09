@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { getUserStats, getUserLeaderboard, getOperationStats } from '../services/userStatsService';
+import { getUserStats, getLeaderboard, getOverviewStats } from '../services/userStatsService';
+import { getContentStats } from '../services/userStatsService';
 
 const router = Router();
 
@@ -65,7 +66,7 @@ router.get('/leaderboard/:type', async (req: any, res: any) => {
       return res.status(400).json({ success: false, message: '无效的排行榜类型' });
     }
 
-    const leaderboard = await getUserLeaderboard(type, limit);
+    const leaderboard = await getLeaderboard(type, limit);
     res.json({ success: true, data: leaderboard });
   } catch (error: any) {
     console.error('获取排行榜失败:', error);
@@ -79,7 +80,7 @@ router.get('/leaderboard', async (req: any, res: any) => {
     const type = (req.query.type as string) || 'exp';
     const limit = parseInt(req.query.limit as string) || 20;
 
-    const leaderboard = await getUserLeaderboard(type, limit);
+    const leaderboard = await getLeaderboard(type, limit);
     res.json({ success: true, data: leaderboard });
   } catch (error: any) {
     console.error('获取排行榜失败:', error);
@@ -95,7 +96,7 @@ router.get('/stats/overview', async (req: any, res: any) => {
       return res.status(401).json({ success: false, message: '未登录' });
     }
 
-    const stats = await getOperationStats();
+    const stats = await getOverviewStats();
     res.json({ success: true, data: stats });
   } catch (error: any) {
     console.error('获取运营概览失败:', error);
@@ -106,7 +107,7 @@ router.get('/stats/overview', async (req: any, res: any) => {
 // 兼容旧路由
 router.get('/overview', async (req: any, res: any) => {
   try {
-    const stats = await getOperationStats();
+    const stats = await getOverviewStats();
     res.json({ success: true, data: stats });
   } catch (error: any) {
     console.error('获取运营概览失败:', error);
