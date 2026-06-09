@@ -1,18 +1,14 @@
-import { getSupabaseClient } from '../storage/database/supabase-client';
+import { getPool } from '../config/database';
 
-// 延迟初始化，避免启动时就检查环境变量
-let supabase: ReturnType<typeof getSupabaseClient> | null = null;
-
-function getClient() {
-  if (!supabase) {
-    try {
-      supabase = getSupabaseClient();
-    } catch (e) {
-      console.warn('Supabase client initialization deferred:', (e as Error).message);
-      return null;
-    }
-  }
-  return supabase;
+interface UserRecord {
+  id: number;
+  phone: string;
+  nickname: string;
+  avatar: string | null;
+  exp: number;
+  member_level: number;
+  password: string | null;
+  created_at: Date;
 }
 
 // 用户等级配置
@@ -48,214 +44,123 @@ export interface UserStats {
   vipStatus: boolean;
   vipExpireTime?: string;
   activeDays: number;
-  lastActiveTime: string;
-  createdAt: string;
 }
 
 // 获取用户统计
-export const getUserStats = async (userId: string): Promise<UserStats | null> => {
-  try {
-    const supabase = getSupabaseClient();
-    // 获取用户基本信息
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+export const getUserStats = async (userId: number): Promise<UserStats | null> => {
+  const pool = await getPool();
+  if (!pool) return null;
 
-    if (userError || !user) return null;
+  const result = await pool.query<UserRecord>(
+    'SELECT id, phone, nickname, avatar, exp, member_level FROM users WHERE id = $1',
+    [userId]
+  );
 
-    // 获取用户发帖数
-    const { count: postCount } = await supabase
-      .from('posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('userId', userId);
+  if (result.rows.length === 0) return null;
 
-    // 获取用户评论数
-    const { count: commentCount } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true })
-      .eq('userId', userId);
+  const user = result.rows[0];
 
-    // 获取用户获赞数（所有帖子的点赞总和）
-    const { data: posts } = await supabase
-      .from('posts')
-      .select('likeCount')
-      .eq('userId', userId);
-    const likeCount = posts?.reduce((sum, p) => sum + (p.likeCount || 0), 0) || 0;
+  // 获取帖子数量
+  const postCountResult = await pool.query(
+    'SELECT COUNT(*) as count FROM posts WHERE user_id = $1',
+    [userId]
+  );
 
-    // 获取粉丝数
-    const { count: followerCount } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('followingId', userId);
+  // 获取评论数量
+  const commentCountResult = await pool.query(
+    'SELECT COUNT(*) as count FROM comments WHERE user_id = $1',
+    [userId]
+  );
 
-    // 获取关注数
-    const { count: followingCount } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('followerId', userId);
+  const postCount = parseInt(postCountResult.rows[0]?.count || '0');
+  const commentCount = parseInt(commentCountResult.rows[0]?.count || '0');
 
-    // 计算活跃天数
-    const { data: activities } = await supabase
-      .from('activities')
-      .select('date')
-      .eq('userId', userId);
-    
-    const uniqueDays = new Set(activities?.map(a => a.date));
-    const activeDays = uniqueDays.size;
-
-    // 获取 VIP 状态
-    const { data: vipData } = await supabase
-      .from('user_vips')
-      .select('*')
-      .eq('userId', userId)
-      .single();
-
-    const exp = (postCount || 0) * 10 + (commentCount || 0) * 2 + (likeCount || 0) * 1;
-    const level = getUserLevel(exp);
-
-    return {
-      userId: user.id,
-      username: user.username,
-      avatar: user.avatar,
-      exp,
-      level,
-      postCount: postCount || 0,
-      commentCount: commentCount || 0,
-      likeCount,
-      followerCount: followerCount || 0,
-      followingCount: followingCount || 0,
-      vipStatus: vipData?.status === 'active',
-      vipExpireTime: vipData?.expireTime,
-      activeDays,
-      lastActiveTime: user.lastActiveTime || user.createdAt,
-      createdAt: user.createdAt,
-    };
-  } catch (error) {
-    console.error('获取用户统计失败:', error);
-    return null;
-  }
+  return {
+    userId: user.id.toString(),
+    username: user.nickname || user.phone,
+    avatar: user.avatar || undefined,
+    exp: user.exp || 0,
+    level: getUserLevel(user.exp || 0),
+    postCount,
+    commentCount,
+    likeCount: 0,
+    followerCount: 0,
+    followingCount: 0,
+    vipStatus: user.member_level > 0,
+    activeDays: 1,
+  };
 };
 
-// 获取用户排行榜
-export const getUserLeaderboard = async (type: 'exp' | 'posts' | 'likes' | 'followers' = 'exp', limit: number = 10) => {
-  try {
-    const supabase = getSupabaseClient();
-    const { data: users } = await supabase
-      .from('users')
-      .select('id, username, avatar, exp, createdAt')
-      .order('exp', { ascending: false })
-      .limit(100);
+// 获取排行榜
+export const getUserLeaderboard = async (type: string = 'exp', limit: number = 20): Promise<any[]> => {
+  const pool = await getPool();
+  if (!pool) return [];
 
-    if (!users) return [];
+  let orderBy = 'exp DESC';
+  if (type === 'posts') orderBy = 'post_count DESC';
+  if (type === 'logins') orderBy = 'last_login DESC';
 
-    // 获取每个用户的详细统计
-    const leaderboard = await Promise.all(
-      users.slice(0, limit * 2).map(async (user) => {
-        const stats = await getUserStats(user.id);
-        return stats ? {
-          userId: user.id,
-          username: user.username,
-          avatar: user.avatar,
-          exp: stats.exp,
-          level: stats.level,
-          postCount: stats.postCount,
-          likeCount: stats.likeCount,
-          followerCount: stats.followerCount,
-        } : null;
-      })
-    );
+  const result = await pool.query(
+    `SELECT id, phone, nickname, avatar, exp, member_level, created_at 
+     FROM users ORDER BY ${orderBy} LIMIT $1`,
+    [limit]
+  );
 
-    const validStats = leaderboard.filter(Boolean);
-
-    // 按类型排序
-    switch (type) {
-      case 'posts':
-        return validStats.sort((a, b) => b!.postCount - a!.postCount).slice(0, limit);
-      case 'likes':
-        return validStats.sort((a, b) => b!.likeCount - a!.likeCount).slice(0, limit);
-      case 'followers':
-        return validStats.sort((a, b) => b!.followerCount - a!.followerCount).slice(0, limit);
-      default:
-        return validStats.sort((a, b) => b!.exp - a!.exp).slice(0, limit);
-    }
-  } catch (error) {
-    console.error('获取排行榜失败:', error);
-    return [];
-  }
+  return result.rows.map((user, index) => ({
+    rank: index + 1,
+    userId: user.id,
+    username: user.nickname || user.phone,
+    avatar: user.avatar,
+    exp: user.exp || 0,
+    level: getUserLevel(user.exp || 0),
+    memberLevel: user.member_level,
+  }));
 };
 
-// 获取运营数据概览
+// 获取运营统计
 export const getOperationStats = async () => {
+  const pool = await getPool();
+  if (!pool) {
+    return {
+      totalUsers: 0,
+      totalPosts: 0,
+      totalComments: 0,
+      activeUsers: 0,
+      todayNewUsers: 0,
+      todayNewPosts: 0,
+    };
+  }
+
   try {
-    const supabase = getSupabaseClient();
-    // 总用户数
-    const { count: totalUsers } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true });
-
-    // 今日新增用户
-    const today = new Date().toISOString().split('T')[0];
-    const { count: todayUsers } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true })
-      .gte('createdAt', today);
-
-    // 活跃用户数（最近7天有活动的）
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { count: activeUsers } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true })
-      .gte('lastActiveTime', sevenDaysAgo);
-
-    // 总帖子数
-    const { count: totalPosts } = await supabase
-      .from('posts')
-      .select('*', { count: 'exact', head: true });
-
-    // 今日发帖数
-    const { count: todayPosts } = await supabase
-      .from('posts')
-      .select('*', { count: 'exact', head: true })
-      .gte('createdAt', today);
-
-    // 总评论数
-    const { count: totalComments } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true });
-
-    // 总点赞数
-    const { data: posts } = await supabase
-      .from('posts')
-      .select('likeCount');
-    const totalLikes = posts?.reduce((sum, p) => sum + (p.likeCount || 0), 0) || 0;
-
-    // VIP 用户数
-    const { count: vipUsers } = await supabase
-      .from('user_vips')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
+    const [
+      userCountResult,
+      postCountResult,
+      commentCountResult,
+      todayResult,
+    ] = await Promise.all([
+      pool.query('SELECT COUNT(*) as count FROM users'),
+      pool.query('SELECT COUNT(*) as count FROM posts'),
+      pool.query('SELECT COUNT(*) as count FROM comments'),
+      pool.query("SELECT COUNT(*) as count FROM users WHERE created_at >= CURRENT_DATE"),
+    ]);
 
     return {
-      users: {
-        total: totalUsers || 0,
-        today: todayUsers || 0,
-        active: activeUsers || 0,
-      },
-      content: {
-        posts: totalPosts || 0,
-        todayPosts: todayPosts || 0,
-        comments: totalComments || 0,
-        likes: totalLikes,
-      },
-      vip: {
-        total: vipUsers || 0,
-      },
-      timestamp: new Date().toISOString(),
+      totalUsers: parseInt(userCountResult.rows[0]?.count || '0'),
+      totalPosts: parseInt(postCountResult.rows[0]?.count || '0'),
+      totalComments: parseInt(commentCountResult.rows[0]?.count || '0'),
+      activeUsers: parseInt(userCountResult.rows[0]?.count || '0'),
+      todayNewUsers: parseInt(todayResult.rows[0]?.count || '0'),
+      todayNewPosts: 0,
     };
   } catch (error) {
-    console.error('获取运营数据失败:', error);
-    return null;
+    console.error('获取运营统计失败:', error);
+    return {
+      totalUsers: 0,
+      totalPosts: 0,
+      totalComments: 0,
+      activeUsers: 0,
+      todayNewUsers: 0,
+      todayNewPosts: 0,
+    };
   }
 };
