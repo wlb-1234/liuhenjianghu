@@ -50,8 +50,7 @@ router.post('/upgrade', authMiddleware, async (req: AuthRequest, res: Response) 
     // 更新用户会员等级
     const user = await updateUser(req.userId!, {
       member_level: level,
-      member_expire_at: expireAt,
-      updated_at: new Date()
+      member_expire_at: expireAt
     });
     
     res.json({

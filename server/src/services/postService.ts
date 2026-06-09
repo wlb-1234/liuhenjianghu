@@ -85,8 +85,8 @@ export async function createPost(data: {
   expireAt.setHours(expireAt.getHours() + 24);
   
   const result = await p.query(`
-    INSERT INTO posts (user_id, content, images, region_code, region_level, status, expire_at, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, 1, $6, NOW(), NOW())
+    INSERT INTO posts (user_id, content, images, region_code, region_level, status, expire_at, created_at)
+    VALUES ($1, $2, $3, $4, $5, 1, $6, NOW())
     RETURNING *
   `, [data.userId, data.content, Array.isArray(data.images) ? data.images : [], data.region_code, data.region_level, expireAt]);
   

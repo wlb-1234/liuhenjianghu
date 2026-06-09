@@ -120,10 +120,10 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       "SELECT COUNT(*) as count FROM posts WHERE DATE(created_at) = CURRENT_DATE"
     );
     const activeUsers = await query(
-      "SELECT COUNT(*) as count FROM public.users WHERE updated_at >= CURRENT_DATE - INTERVAL '7 days'"
+      "SELECT COUNT(*) as count FROM public.users WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'"
     );
     const todayActiveUsers = await query(
-      "SELECT COUNT(*) as count FROM public.users WHERE DATE(updated_at) = CURRENT_DATE"
+      "SELECT COUNT(*) as count FROM public.users WHERE DATE(created_at) = CURRENT_DATE"
     );
     const totalEarnings = await query(
       'SELECT COALESCE(SUM(amount), 0) as total FROM earnings'
@@ -251,7 +251,7 @@ router.get('/users', verifyAdmin, async (req: any, res: any) => {
     params.push(limit, offset);
     const users = await query(`
       SELECT u.id, u.phone, u.nickname, u.member_level, 
-             u.created_at, u.updated_at,
+             u.created_at,
              ml.name as member_level_name,
              (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
       FROM public.users u
@@ -283,7 +283,7 @@ router.get('/users/:id', verifyAdmin, async (req, res) => {
     
     const user = await query(`
       SELECT u.id, u.phone, u.nickname, u.member_level, u.member_expire_at,
-             u.created_at, u.updated_at,
+             u.created_at,
              ml.name as member_level_name, ml.post_expire_hours, ml.max_posts_per_day
       FROM public.users u
       LEFT JOIN member_levels ml ON u.member_level = ml.level

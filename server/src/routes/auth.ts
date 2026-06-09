@@ -214,8 +214,6 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
       return res.status(400).json({ error: '没有需要更新的字段' });
     }
     
-    updates.updated_at = new Date();
-    
     const user = await updateUser(req.userId!, updates);
     
     res.json({ 

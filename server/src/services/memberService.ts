@@ -20,7 +20,7 @@ export async function getAllMemberLevels() {
 export async function updateMemberLevel(userId: number, level: number, expireAt?: Date) {
   const p = getPool();
   const result = await p.query(
-    `UPDATE users SET member_level = $1, member_expire_at = $2, updated_at = NOW()
+    `UPDATE users SET member_level = $1, member_expire_at = $2
      WHERE id = $3 RETURNING *`,
     [level, expireAt || null, userId]
   );

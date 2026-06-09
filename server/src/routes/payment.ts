@@ -120,8 +120,7 @@ router.post('/pay/simulate', authMiddleware, async (req: AuthRequest, res: Respo
 
     await updateUser(req.userId!, {
       member_level: order.member_level,
-      member_expire_at: expireAt,
-      updated_at: new Date()
+      member_expire_at: expireAt
     });
 
     const levelConfig = await getMemberLevelConfig(order.member_level);

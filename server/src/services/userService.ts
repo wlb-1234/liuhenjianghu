@@ -21,8 +21,8 @@ export async function createUser(data: {
 }) {
   const p = getPool();
   const result = await p.query(
-    `INSERT INTO users (phone, nickname, password_hash, province_code, city_code, district_code, town_code, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+    `INSERT INTO users (phone, nickname, password_hash, province_code, city_code, district_code, town_code, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
      RETURNING *`,
     [data.phone, data.nickname, data.password_hash, data.province_code || null, data.city_code || null, data.district_code || null, data.town_code || null]
   );
@@ -50,7 +50,6 @@ export async function updateUser(id: number, data: any) {
     idx++;
   }
 
-  fields.push(`updated_at = NOW()`);
   values.push(id);
 
   const result = await p.query(
