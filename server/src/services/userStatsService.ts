@@ -1,4 +1,18 @@
-import { getPool } from '../config/database';
+import pg from 'pg';
+const { Pool } = pg;
+
+// 使用与 auth 相同的数据库连接
+const pool = new Pool({
+  host: '13.114.6.6',
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres.hmlqsbhbbclbzfuutrie',
+  password: 'Liuhen2026App',
+  ssl: false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
 
 interface UserRecord {
   id: number;
@@ -7,8 +21,6 @@ interface UserRecord {
   avatar: string | null;
   exp: number;
   member_level: number;
-  password: string | null;
-  created_at: Date;
 }
 
 // 用户等级配置
@@ -48,119 +60,88 @@ export interface UserStats {
 
 // 获取用户统计
 export const getUserStats = async (userId: number): Promise<UserStats | null> => {
-  const pool = await getPool();
-  if (!pool) return null;
-
-  const result = await pool.query<UserRecord>(
-    'SELECT id, phone, nickname, avatar, exp, member_level FROM users WHERE id = $1',
-    [userId]
-  );
-
-  if (result.rows.length === 0) return null;
-
-  const user = result.rows[0];
-
-  // 获取帖子数量
-  const postCountResult = await pool.query(
-    'SELECT COUNT(*) as count FROM posts WHERE user_id = $1',
-    [userId]
-  );
-
-  // 获取评论数量
-  const commentCountResult = await pool.query(
-    'SELECT COUNT(*) as count FROM comments WHERE user_id = $1',
-    [userId]
-  );
-
-  const postCount = parseInt(postCountResult.rows[0]?.count || '0');
-  const commentCount = parseInt(commentCountResult.rows[0]?.count || '0');
-
-  return {
-    userId: user.id.toString(),
-    username: user.nickname || user.phone,
-    avatar: user.avatar || undefined,
-    exp: user.exp || 0,
-    level: getUserLevel(user.exp || 0),
-    postCount,
-    commentCount,
-    likeCount: 0,
-    followerCount: 0,
-    followingCount: 0,
-    vipStatus: user.member_level > 0,
-    activeDays: 1,
-  };
-};
-
-// 获取排行榜
-export const getUserLeaderboard = async (type: string = 'exp', limit: number = 20): Promise<any[]> => {
-  const pool = await getPool();
-  if (!pool) return [];
-
-  let orderBy = 'exp DESC';
-  if (type === 'posts') orderBy = 'post_count DESC';
-  if (type === 'logins') orderBy = 'last_login DESC';
-
-  const result = await pool.query(
-    `SELECT id, phone, nickname, avatar, exp, member_level, created_at 
-     FROM users ORDER BY ${orderBy} LIMIT $1`,
-    [limit]
-  );
-
-  return result.rows.map((user, index) => ({
-    rank: index + 1,
-    userId: user.id,
-    username: user.nickname || user.phone,
-    avatar: user.avatar,
-    exp: user.exp || 0,
-    level: getUserLevel(user.exp || 0),
-    memberLevel: user.member_level,
-  }));
-};
-
-// 获取运营统计
-export const getOperationStats = async () => {
-  const pool = await getPool();
-  if (!pool) {
-    return {
-      totalUsers: 0,
-      totalPosts: 0,
-      totalComments: 0,
-      activeUsers: 0,
-      todayNewUsers: 0,
-      todayNewPosts: 0,
-    };
-  }
-
   try {
-    const [
-      userCountResult,
-      postCountResult,
-      commentCountResult,
-      todayResult,
-    ] = await Promise.all([
-      pool.query('SELECT COUNT(*) as count FROM users'),
-      pool.query('SELECT COUNT(*) as count FROM posts'),
-      pool.query('SELECT COUNT(*) as count FROM comments'),
-      pool.query("SELECT COUNT(*) as count FROM users WHERE created_at >= CURRENT_DATE"),
+    const result = await pool.query<UserRecord>(
+      'SELECT id, phone, nickname, avatar, exp, member_level FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const user = result.rows[0];
+    return {
+      userId: user.id.toString(),
+      username: user.nickname || user.phone,
+      avatar: user.avatar || undefined,
+      exp: user.exp || 0,
+      level: getUserLevel(user.exp || 0),
+      postCount: 0,
+      commentCount: 0,
+      likeCount: 0,
+      followerCount: 0,
+      followingCount: 0,
+      vipStatus: user.member_level > 0,
+      activeDays: 0,
+    };
+  } catch (error) {
+    console.error('userStatsService.getUserStats error:', error);
+    return null;
+  }
+};
+
+// 获取用户排行榜
+export const getUserLeaderboard = async (type: string, limit: number = 20) => {
+  try {
+    let orderColumn = 'exp';
+    if (type === 'posts') orderColumn = 'member_level';
+    
+    const result = await pool.query<UserRecord>(
+      `SELECT id, phone, nickname, avatar, exp, member_level 
+       FROM users 
+       ORDER BY ${orderColumn} DESC NULLS LAST 
+       LIMIT $1`,
+      [limit]
+    );
+
+    return result.rows.map((user, index) => ({
+      rank: index + 1,
+      userId: user.id,
+      username: user.nickname || user.phone,
+      avatar: user.avatar,
+      exp: user.exp || 0,
+      level: getUserLevel(user.exp || 0),
+    }));
+  } catch (error) {
+    console.error('userStatsService.getUserLeaderboard error:', error);
+    return [];
+  }
+};
+
+// 获取运营概览
+export const getOperationStats = async () => {
+  try {
+    const [userCount, memberCount] = await Promise.all([
+      pool.query('SELECT COUNT(*) FROM users'),
+      pool.query('SELECT COUNT(*) FROM users WHERE member_level > 0'),
     ]);
 
     return {
-      totalUsers: parseInt(userCountResult.rows[0]?.count || '0'),
-      totalPosts: parseInt(postCountResult.rows[0]?.count || '0'),
-      totalComments: parseInt(commentCountResult.rows[0]?.count || '0'),
-      activeUsers: parseInt(userCountResult.rows[0]?.count || '0'),
-      todayNewUsers: parseInt(todayResult.rows[0]?.count || '0'),
-      todayNewPosts: 0,
-    };
-  } catch (error) {
-    console.error('获取运营统计失败:', error);
-    return {
-      totalUsers: 0,
+      totalUsers: parseInt(userCount.rows[0].count),
+      activeUsers: parseInt(userCount.rows[0].count),
+      totalMembers: parseInt(memberCount.rows[0].count),
       totalPosts: 0,
       totalComments: 0,
+      todayActiveUsers: parseInt(userCount.rows[0].count),
+    };
+  } catch (error) {
+    console.error('userStatsService.getOperationStats error:', error);
+    return {
+      totalUsers: 0,
       activeUsers: 0,
-      todayNewUsers: 0,
-      todayNewPosts: 0,
+      totalMembers: 0,
+      totalPosts: 0,
+      totalComments: 0,
+      todayActiveUsers: 0,
     };
   }
 };
