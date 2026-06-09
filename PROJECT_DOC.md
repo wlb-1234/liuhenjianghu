@@ -365,22 +365,89 @@ COZE_SUPABASE_ANON_KEY=<your-anon-key>
 COZE_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 
 # Supabase 直连 IP (Railway 部署用)
-# 主机: 13.114.6.6
-# 数据库: postgres
-# 用户: postgres.hmlqsbhbbclbzfuutrie
-# 密码: Liuhen2026App
+## 数据库连接
 
-# JWT
-JWT_SECRET=<your-jwt-secret>
+### 连接方式说明
 
-# 跳过 SSL 验证
+| 连接类型 | 地址 | 用途 | 表结构 |
+|---------|------|------|--------|
+| Pooler | `aws-ap-southeast-1.pooler.supabase.com:65432` | 应用默认 | ⚠️ 可能缺少字段 |
+| 直连域名 | `db.hmlqsbhbbclbzfuutrie.supabase.co` | 需要 DNS 解析 | ✅ 完整 |
+| 直连 IP | `13.114.6.6:5432` | Railway 部署用 | ✅ 完整 |
+
+### Railway 部署数据库配置
+
+Railway 容器无法解析 Supabase 域名，需要硬编码 IP：
+
+```typescript
+// server/src/config/database.ts
+const DB_CONFIG = {
+  host: '13.114.6.6',      // Supabase 直连 IP
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres.hmlqsbhbbclbzfuutrie',
+  password: 'Liuhen2026App',
+  ssl: false,               // 禁用 SSL
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+};
+```
+
+### Railway 环境变量
+
+```env
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-### 前端必需
-```env
-EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu-production.up.railway.app
+### ⚠️ 重要注意事项
+
+1. **Railway PostgreSQL 插件问题**
+   - Railway 项目级的 PostgreSQL 插件会覆盖 `DATABASE_URL`
+   - 解决方案：代码中硬编码 Supabase IP，不用环境变量
+
+2. **Railway 无法解析域名**
+   - `pooler.supabase.com` → 需要用 IP `13.114.6.6`
+   - `db.hmlqsbhbbclbzfuutrie.supabase.co` → 可能解析失败
+
+3. **数据库字段差异**
+   - 主库（通过 exec_sql 访问）和 Railway 读副本字段可能不同
+   - 当前代码已适配 Railway 数据库（使用 `password` 而非 `password_hash`，无 `exp` 列）
+
+### 本地开发数据库连接
+
+本地开发环境直接使用 Supabase Pooler：
+
+```typescript
+// 使用 Supabase 官方客户端
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 ```
+
+### 恢复数据库表结构
+
+如果需要在新 Supabase 项目初始化表结构，执行：
+
+```sql
+-- users 表（基础字段）
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  phone VARCHAR(20) UNIQUE NOT NULL,
+  nickname VARCHAR(50),
+  avatar VARCHAR(500),
+  password VARCHAR(255),
+  region_code VARCHAR(10),
+  vip_level INTEGER DEFAULT 0,
+  vip_expires_at TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'active',
+  last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 其他表结构参考 PROJECT_DOC.md 完整列表
+```
+
+---
 
 ## 部署配置
 
