@@ -7,8 +7,13 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 // Create single pool instance using environment variable
+// 使用 Supabase 主库（Railway PostgreSQL 插件会覆盖 DATABASE_URL）
+const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
+const dbHost = '172.35.242.99'; // Supabase 主库 IP
+const dbUrl = `postgresql://postgres:${dbPassword}@${dbHost}:5432/postgres`;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   ssl: { rejectUnauthorized: false }
 });
 
