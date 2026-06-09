@@ -1,13 +1,12 @@
 import { Pool } from 'pg';
 
 function getDatabaseUrl(): string {
-  // 直接使用 Supabase 直连地址（固定）
   const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
   
-  // 使用 Supabase 的直接数据库连接地址
-  const directUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres?sslmode=require`;
+  // 使用 Supabase 直连地址，禁用 IPv6，强制 IPv4
+  const directUrl = `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres?sslmode=require&ssl=1&family=4`;
   
-  console.log('🔍 使用 Supabase 直连地址');
+  console.log('🔍 使用 Supabase 直连地址 (IPv4 only)');
   return directUrl;
 }
 
@@ -27,6 +26,8 @@ export function getPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
+    // 强制使用 IPv4
+    statement_timeout: 30000,
   });
   
   poolInstance.on('error', (err) => {
