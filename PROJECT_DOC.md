@@ -449,6 +449,31 @@ CREATE TABLE users (
 
 ---
 
+## 安全机制 (2024-06-10)
+
+### 已实现的安全措施
+
+| 安全项 | 实现方式 | 说明 |
+|--------|----------|------|
+| 密码加密 | bcrypt | 密码使用 bcrypt 哈希存储 |
+| SQL 注入防护 | 参数化查询 | 所有 SQL 使用 `$1, $2` 参数 |
+| XSS 防护 | 输入过滤 + HTML转义 | `client/utils/xss.ts` |
+| CSRF 防护 | CSRF Token | POST/PUT/DELETE 需验证 |
+| 越权访问 | 认证中间件 | 敏感接口需登录 |
+| 日志脱敏 | 敏感字段屏蔽 | password/token 显示为 `***` |
+
+### 安全配置
+
+```typescript
+// 后端 CSRF 中间件
+// server/src/middleware/csrfProtection.ts
+
+// 前端 XSS 防护
+// client/utils/xss.ts
+```
+
+---
+
 ## 部署配置
 
 ### Railway
