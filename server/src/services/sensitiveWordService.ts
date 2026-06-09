@@ -82,6 +82,29 @@ class SensitiveWordService {
     return this.wordSet.some(word => lowerText.includes(word.toLowerCase()));
   }
 
+  // 检查文本，返回详细结果
+  checkText(text: string): { hasSensitive: boolean; words: string[]; filtered: string } {
+    const lowerText = text.toLowerCase();
+    const found: string[] = [];
+    
+    for (const word of this.wordSet) {
+      if (lowerText.includes(word.toLowerCase())) {
+        found.push(word);
+      }
+    }
+    
+    let filtered = text;
+    found.forEach(word => {
+      filtered = filtered.replace(new RegExp(word, 'gi'), '*'.repeat(word.length));
+    });
+    
+    return {
+      hasSensitive: found.length > 0,
+      words: found,
+      filtered
+    };
+  }
+
   // 获取所有敏感词
   getWords(): Array<{ word: string; category: string; level: number }> {
     return builtInWords;

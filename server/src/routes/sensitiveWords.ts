@@ -4,6 +4,20 @@ import { sensitiveWordService } from '../services/sensitiveWordService';
 
 const router = Router();
 
+// 检测文本是否包含敏感词（公开接口）
+router.post('/check', async (req: any, res: any) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.json({ success: true, data: { hasSensitive: false, words: [] } });
+    }
+    const result = sensitiveWordService.checkText(text);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // 获取敏感词列表
 router.get('/', authMiddleware, async (req: any, res: any) => {
   try {
