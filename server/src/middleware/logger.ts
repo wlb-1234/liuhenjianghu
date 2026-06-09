@@ -3,6 +3,27 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from './auth';
 
+// 敏感字段列表
+const SENSITIVE_FIELDS = [
+  'password', 'password_hash', 'token', 'access_token', 'refresh_token',
+  'secret', 'api_key', 'private_key', 'authorization', 'cookie',
+  'phone', 'email', 'id_card', 'bank_card'
+];
+
+// 日志脱敏函数
+export const sanitizeLogData = (data: any): any => {
+  if (!data) return data;
+  if (typeof data !== 'object') return data;
+  
+  const sanitized = { ...data };
+  for (const field of SENSITIVE_FIELDS) {
+    if (sanitized[field]) {
+      sanitized[field] = '[REDACTED]';
+    }
+  }
+  return sanitized;
+};
+
 // 日志存储（生产环境应发送到日志服务）
 interface LogEntry {
   id: string;

@@ -8,6 +8,7 @@ import { requestLogger } from './middleware/logger';
 import logsRouter from './middleware/logger';
 import { rateLimiters } from './middleware/rateLimiter';
 import { createCacheRouter } from './middleware/cache';
+import { csrfProtection } from './middleware/csrfProtection';
 
 const app = express();
 const PORT = process.env.PORT || 9091;
@@ -81,5 +82,8 @@ app.listen(PORT, () => {
   console.log('╚════════════════════════════════════════════╝');
   console.log('');
 });
+
+// CSRF 防护（仅对需要认证的 API 生效）
+app.use('/api/v1', csrfProtection);
 
 export default app;

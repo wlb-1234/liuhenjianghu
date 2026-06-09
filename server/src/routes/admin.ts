@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
@@ -60,17 +60,10 @@ router.post('/login', async (req: any, res: any) => {
       return res.status(400).json({ error: 'Missing credentials' });
     }
     
-    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-    const admins = await query(
-      'SELECT id, username, role FROM admins WHERE username = $1 AND password = $2',
-      [username, passwordHash]
-    );
-    
-    if (admins.rows.length === 0) {
+    // 验证密码
+    if (!admin || !await bcrypt.compare(password, admin.password)) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
-    const admin = admins.rows[0];
     
     // 生成 JWT token
     const token = jwt.sign(
@@ -179,18 +172,18 @@ router.get('/stats/trend', verifyAdmin, async (req: any, res) => {
     const userTrend = await query(`
       SELECT DATE(created_at) as date, COUNT(*) as count
       FROM public.users
-      WHERE created_at >= CURRENT_DATE - INTERVAL '${daysNum} days'
+      WHERE created_at >= CURRENT_DATE - ($1 || ' days')::interval
       GROUP BY DATE(created_at)
       ORDER BY date
-    `);
+    `, [daysNum]);
     
     const postTrend = await query(`
       SELECT DATE(created_at) as date, COUNT(*) as count
       FROM posts
-      WHERE created_at >= CURRENT_DATE - INTERVAL '${daysNum} days'
+      WHERE created_at >= CURRENT_DATE - ($1 || ' days')::interval
       GROUP BY DATE(created_at)
       ORDER BY date
-    `);
+    `, [daysNum]);
     
     const earningTrend = await query(`
       SELECT DATE(created_at) as date, SUM(amount) as total
