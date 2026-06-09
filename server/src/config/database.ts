@@ -3,13 +3,12 @@ import { Pool } from 'pg';
 function getDatabaseUrl(): string {
   const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
   
-  // 使用 Supabase 主库 IP
-const directIp = '172.35.242.99';
+  // 使用 Supabase 直连 IP
+  const directIp = '13.114.6.6';
   
   console.log(`🔍 使用 Supabase 直连 IP: ${directIp}`);
   
-  // 不指定 sslmode，让 pg 库自动处理
-  return `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@${directIp}:5432/postgres`;
+  return `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@${directIp}:5432/postgres?sslmode=disable`;
 }
 
 // 单例 Pool
