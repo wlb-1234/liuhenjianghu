@@ -6,14 +6,17 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
+# 复制 server 目录的 package.json
 COPY server/package*.json ./
 
 RUN pnpm install --ignore-scripts
 
+# 复制 server 源代码
 COPY server/ ./
 
+# 构建
 RUN pnpm run build
 
-EXPOSE 8080
+EXPOSE 5000
 
-CMD ["node", "dist/index.js"]
+CMD ["pnpm", "start"]
