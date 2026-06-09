@@ -26,7 +26,7 @@ export const users = pgTable("users", {
 	phone: varchar({ length: 20 }).notNull(),
 	nickname: varchar({ length: 50 }).notNull(),
 	avatar: varchar({ length: 500 }),
-	passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+	passwordHash: varchar("password", { length: 255 }).notNull(),
 	provinceCode: varchar("province_code", { length: 20 }),
 	cityCode: varchar("city_code", { length: 20 }),
 	districtCode: varchar("district_code", { length: 20 }),

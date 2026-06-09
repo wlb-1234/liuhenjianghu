@@ -13,7 +13,7 @@ export async function getUserByPhone(phone: string) {
 export async function createUser(data: {
   phone: string;
   nickname: string;
-  password_hash: string;
+  password: string;
   province_code?: string;
   city_code?: string;
   district_code?: string;
@@ -21,10 +21,10 @@ export async function createUser(data: {
 }) {
   const p = getPool();
   const result = await p.query(
-    `INSERT INTO users (phone, nickname, password_hash, province_code, city_code, district_code, town_code, created_at)
+    `INSERT INTO users (phone, nickname, password, province_code, city_code, district_code, town_code, created_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
      RETURNING *`,
-    [data.phone, data.nickname, data.password_hash, data.province_code || null, data.city_code || null, data.district_code || null, data.town_code || null]
+    [data.phone, data.nickname, data.password, data.province_code || null, data.city_code || null, data.district_code || null, data.town_code || null]
   );
   return result.rows[0];
 }
@@ -94,7 +94,7 @@ export async function verifyAdmin(username: string, password: string) {
   if (result.rows.length === 0) return null;
   
   const admin = result.rows[0];
-  const isValid = await bcrypt.compare(password, admin.password_hash);
+  const isValid = await bcrypt.compare(password, admin.password);
   if (!isValid) return null;
   
   return admin;
@@ -104,7 +104,7 @@ export async function createAdmin(username: string, password: string) {
   const p = getPool();
   const passwordHash = await bcrypt.hash(password, 10);
   const result = await p.query(
-    `INSERT INTO admins (username, password_hash, created_at)
+    `INSERT INTO admins (username, password, created_at)
      VALUES ($1, $2, NOW()) RETURNING *`,
     [username, passwordHash]
   );

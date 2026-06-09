@@ -72,13 +72,13 @@ router.post('/register', async (req: Request, res: Response) => {
     }
     
     // 加密密码
-    const password_hash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     
     // 创建用户
     const user = await createUser({
       phone,
       nickname,
-      password_hash,
+      hashedPassword,
       province_code,
       city_code,
       district_code,
@@ -129,7 +129,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // 验证密码
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: '手机号或密码错误' });
     }

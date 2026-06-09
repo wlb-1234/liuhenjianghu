@@ -62,7 +62,7 @@ router.post('/login', async (req: any, res: any) => {
     
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     const admins = await query(
-      'SELECT id, username, role FROM admins WHERE username = $1 AND password_hash = $2',
+      'SELECT id, username, role FROM admins WHERE username = $1 AND password = $2',
       [username, passwordHash]
     );
     
