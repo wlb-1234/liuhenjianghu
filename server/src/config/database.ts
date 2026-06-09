@@ -8,7 +8,7 @@ function getDatabaseUrl(): string {
   
   console.log(`🔍 使用 Supabase 直连 IP: ${directIp}`);
   
-  // 尝试不同的 SSL 模式
+  // 不指定 sslmode，让 pg 库自动处理
   return `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@${directIp}:5432/postgres`;
 }
 
@@ -28,8 +28,6 @@ export function getPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
-    // 尝试不同的 SSL 配置
-    ssl: process.env.NODE_ENV === 'production' ? true : false,
   });
   
   poolInstance.on('error', (err) => {
