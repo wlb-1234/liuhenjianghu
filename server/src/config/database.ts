@@ -8,8 +8,8 @@ function getDatabaseUrl(): string {
   
   console.log(`🔍 使用 Supabase 直连 IP: ${directIp}`);
   
-  // 使用 require SSL 模式
-  return `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@${directIp}:5432/postgres?sslmode=require`;
+  // 尝试不同的 SSL 模式
+  return `postgresql://postgres.hmlqsbhbbclbzfuutrie:${dbPassword}@${directIp}:5432/postgres`;
 }
 
 // 单例 Pool
@@ -28,10 +28,8 @@ export function getPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
-    // 配置 SSL
-    ssl: {
-      rejectUnauthorized: false
-    }
+    // 尝试不同的 SSL 配置
+    ssl: process.env.NODE_ENV === 'production' ? true : false,
   });
   
   poolInstance.on('error', (err) => {
