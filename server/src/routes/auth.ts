@@ -78,7 +78,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const user = await createUser({
       phone,
       nickname,
-      hashedPassword,
+      password: hashedPassword,
       province_code,
       city_code,
       district_code,
