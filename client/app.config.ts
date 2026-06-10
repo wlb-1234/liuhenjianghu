@@ -90,6 +90,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     "experiments": {
       "typedRoutes": true
     },
+    "fontSource": {
+      "fonts": ["./assets/fonts/calligraphy.ttf", "./assets/fonts/NotoSerifKR.otf"]
+    },
     "extra": {
       "EXPO_PUBLIC_BACKEND_BASE_URL": "https://adequate-perfection-production.up.railway.app"
     }

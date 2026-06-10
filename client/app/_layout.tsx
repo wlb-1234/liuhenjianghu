@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LogBox } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Provider } from '@/components/Provider';
+import { useFonts } from 'expo-font';
 
 import '../global.css';
 
@@ -11,6 +12,15 @@ LogBox.ignoreLogs([
 ]);
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    'Calligraphy': require('../assets/fonts/calligraphy.ttf'),
+    'NotoSerif': require('../assets/fonts/NotoSerifKR.otf'),
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <Provider>
       <StatusBar style="light" />

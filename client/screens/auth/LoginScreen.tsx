@@ -78,17 +78,19 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 主标题 - 烫金色书法 */}
-          <LinearGradient
-            colors={['#C9A84C', '#FFD700', '#E6C778', '#D4AF37', '#C9A84C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.titleGradient}
-          >
-            <Text style={styles.mainTitle}>流痕江湖</Text>
-          </LinearGradient>
+          {/* 主标题 - 烫金色书法字体 */}
+          <View style={styles.titleContainer}>
+            <LinearGradient
+              colors={['#B8860B', '#FFD700', '#DAA520', '#B8860B', '#FFD700']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.titleGradient}
+            >
+              <Text style={styles.mainTitle}>流痕江湖</Text>
+            </LinearGradient>
+          </View>
 
-          {/* 副标题 - 带箭头 */}
+          {/* 副标题 - 国风宋体 + 金色箭头 */}
           <View style={styles.subtitleContainer}>
             <Text style={styles.arrow}>◀</Text>
             <Text style={styles.subtitleText}>人海为江湖，留言皆流痕</Text>
@@ -104,17 +106,17 @@ export default function LoginScreen() {
               style={styles.goldenBorder}
             >
               <View style={styles.innerBox}>
-                {/* 标题 */}
+                {/* 标题 - 江湖登录 */}
                 <Text style={styles.boxTitle}>江湖登录</Text>
 
                 {/* 手机号 */}
                 <View style={styles.inputGroup}>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.icon}>📱</Text>
+                    <Text style={styles.icon}>👤</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="请输入手机号"
-                      placeholderTextColor="#555"
+                      placeholderTextColor="#666"
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
@@ -129,7 +131,7 @@ export default function LoginScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="请输入密码"
-                      placeholderTextColor="#555"
+                      placeholderTextColor="#666"
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry
@@ -137,7 +139,7 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
-                {/* 登录按钮 */}
+                {/* 登录按钮 - 渐变金色 + 发光 */}
                 <TouchableOpacity
                   style={styles.loginButton}
                   onPress={handleLogin}
@@ -145,7 +147,7 @@ export default function LoginScreen() {
                   activeOpacity={0.85}
                 >
                   <LinearGradient
-                    colors={['#C9A84C', '#FFD700', '#E6C778', '#FFD700', '#C9A84C']}
+                    colors={['#B8860B', '#FFD700', '#DAA520', '#FFD700', '#B8860B']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.buttonGradient}
@@ -222,26 +224,31 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 30,
   },
+  titleContainer: {
+    paddingHorizontal: 40,
+    paddingVertical: 10,
+    marginBottom: 5,
+  },
   titleGradient: {
-    paddingHorizontal: 50,
-    paddingVertical: 12,
     borderRadius: 8,
+    paddingHorizontal: 30,
+    paddingVertical: 8,
   },
   mainTitle: {
-    fontSize: 52,
-    fontWeight: 'bold',
+    fontSize: 48,
+    fontFamily: 'Calligraphy',
     color: '#FFD700',
     textAlign: 'center',
-    letterSpacing: 12,
-    textShadowColor: 'rgba(255, 215, 0, 0.8)',
+    letterSpacing: 8,
+    textShadowColor: 'rgba(255, 215, 0, 0.9)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
+    textShadowRadius: 25,
   },
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 25,
-    marginBottom: 60,
+    marginTop: 20,
+    marginBottom: 50,
   },
   arrow: {
     fontSize: 12,
@@ -249,9 +256,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   subtitleText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#FFFFFF',
-    letterSpacing: 4,
+    letterSpacing: 3,
     fontWeight: '300',
   },
   loginBox: {
@@ -268,12 +275,13 @@ const styles = StyleSheet.create({
     padding: 28,
   },
   boxTitle: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#D4AF37',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 30,
     fontWeight: 'bold',
-    letterSpacing: 8,
+    letterSpacing: 6,
+    fontFamily: 'NotoSerif',
   },
   inputGroup: {
     marginBottom: 18,
@@ -299,13 +307,13 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   loginButton: {
-    marginTop: 28,
+    marginTop: 26,
     marginBottom: 22,
     borderRadius: 8,
     overflow: 'hidden',
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.7,
     shadowRadius: 20,
     elevation: 12,
   },
