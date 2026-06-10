@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "流痕江湖",
+    "slug": "liuhenjianghu",
+    "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "liuhenjianghu"
+      }
+    }
+  },
+  "build": {
+    "env": {
+      "EXPO_PUBLIC_BACKEND_BASE_URL": "@backend-url"
+    }
+  }
+}
