@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
@@ -16,124 +17,143 @@ export default function LoginScreen() {
   const router = useSafeRouter();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // 登录逻辑
-    router.replace('/(tabs)');
-  };
-
-  const handleRegister = () => {
-    router.push('/register');
+  const handleLogin = async () => {
+    if (!phone || !password) {
+      alert('请输入手机号和密码');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        router.replace('/');
+      } else {
+        alert(data.error || '登录失败');
+      }
+    } catch (error) {
+      alert('网络错误');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0A0A0F" />
+      
       {/* 背景装饰 - 金色光点 */}
-      <View style={styles.glowContainer}>
-        <View style={styles.glowOrb1} />
-        <View style={styles.glowOrb2} />
+      <View style={styles.backgroundEffects}>
+        <View style={[styles.goldDot, styles.dot1]} />
+        <View style={[styles.goldDot, styles.dot2]} />
+        <View style={[styles.goldDot, styles.dot3]} />
+        <View style={[styles.goldDot, styles.dot4]} />
+        <View style={[styles.goldDot, styles.dot5]} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.content}>
-          {/* 标题区域 */}
-          <View style={styles.header}>
-            {/* 流痕江湖 - 书法金色渐变 */}
-            <LinearGradient
-              colors={['#D4AF37', '#FFD700', '#B8860B', '#FFD700']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.titleGradient}
-            >
-              <Text style={styles.titleShadow}>流痕江湖</Text>
-              <Text style={styles.title}>流痕江湖</Text>
-            </LinearGradient>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 主标题 - 书法风格金色渐变 */}
+          <LinearGradient
+            colors={['#D4AF37', '#FFD700', '#D4AF37', '#B8860B']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.titleGradient}
+          >
+            <Text style={styles.mainTitle}>流痕江湖</Text>
+          </LinearGradient>
 
-            {/* 副标题 */}
-            <Text style={styles.subtitle}>人海为江湖，留言皆流痕</Text>
+          {/* 副标题 - 国风宋体风格 */}
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subtitleArrow}>◀</Text>
+            <Text style={styles.subtitleText}>人海为江湖，留言皆流痕</Text>
+            <Text style={styles.subtitleArrow}>▶</Text>
           </View>
 
           {/* 登录卡片 */}
-          <View style={styles.card}>
-            <View style={styles.cardBorder}>
-              <View style={styles.cardInner}>
-                {/* 江湖登录标题 */}
-                <LinearGradient
-                  colors={['#D4AF37', '#FFD700']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardTitleGradient}
-                >
-                  <Text style={styles.cardTitleShadow}>江湖登录</Text>
-                  <Text style={styles.cardTitle}>江湖登录</Text>
-                </LinearGradient>
+          <View style={styles.loginCard}>
+            {/* 卡片标题 */}
+            <Text style={styles.cardTitle}>江湖登录</Text>
 
-                {/* 手机号输入 */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>手机号</Text>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputIcon}>🎤</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="请输入手机号"
-                      placeholderTextColor="#8B8B8B"
-                      value={phone}
-                      onChangeText={setPhone}
-                      keyboardType="phone-pad"
-                      autoCapitalize="none"
-                    />
-                  </View>
-                </View>
-
-                {/* 密码输入 */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>密码</Text>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputIcon}>🔐</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="请输入密码"
-                      placeholderTextColor="#8B8B8B"
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry
-                    />
-                  </View>
-                </View>
-
-                {/* 进入江湖按钮 */}
-                <LinearGradient
-                  colors={['#D4AF37', '#FFD700', '#B8860B']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
-                >
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={handleLogin}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.buttonText}>进入江湖</Text>
-                  </TouchableOpacity>
-                </LinearGradient>
-
-                {/* 注册链接 */}
-                <TouchableOpacity
-                  style={styles.registerLink}
-                  onPress={handleRegister}
-                >
-                  <Text style={styles.registerText}>
-                    还没有账号？<Text style={styles.registerHighlight}>立即注册</Text>
-                  </Text>
-                </TouchableOpacity>
+            {/* 手机号输入 */}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputLabel}>
+                <Text style={styles.labelText}>手机号</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputIcon}>👤</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="请输入手机号"
+                  placeholderTextColor="#666"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                />
               </View>
             </View>
+
+            {/* 密码输入 */}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputLabel}>
+                <Text style={styles.labelText}>密码</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputIcon}>🔒</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="请输入密码"
+                  placeholderTextColor="#666"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            {/* 登录按钮 */}
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#FFD700', '#B8860B']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? '登录中...' : '进入江湖'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* 注册链接 */}
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>还没有账号？</Text>
+              <TouchableOpacity onPress={() => router.push('/register')}>
+                <Text style={styles.registerLink}>立即注册</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -143,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
-  glowContainer: {
+  backgroundEffects: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -151,122 +171,100 @@ const styles = StyleSheet.create({
     bottom: 0,
     overflow: 'hidden',
   },
-  glowOrb1: {
+  goldDot: {
     position: 'absolute',
-    top: 80,
-    left: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    opacity: 0.5,
-  },
-  glowOrb2: {
-    position: 'absolute',
-    bottom: 150,
-    right: -80,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D4AF37',
     opacity: 0.4,
+  },
+  dot1: { top: '10%', left: '15%' },
+  dot2: { top: '25%', right: '20%' },
+  dot3: { top: '45%', left: '8%' },
+  dot4: { bottom: '35%', right: '12%' },
+  dot5: { bottom: '20%', left: '25%' },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
     paddingVertical: 60,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
+    paddingHorizontal: 24,
   },
   titleGradient: {
-    position: 'relative',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  titleShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    fontSize: 44,
-    fontWeight: '900',
-    color: 'rgba(0, 0, 0, 0.3)',
-  },
-  title: {
-    fontSize: 44,
-    fontWeight: '900',
+  mainTitle: {
+    fontSize: 42,
+    fontWeight: 'bold',
     color: '#FFD700',
-    textShadowColor: 'rgba(212, 175, 55, 0.8)',
+    textShadowColor: 'rgba(255, 215, 0, 0.8)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
     letterSpacing: 8,
   },
-  subtitle: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#CCCCCC',
-    letterSpacing: 2,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-  },
-  cardBorder: {
-    borderWidth: 2,
-    borderColor: '#D4AF37',
-    borderRadius: 20,
-    padding: 2,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-  },
-  cardInner: {
-    backgroundColor: '#1A1A1F',
-    borderRadius: 18,
-    padding: 28,
-  },
-  cardTitleGradient: {
-    alignSelf: 'center',
-    marginBottom: 28,
-  },
-  cardTitleShadow: {
-    position: 'absolute',
-    top: 1,
-    left: 1,
-    fontSize: 22,
-    fontWeight: '700',
-    color: 'rgba(0, 0, 0, 0.2)',
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFD700',
-    letterSpacing: 4,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 13,
-    color: '#D4AF37',
-    marginBottom: 8,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  inputContainer: {
+  subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0D0D12',
-    borderWidth: 1.5,
+    marginTop: 16,
+    marginBottom: 40,
+  },
+  subtitleArrow: {
+    fontSize: 12,
+    color: '#D4AF37',
+    marginHorizontal: 8,
+  },
+  subtitleText: {
+    fontSize: 14,
+    color: '#D4AF37',
+    letterSpacing: 2,
+  },
+  loginCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: 'rgba(30, 30, 35, 0.95)',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
     borderColor: '#D4AF37',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  cardTitle: {
+    fontSize: 20,
+    color: '#D4AF37',
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: 'bold',
+    letterSpacing: 4,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    marginBottom: 6,
+  },
+  labelText: {
+    fontSize: 12,
+    color: '#888',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A1F',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    paddingHorizontal: 12,
+    height: 48,
   },
   inputIcon: {
     fontSize: 18,
@@ -275,35 +273,44 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#FFFFFF',
-    paddingVertical: 0,
+    color: '#FFF',
+    padding: 0,
+  },
+  loginButton: {
+    marginTop: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
   buttonGradient: {
-    borderRadius: 12,
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  button: {
-    height: 52,
-    justifyContent: 'center',
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#1A1A1F',
     letterSpacing: 2,
   },
-  registerLink: {
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
   },
   registerText: {
     fontSize: 13,
-    color: '#888888',
+    color: '#666',
   },
-  registerHighlight: {
+  registerLink: {
+    fontSize: 13,
     color: '#D4AF37',
-    fontWeight: '600',
+    marginLeft: 4,
+    fontWeight: 'bold',
   },
 });
