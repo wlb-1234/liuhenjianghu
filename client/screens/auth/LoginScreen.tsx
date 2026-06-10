@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 
 export default function LoginScreen() {
@@ -67,6 +68,33 @@ export default function LoginScreen() {
         <View style={[styles.glow, styles.glow1]} />
         <View style={[styles.glow, styles.glow2]} />
         <View style={[styles.glow, styles.glow3]} />
+      </View>
+
+      {/* 左上角水纹装饰 */}
+      <View style={styles.waterWave}>
+        <Svg width="120" height="60" viewBox="0 0 120 60">
+          <Path
+            d="M0,15 Q15,5 30,15 T60,15 T90,15 T120,15"
+            stroke="#8B7355"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.5"
+          />
+          <Path
+            d="M0,25 Q15,15 30,25 T60,25 T90,25 T120,25"
+            stroke="#8B7355"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.5"
+          />
+          <Path
+            d="M0,35 Q15,25 30,35 T60,35 T90,35 T120,35"
+            stroke="#8B7355"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.5"
+          />
+        </Svg>
       </View>
 
       <KeyboardAvoidingView
@@ -337,5 +365,11 @@ const styles = StyleSheet.create({
     color: '#D4AF37',
     marginLeft: 6,
     fontWeight: 'bold',
+  },
+  waterWave: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    opacity: 0.6,
   },
 });
