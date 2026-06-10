@@ -3,7 +3,6 @@ import { StatusBar } from 'expo-status-bar';
 import { LogBox } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Provider } from '@/components/Provider';
-import { useFonts } from 'expo-font';
 
 import '../global.css';
 
@@ -12,15 +11,6 @@ LogBox.ignoreLogs([
 ]);
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    'Calligraphy': require('../assets/fonts/calligraphy.ttf'),
-    'NotoSerif': require('../assets/fonts/NotoSerifKR.otf'),
-  });
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
   return (
     <Provider>
       <StatusBar style="light" />
@@ -38,14 +28,9 @@ export default function RootLayout() {
         <Stack.Screen name="post" options={{ title: "" }} />
         <Stack.Screen name="chat" options={{ title: "" }} />
         <Stack.Screen name="post-detail" options={{ title: "" }} />
-        <Stack.Screen name="upgrade" options={{ title: "" }} />
-        <Stack.Screen name="settings" options={{ title: "" }} />
-        <Stack.Screen name="admin" options={{ title: "" }} />
-        <Stack.Screen name="admin/dashboard" options={{ title: "" }} />
-        <Stack.Screen name="admin/users" options={{ title: "" }} />
-        <Stack.Screen name="admin/moderation" options={{ title: "" }} />
-        <Stack.Screen name="admin/members" options={{ title: "" }} />
-        <Stack.Screen name="admin/logs" options={{ title: "" }} />
+        <Stack.Screen name="profile-edit" options={{ title: "" }} />
+        <Stack.Screen name="setting" options={{ title: "" }} />
+        <Stack.Screen name="+not-found" options={{ title: "" }} />
       </Stack>
       <Toast />
     </Provider>
