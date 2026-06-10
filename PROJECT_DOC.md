@@ -364,49 +364,51 @@ COZE_SUPABASE_URL=https://hmlqsbhbbclbzfuutrie.supabase.co
 COZE_SUPABASE_ANON_KEY=<your-anon-key>
 COZE_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 
-# Supabase 直连 IP (Railway 部署用)
-## 数据库连接
+## Railway 连接 Supabase 主库（IPv6 方案）
 
-### 连接方式说明
+### 问题背景
+Railway 容器默认禁用 Outbound IPv6，无法连接 Supabase 主库（IPv6 only）。
 
-| 连接类型 | 地址 | 用途 | 表结构 |
-|---------|------|------|--------|
-| Pooler | `aws-ap-southeast-1.pooler.supabase.com:65432` | 应用默认 | ⚠️ 可能缺少字段 |
-| 直连域名 | `db.hmlqsbhbbclbzfuutrie.supabase.co` | 需要 DNS 解析 | ✅ 完整 |
-| 直连 IP | `13.114.6.6:5432` | Railway 部署用 | ✅ 完整 |
+### 解决方案
+1. **Railway 控制台**：Settings → Networking → Enable Outbound IPv6 → ON
+2. **代码配置**：使用 Supabase 直连域名
 
-### Railway 部署数据库配置
-
-Railway 容器无法解析 Supabase 域名，需要硬编码 IP：
+### Railway 部署数据库配置（2024-06-10 更新）
 
 ```typescript
 // server/src/config/database.ts
-const DB_CONFIG = {
-  host: '13.114.6.6',      // Supabase 直连 IP
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres.hmlqsbhbbclbzfuutrie',
-  password: 'Liuhen2026App',
-  ssl: false,               // 禁用 SSL
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-};
+import { Pool } from 'pg';
+
+function getDatabaseUrl(): string {
+  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
+  
+  // Supabase 直连地址（IPv6 已启用）
+  const supabaseHost = 'db.hmlqsbhbbclbzfuutrie.supabase.co';
+  
+  // Supabase 用户名是 "postgres"
+  return `postgresql://postgres:${dbPassword}@${supabaseHost}:5432/postgres?sslmode=require`;
+}
 ```
 
 ### Railway 环境变量
 
 ```env
-NODE_TLS_REJECT_UNAUTHORIZED=0
+SUPABASE_DB_PASSWORD=<你的Supabase数据库密码>
 ```
 
 ### ⚠️ 重要注意事项
 
-1. **Railway PostgreSQL 插件问题**
-   - Railway 项目级的 PostgreSQL 插件会覆盖 `DATABASE_URL`
-   - 解决方案：代码中硬编码 Supabase IP，不用环境变量
+1. **Railway IPv6 配置**
+   - Settings → Networking → Enable Outbound IPv6 = ON
+   - 启用后需要 Redeploy 服务才能生效
 
-2. **Railway 无法解析域名**
+2. **Railway 静态出口 IP（可选）**
+   - 可启用 Static Outbound IPs 获得固定 IP
+   - 适用于需要 IP 白名单的场景
+
+3. **PostgreSQL vs MySQL 语法**
+   - 参数占位符：`$1, $2`（不是 `?`）
+   - 结果访问：`result.rows[0]`（不是 `result[0]`）
    - `pooler.supabase.com` → 需要用 IP `13.114.6.6`
    - `db.hmlqsbhbbclbzfuutrie.supabase.co` → 可能解析失败
 
