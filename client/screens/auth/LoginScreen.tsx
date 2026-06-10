@@ -48,13 +48,19 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0A0A0F" />
       
-      {/* 背景装饰 - 金色光点 */}
-      <View style={styles.backgroundEffects}>
-        <View style={[styles.goldDot, styles.dot1]} />
-        <View style={[styles.goldDot, styles.dot2]} />
-        <View style={[styles.goldDot, styles.dot3]} />
-        <View style={[styles.goldDot, styles.dot4]} />
-        <View style={[styles.goldDot, styles.dot5]} />
+      {/* 水墨背景效果 */}
+      <View style={styles.inkBackground}>
+        <LinearGradient
+          colors={['rgba(20,20,30,0.9)', 'rgba(10,10,15,1)', 'rgba(5,5,10,1)']}
+          style={styles.inkGradient}
+        />
+        {/* 金色墨点装饰 */}
+        <View style={[styles.inkSplash, styles.splash1]} />
+        <View style={[styles.inkSplash, styles.splash2]} />
+        <View style={[styles.inkSplash, styles.splash3]} />
+        <View style={[styles.inkSplash, styles.splash4]} />
+        <View style={[styles.inkSplash, styles.splash5]} />
+        <View style={[styles.inkSplash, styles.splash6]} />
       </View>
 
       <KeyboardAvoidingView
@@ -66,9 +72,9 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 主标题 - 书法风格金色渐变 */}
+          {/* 主标题 - 烫金色书法风格 */}
           <LinearGradient
-            colors={['#D4AF37', '#FFD700', '#D4AF37', '#B8860B']}
+            colors={['#B8860B', '#FFD700', '#D4AF37', '#B8860B']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.titleGradient}
@@ -76,25 +82,30 @@ export default function LoginScreen() {
             <Text style={styles.mainTitle}>流痕江湖</Text>
           </LinearGradient>
 
-          {/* 副标题 - 国风宋体风格 */}
+          {/* 副标题 - 国风风格 */}
           <View style={styles.subtitleContainer}>
             <Text style={styles.subtitleArrow}>◀</Text>
             <Text style={styles.subtitleText}>人海为江湖，留言皆流痕</Text>
             <Text style={styles.subtitleArrow}>▶</Text>
           </View>
 
-          {/* 登录卡片 */}
+          {/* 登录卡片 - 金色边框 */}
           <View style={styles.loginCard}>
+            {/* 金色装饰边框 */}
+            <View style={styles.cardBorder}>
+              <View style={[styles.corner, styles.cornerTL]} />
+              <View style={[styles.corner, styles.cornerTR]} />
+              <View style={[styles.corner, styles.cornerBL]} />
+              <View style={[styles.corner, styles.cornerBR]} />
+            </View>
+            
             {/* 卡片标题 */}
             <Text style={styles.cardTitle}>江湖登录</Text>
 
             {/* 手机号输入 */}
             <View style={styles.inputContainer}>
-              <View style={styles.inputLabel}>
-                <Text style={styles.labelText}>手机号</Text>
-              </View>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>👤</Text>
+                <Text style={styles.inputIconPhone}>📱</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="请输入手机号"
@@ -109,11 +120,8 @@ export default function LoginScreen() {
 
             {/* 密码输入 */}
             <View style={styles.inputContainer}>
-              <View style={styles.inputLabel}>
-                <Text style={styles.labelText}>密码</Text>
-              </View>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                <Text style={styles.inputIconLock}>🔒</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="请输入密码"
@@ -125,7 +133,7 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* 登录按钮 */}
+            {/* 登录按钮 - 金色发光 */}
             <TouchableOpacity
               style={styles.loginButton}
               onPress={handleLogin}
@@ -133,7 +141,7 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#D4AF37', '#FFD700', '#B8860B']}
+                colors={['#B8860B', '#FFD700', '#D4AF37', '#B8860B']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
@@ -163,27 +171,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
-  backgroundEffects: {
+  inkBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    overflow: 'hidden',
   },
-  goldDot: {
+  inkGradient: {
     position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D4AF37',
-    opacity: 0.4,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  dot1: { top: '10%', left: '15%' },
-  dot2: { top: '25%', right: '20%' },
-  dot3: { top: '45%', left: '8%' },
-  dot4: { bottom: '35%', right: '12%' },
-  dot5: { bottom: '20%', left: '25%' },
+  inkSplash: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: '#D4AF37',
+  },
+  splash1: { width: 80, height: 80, top: '5%', left: '-5%', opacity: 0.08 },
+  splash2: { width: 120, height: 120, top: '15%', right: '-8%', opacity: 0.06 },
+  splash3: { width: 60, height: 60, top: '40%', left: '5%', opacity: 0.05 },
+  splash4: { width: 100, height: 100, bottom: '25%', right: '0%', opacity: 0.07 },
+  splash5: { width: 70, height: 70, bottom: '10%', left: '10%', opacity: 0.06 },
+  splash6: { width: 90, height: 90, top: '60%', right: '5%', opacity: 0.04 },
   keyboardView: {
     flex: 1,
   },
@@ -195,122 +207,140 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   titleGradient: {
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 10,
   },
   mainTitle: {
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#FFD700',
-    textShadowColor: 'rgba(255, 215, 0, 0.8)',
+    textShadowColor: 'rgba(255, 215, 0, 0.6)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-    letterSpacing: 8,
+    textShadowRadius: 25,
+    letterSpacing: 10,
   },
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 40,
+    marginTop: 20,
+    marginBottom: 50,
   },
   subtitleArrow: {
-    fontSize: 12,
-    color: '#D4AF37',
-    marginHorizontal: 8,
-  },
-  subtitleText: {
     fontSize: 14,
     color: '#D4AF37',
-    letterSpacing: 2,
+    marginHorizontal: 12,
+  },
+  subtitleText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    letterSpacing: 3,
+    fontWeight: '300',
   },
   loginCard: {
     width: '100%',
-    maxWidth: 340,
-    backgroundColor: 'rgba(30, 30, 35, 0.95)',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
+    maxWidth: 360,
+    backgroundColor: 'rgba(20, 20, 28, 0.95)',
+    borderRadius: 12,
+    padding: 30,
+    borderWidth: 1.5,
     borderColor: '#D4AF37',
     shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    elevation: 15,
   },
+  cardBorder: {
+    position: 'absolute',
+    top: -1,
+    left: -1,
+    right: -1,
+    bottom: -1,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  corner: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderColor: '#D4AF37',
+  },
+  cornerTL: { top: -1, left: -1, borderTopWidth: 2, borderLeftWidth: 2 },
+  cornerTR: { top: -1, right: -1, borderTopWidth: 2, borderRightWidth: 2 },
+  cornerBL: { bottom: -1, left: -1, borderBottomWidth: 2, borderLeftWidth: 2 },
+  cornerBR: { bottom: -1, right: -1, borderBottomWidth: 2, borderRightWidth: 2 },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 22,
     color: '#D4AF37',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 30,
     fontWeight: 'bold',
-    letterSpacing: 4,
+    letterSpacing: 6,
   },
   inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    marginBottom: 6,
-  },
-  labelText: {
-    fontSize: 12,
-    color: '#888',
+    marginBottom: 20,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1F',
-    borderRadius: 10,
+    backgroundColor: '#15151A',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D4AF37',
-    paddingHorizontal: 12,
-    height: 48,
+    borderColor: '#B8860B',
+    paddingHorizontal: 15,
+    height: 52,
   },
-  inputIcon: {
-    fontSize: 18,
-    marginRight: 10,
+  inputIconPhone: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  inputIconLock: {
+    fontSize: 20,
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: '#FFF',
     padding: 0,
   },
   loginButton: {
-    marginTop: 20,
-    borderRadius: 10,
+    marginTop: 25,
+    marginBottom: 20,
+    borderRadius: 8,
     overflow: 'hidden',
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
   },
   buttonGradient: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1A1A1F',
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
   registerText: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 14,
+    color: '#888',
   },
   registerLink: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#D4AF37',
-    marginLeft: 4,
+    marginLeft: 5,
     fontWeight: 'bold',
   },
 });
