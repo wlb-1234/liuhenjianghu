@@ -78,19 +78,12 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 主标题 - 烫金色书法字体 */}
+          {/* 主标题 - 横排显示 */}
           <View style={styles.titleContainer}>
-            <LinearGradient
-              colors={['#B8860B', '#FFD700', '#DAA520', '#B8860B', '#FFD700']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.titleGradient}
-            >
-              <Text style={styles.mainTitle}>流痕江湖</Text>
-            </LinearGradient>
+            <Text style={styles.mainTitle}>流痕江湖</Text>
           </View>
 
-          {/* 副标题 - 国风宋体 + 金色箭头 */}
+          {/* 副标题 - 一行显示 */}
           <View style={styles.subtitleContainer}>
             <Text style={styles.arrow}>◀</Text>
             <Text style={styles.subtitleText}>人海为江湖，留言皆流痕</Text>
@@ -109,10 +102,11 @@ export default function LoginScreen() {
                 {/* 标题 - 江湖登录 */}
                 <Text style={styles.boxTitle}>江湖登录</Text>
 
-                {/* 手机号 */}
+                {/* 手机号输入 */}
                 <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>手机号</Text>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.icon}>👤</Text>
+                    <Text style={styles.icon}>📱</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="请输入手机号"
@@ -120,12 +114,14 @@ export default function LoginScreen() {
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
+                      autoComplete="tel"
                     />
                   </View>
                 </View>
 
-                {/* 密码 */}
+                {/* 密码输入 */}
                 <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>密码</Text>
                   <View style={styles.inputWrapper}>
                     <Text style={styles.icon}>🔒</Text>
                     <TextInput
@@ -139,15 +135,15 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
-                {/* 登录按钮 - 渐变金色 + 发光 */}
+                {/* 登录按钮 */}
                 <TouchableOpacity
                   style={styles.loginButton}
                   onPress={handleLogin}
                   disabled={loading}
-                  activeOpacity={0.85}
+                  activeOpacity={0.8}
                 >
                   <LinearGradient
-                    colors={['#B8860B', '#FFD700', '#DAA520', '#FFD700', '#B8860B']}
+                    colors={['#D4AF37', '#FFD700', '#DAA520']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.buttonGradient}
@@ -158,7 +154,7 @@ export default function LoginScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
 
-                {/* 注册 */}
+                {/* 注册链接 */}
                 <View style={styles.registerRow}>
                   <Text style={styles.registerText}>还没有账号？</Text>
                   <TouchableOpacity onPress={() => router.push('/register')}>
@@ -180,18 +176,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A0A0F',
   },
   background: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
   },
   gradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
   },
   splash: {
     position: 'absolute',
@@ -229,25 +218,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 5,
   },
-  titleGradient: {
-    borderRadius: 8,
-    paddingHorizontal: 30,
-    paddingVertical: 8,
-  },
   mainTitle: {
-    fontSize: 48,
-    fontFamily: 'Calligraphy',
+    fontSize: 52,
+    fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
     letterSpacing: 8,
     textShadowColor: 'rgba(255, 215, 0, 0.9)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 25,
+    textShadowRadius: 30,
   },
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 15,
     marginBottom: 50,
   },
   arrow: {
@@ -281,10 +265,15 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     fontWeight: 'bold',
     letterSpacing: 6,
-    fontFamily: 'NotoSerif',
   },
   inputGroup: {
     marginBottom: 18,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#D4AF37',
+    marginBottom: 8,
+    letterSpacing: 2,
   },
   inputWrapper: {
     flexDirection: 'row',
