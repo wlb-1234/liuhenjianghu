@@ -23,7 +23,7 @@ const validateCsrf = async (req: Request, res: Response): Promise<boolean> => {
 };
 
 // 用户注销账户
-router.post('/delete', authMiddleware, async (req: Request, res: Response) => {
+router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Response) => {
   try {
     // 验证请求体
     const parseResult = accountDeletionSchema.safeParse(req.body);
@@ -37,7 +37,7 @@ router.post('/delete', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const { password, confirmText } = parseResult.data;
-    const userId = req.user!.userId;
+    const userId = req.userId;
 
     // 确认文本必须包含 "注销"
     if (!confirmText.includes('注销')) {
@@ -110,9 +110,9 @@ router.post('/delete', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // 用户注销预览（查看将被删除的内容）
-router.get('/preview', authMiddleware, async (req: Request, res: Response) => {
+router.get('/preview', authMiddlewareWithUser, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.userId;
     const pool = getPool();
 
     // 获取用户发帖数
@@ -151,7 +151,7 @@ router.get('/preview', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // 管理员强制注销用户（需要管理员权限）
-router.post('/admin/delete', authMiddleware, async (req: Request, res: Response) => {
+router.post('/admin/delete', authMiddlewareWithUser, async (req: Request, res: Response) => {
   try {
     // 验证是否为管理员
     if (req.user!.role !== 'admin') {
