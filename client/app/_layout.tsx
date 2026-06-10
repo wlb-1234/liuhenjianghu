@@ -13,7 +13,7 @@ LogBox.ignoreLogs([
 export default function RootLayout() {
   return (
     <Provider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           animation: 'slide_from_right',

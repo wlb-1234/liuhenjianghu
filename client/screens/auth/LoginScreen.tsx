@@ -50,7 +50,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: '#0D0D0F' }}>
       {/* 左上角水纹标志 */}
       <View style={[styles.logoCorner, { top: insets.top + 10, left: 16 }]}>
         <Image
@@ -76,20 +76,31 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
 
           {/* 登录表单 */}
           <View style={styles.formSection}>
-            <LinearGradient
-              colors={['rgba(255,248,240,0.95)', 'rgba(253,245,230,0.95)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.formGradient}
+            <View
+              style={{
+                borderRadius: 28,
+                padding: 28,
+                borderWidth: 1.5,
+                borderColor: 'rgba(212,175,55,0.4)',
+                backgroundColor: 'rgba(26,26,31,0.98)',
+              }}
             >
               <Text style={styles.loginTitle}>江湖登录</Text>
               
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>手机号</Text>
                 <TextInput
-                  style={styles.input}
+                  style={{
+                    backgroundColor: 'rgba(31,31,36,0.9)',
+                    borderRadius: 16,
+                    padding: 16,
+                    fontSize: 16,
+                    color: '#E8E4DC',
+                    borderWidth: 1,
+                    borderColor: 'rgba(212,175,55,0.3)',
+                  }}
                   placeholder="请输入手机号"
-                  placeholderTextColor="rgba(205,133,63,0.7)"
+                  placeholderTextColor="rgba(138,133,128,0.7)"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -101,9 +112,17 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>密码</Text>
                 <TextInput
-                  style={styles.input}
+                  style={{
+                    backgroundColor: 'rgba(31,31,36,0.9)',
+                    borderRadius: 16,
+                    padding: 16,
+                    fontSize: 16,
+                    color: '#E8E4DC',
+                    borderWidth: 1,
+                    borderColor: 'rgba(212,175,55,0.3)',
+                  }}
                   placeholder="请输入密码"
-                  placeholderTextColor="rgba(205,133,63,0.7)"
+                  placeholderTextColor="rgba(138,133,128,0.7)"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -119,15 +138,19 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#D2691E', '#FF8C00', '#FFD700']}
+                  colors={['#B8960C', '#D4AF37', '#E8C97D']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
+                  style={{
+                    paddingVertical: 18,
+                    alignItems: 'center',
+                    borderRadius: 28,
+                  }}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color="#0D0D0F" />
                   ) : (
-                    <Text style={styles.buttonText}>进入江湖</Text>
+                    <Text style={{ color: '#0D0D0F', fontSize: 22, fontWeight: '700', letterSpacing: 4 }}>进入江湖</Text>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
@@ -139,13 +162,13 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 <Text style={styles.switchText}>还没有江湖身份？</Text>
                 <Text style={styles.switchLink}>立即注册</Text>
               </TouchableOpacity>
-            </LinearGradient>
+            </View>
           </View>
 
           <Text style={styles.footerHint}>网页端建议优先使用移动端体验更佳</Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
