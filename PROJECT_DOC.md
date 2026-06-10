@@ -594,3 +594,35 @@ client/
 4. 推送通知
 5. 用户反馈入口
 6. 数据库索引优化
+
+---
+
+## 变更日志
+
+### 2025-06-11
+
+#### UI/前端优化
+
+| 时间 | 变更内容 | 文件 |
+|------|----------|------|
+| 21:30 | 登录页面黑金武侠风格改造完成 | screens/auth/LoginScreen.tsx |
+| 21:45 | 添加金色渐变和发光效果 | screens/auth/LoginScreen.tsx |
+| 21:50 | 添加水墨金点背景装饰效果 | screens/auth/LoginScreen.tsx |
+| 22:00 | 添加左上角水纹装饰（SVG波浪线） | screens/auth/LoginScreen.tsx |
+| 22:15 | 调整字号确保文字横排显示 | screens/auth/LoginScreen.tsx |
+| 22:30 | 优化输入框、按钮金色效果 | screens/auth/LoginScreen.tsx |
+
+#### 部署配置
+
+| 时间 | 变更内容 | 文件 |
+|------|----------|------|
+| 21:00 | 添加前端 Dockerfile 用于 Railway 部署 | client/Dockerfile |
+| 21:15 | 添加 Vercel 配置文件 | client/vercel.json |
+| 21:20 | 添加 nginx.conf | client/nginx.conf |
+| 21:25 | 添加 server.js 静态文件服务 | client/server.js |
+
+#### 设计方案
+
+| 版本 | 日期 | 内容 |
+|------|------|------|
+| 方案D | 2025-06-11 | 黑金武侠风格：毛笔书法烫金色标题 + 水墨纹理背景 + 金色边框输入框 + 渐变金色按钮 |
