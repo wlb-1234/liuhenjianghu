@@ -94,7 +94,7 @@ export function isSimilarContent(text1: string, text2: string, threshold: number
 export function checkContentLimit(
   newContent: string,
   existingContents: Array<{ content: string; created_at: Date }>,
-  maxSimilar: number = 3
+  maxSimilar: number = 2
 ): { canPost: boolean; similarCount: number; reason?: string } {
   const today = new Date().toISOString().split('T')[0];
   
