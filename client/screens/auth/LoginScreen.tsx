@@ -152,7 +152,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F0E6',
+    backgroundColor: '#0D0D0F',
   },
   logoCorner: {
     position: 'absolute',
@@ -177,13 +177,16 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#D4AF37',  // 黄金色
     letterSpacing: 6,
     marginBottom: 12,
+    textShadowColor: 'rgba(212,175,55,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   slogan: {
     fontSize: 14,
-    color: '#A0522D',
+    color: '#8A8580',  // 暗灰文字
     letterSpacing: 4,
     fontStyle: 'italic',
     fontWeight: '300',
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   formSection: {
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#8B4513',
+    shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
@@ -200,13 +203,14 @@ const styles = StyleSheet.create({
   formGradient: {
     borderRadius: 28,
     padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,215,0,0.3)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212,175,55,0.4)',  // 金色边框
+    backgroundColor: 'rgba(26,26,31,0.95)',  // 深灰背景
   },
   loginTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#5D4037',
+    color: '#D4AF37',  // 黄金色
     textAlign: 'center',
     marginBottom: 28,
     letterSpacing: 4,
@@ -216,26 +220,26 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    color: '#A0522D',
+    color: '#E8C97D',  // 浅金色
     marginBottom: 10,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: 'rgba(237,232,220,0.8)',
+    backgroundColor: 'rgba(31,31,36,0.8)',
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: '#5D4037',
+    color: '#E8E4DC',  // 月白文字
     borderWidth: 1,
-    borderColor: 'rgba(205,133,63,0.2)',
+    borderColor: 'rgba(212,175,55,0.2)',  // 金色边框
   },
   loginButton: {
     marginTop: 20,
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#FF8C00',
+    shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -245,7 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#0D0D0F',  // 墨黑色
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 4,
@@ -262,18 +266,18 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 12,
-    color: '#8B4513',
+    color: '#8A8580',  // 暗灰
   },
   switchLink: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF8C00',
+    color: '#D4AF37',  // 黄金色
   },
   footerHint: {
     marginTop: 40,
     textAlign: 'center',
     fontSize: 12,
-    color: 'rgba(160,82,45,0.6)',
+    color: 'rgba(138,133,128,0.6)',  // 暗灰
     fontWeight: '300',
   },
 });

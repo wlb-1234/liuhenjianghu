@@ -263,7 +263,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
           {/* 表单 */}
           <View style={styles.formSection}>
             <LinearGradient
-              colors={['rgba(255,248,240,0.95)', 'rgba(253,245,230,0.95)']}
+              colors={['rgba(26,26,31,0.98)', 'rgba(26,26,31,0.98)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.formGradient}
@@ -279,7 +279,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                     <TextInput
                       style={styles.input}
                       placeholder="请输入手机号"
-                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      placeholderTextColor="rgba(138,133,128,0.7)"
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
@@ -294,7 +294,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                       <TextInput
                         style={[styles.input, styles.codeInput]}
                         placeholder="请输入验证码"
-                        placeholderTextColor="rgba(205,133,63,0.7)"
+                        placeholderTextColor="rgba(138,133,128,0.7)"
                         value={code}
                         onChangeText={setCode}
                         keyboardType="number-pad"
@@ -306,7 +306,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                         disabled={codeLoading || codeCooldown > 0}
                       >
                         {codeLoading ? (
-                          <ActivityIndicator color="#8B4513" size="small" />
+                          <ActivityIndicator color="#D4AF37" size="small" />
                         ) : (
                           <Text style={styles.codeButtonText}>
                             {codeCooldown > 0 ? `${codeCooldown}s` : '获取验证码'}
@@ -321,7 +321,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                     <TextInput
                       style={styles.input}
                       placeholder="江湖名号（2-20字）"
-                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      placeholderTextColor="rgba(138,133,128,0.7)"
                       value={nickname}
                       onChangeText={setNickname}
                       maxLength={20}
@@ -333,7 +333,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                     <TextInput
                       style={styles.input}
                       placeholder="设置密码（至少6位）"
-                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      placeholderTextColor="rgba(138,133,128,0.7)"
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry
@@ -345,7 +345,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
                     <TextInput
                       style={styles.input}
                       placeholder="再次输入密码"
-                      placeholderTextColor="rgba(205,133,63,0.7)"
+                      placeholderTextColor="rgba(138,133,128,0.7)"
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
                       secureTextEntry
@@ -477,7 +477,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F0E6',
+    backgroundColor: '#0D0D0F',
   },
   keyboardView: {
     flex: 1,
@@ -494,13 +494,16 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 42,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#D4AF37',
     letterSpacing: 6,
     marginBottom: 12,
+    textShadowColor: 'rgba(212,175,55,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   slogan: {
     fontSize: 14,
-    color: '#A0522D',
+    color: '#8A8580',
     letterSpacing: 4,
     fontStyle: 'italic',
     fontWeight: '300',
@@ -508,7 +511,7 @@ const styles = StyleSheet.create({
   formSection: {
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#8B4513',
+    shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
@@ -517,13 +520,14 @@ const styles = StyleSheet.create({
   formGradient: {
     borderRadius: 28,
     padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,215,0,0.3)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212,175,55,0.4)',
+    backgroundColor: 'rgba(26,26,31,0.95)',
   },
   stepTitle: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#5D4037',
+    color: '#D4AF37',
     textAlign: 'center',
     marginBottom: 28,
     letterSpacing: 4,
@@ -533,18 +537,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    color: '#A0522D',
+    color: '#E8C97D',
     marginBottom: 10,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: 'rgba(237,232,220,0.8)',
+    backgroundColor: 'rgba(31,31,36,0.8)',
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: '#5D4037',
+    color: '#E8E4DC',
     borderWidth: 1,
-    borderColor: 'rgba(205,133,63,0.2)',
+    borderColor: 'rgba(212,175,55,0.2)',
   },
   codeRow: {
     flexDirection: 'row',
@@ -554,16 +558,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   codeButton: {
-    backgroundColor: 'rgba(237,232,220,0.9)',
+    backgroundColor: 'rgba(31,31,36,0.9)',
     borderRadius: 16,
     paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(205,133,63,0.3)',
+    borderColor: 'rgba(212,175,55,0.3)',
   },
   codeButtonText: {
-    color: '#8B4513',
+    color: '#D4AF37',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -586,12 +590,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(139,69,19,0.3)',
+    borderColor: 'rgba(212,175,55,0.3)',
     marginRight: 12,
-    backgroundColor: 'rgba(237,232,220,0.5)',
+    backgroundColor: 'rgba(31,31,36,0.5)',
   },
   backButtonText: {
-    color: '#8B4513',
+    color: '#D4AF37',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -605,7 +609,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#0D0D0F',
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 4,
@@ -622,12 +626,12 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 12,
-    color: '#8B4513',
+    color: '#8A8580',
   },
   switchLink: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF8C00',
+    color: '#D4AF37',
   },
   pickerSection: {
     marginBottom: 16,
@@ -636,24 +640,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   pickerItem: {
-    backgroundColor: 'rgba(237,232,220,0.8)',
+    backgroundColor: 'rgba(31,31,36,0.8)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: 'rgba(205,133,63,0.2)',
+    borderColor: 'rgba(212,175,55,0.2)',
   },
   pickerItemActive: {
-    backgroundColor: '#8B4513',
-    borderColor: '#A0522D',
+    backgroundColor: '#D4AF37',
+    borderColor: '#E8C97D',
   },
   pickerText: {
-    color: '#8B4513',
+    color: '#E8E4DC',
     fontSize: 14,
   },
   pickerTextActive: {
-    color: '#FDFBF7',
+    color: '#0D0D0F',
   },
   selectedRegion: {
     marginTop: 8,
@@ -665,15 +669,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   regionTag: {
-    backgroundColor: 'rgba(139, 69, 19, 0.15)',
+    backgroundColor: 'rgba(212,175,55,0.1)',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(205,133,63,0.3)',
+    borderColor: 'rgba(212,175,55,0.3)',
   },
   regionTagText: {
-    color: '#8B4513',
+    color: '#E8C97D',
     fontSize: 13,
     fontWeight: '500',
   },

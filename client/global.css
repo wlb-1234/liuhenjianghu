@@ -92,63 +92,65 @@
   }
 
   @variant dark {
-    /* 古风武侠主题配色 - 暗色模式（墨韵夜色） */
+    /* 黑金武侠主题配色 - 暗色模式（墨韵夜色） */
     
     /* Base Colors */
-    --background: #1A1A1F;        /* 夜色墨 */
-    --foreground: #E8E4DC;        /* 月白 */
+    --background: #0D0D0F;        /* 夜色墨黑 */
+    --foreground: #E8E4DC;        /* 月白文字 */
     
     /* Surface */
-    --surface: #252529;
+    --surface: #1A1A1F;           /* 深灰卡片 */
     --surface-foreground: var(--foreground);
     
     /* Overlay */
-    --overlay: #2A2A2F;
+    --overlay: #252529;
     --overlay-foreground: var(--foreground);
     
-    --muted: #9A918A;
+    --muted: #8A8580;             /* 暗灰文字 */
     
-    --default: #2F2F35;
+    --default: #1F1F24;           /* 输入框背景 */
     
-    --accent: #C9A96E;            /* 古铜金 */
-    --accent-foreground: #1A1A1F;
+    /* Accent - 金色 */
+    --accent: #D4AF37;            /* 黄金色 */
+    --accent-foreground: #0D0D0F;
     
     /* Form Field Defaults */
     --field-background: #1F1F24;
-    --field-foreground: var(--foreground);
+    --field-foreground: #E8E4DC;
     --field-placeholder: #6B6560;
-    --field-border: transparent;
+    --field-border: rgba(212,175,55,0.3);
     
     /* Status Colors */
     --success: #5B9A6F;
-    --success-foreground: #1A1A1F;
+    --success-foreground: #0D0D0F;
     
-    --warning: #E0B04B;
-    --warning-foreground: #1A1A1F;
+    --warning: #D4AF37;           /* 金色 */
+    --warning-foreground: #0D0D0F;
     
-    --danger: #D45444;
-    --danger-foreground: #1A1A1F;
+    --danger: #C45C5C;            /* 朱砂红 */
+    --danger-foreground: #E8E4DC;
     
     /* Component Colors */
     --segment: #2A2A2F;
     --segment-foreground: var(--foreground);
     
     /* Misc Colors */
-    --border: #3A3A40;
-    --separator: #45450A;
+    --border: rgba(212,175,55,0.3);  /* 金色边框 */
+    --separator: rgba(212,175,55,0.2);
     --focus: var(--accent);
     --link: var(--foreground);
     
-    /* 古风特色颜色 */
-    --cinnabar: #D45444;          /* 朱砂红 */
-    --ink: #0D1A26;               /* 夜色墨 */
-    --gold: #C9A96E;              /* 古铜金 */
-    --paper: #F5F0E6;             /* 宣纸色 */
-    --wood: #B87333;              /* 暗金 */
+    /* 黑金特色颜色 */
+    --cinnabar: #C45C5C;          /* 朱砂红 */
+    --ink: #0D0D0F;               /* 夜色墨 */
+    --gold: #D4AF37;              /* 黄金色 */
+    --paper: #E8E4DC;             /* 月白 */
+    --gold-light: #E8C97D;        /* 浅金色 */
+    --gold-dark: #B8960C;         /* 深金色 */
     
-    /* Shadows - 暗色阴影 */
+    /* Shadows - 黑金发光阴影 */
     --surface-shadow: 0 0 0 0 transparent inset;
-    --overlay-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+    --overlay-shadow: 0 2px 8px 0 rgba(212,175,55,0.1);
     --field-shadow: 0 0 0 0 transparent inset;
   }
 }
@@ -217,36 +219,39 @@
   --color-accent-hover: color-mix(in oklab, var(--accent) 90%, var(--accent-foreground) 10%);
 }
 
-/* 古风武侠字体样式 */
+/* 黑金武侠字体样式 */
 .wuxia-title {
   font-family: system-ui;
   letter-spacing: 2px;
+  color: var(--gold);
 }
 
 .wuxia-text {
   font-family: system-ui;
   letter-spacing: 1px;
+  color: var(--paper);
 }
 
-/* 古风卡片样式 */
+/* 黑金卡片样式 */
 .wuxia-card {
   background-color: var(--color-surface);
   border-radius: 16px;
-  shadow-color: var(--ink);
+  border: 1px solid rgba(212,175,55,0.3);
+  shadow-color: var(--gold);
   shadow-offset: 0 2px 8px;
-  shadow-opacity: 0.08;
+  shadow-opacity: 0.1;
   shadow-radius: 12;
   elevation: 3;
 }
 
-/* 古风按钮样式 */
+/* 黑金按钮样式 */
 .wuxia-button-primary {
-  background: linear-gradient(135deg, var(--wood) 0%, var(--accent) 100%);
+  background: linear-gradient(135deg, #B8960C 0%, #D4AF37 50%, #E8C97D 100%);
   border-radius: 24px;
   padding: 14px 28px;
-  shadow-color: var(--wood);
+  shadow-color: #D4AF37;
   shadow-offset: 0 4px 12px;
-  shadow-opacity: 0.25;
+  shadow-opacity: 0.4;
   shadow-radius: 8;
   elevation: 4;
 }
@@ -258,52 +263,52 @@
   padding: 14px 28px;
 }
 
-/* 古风输入框 */
+/* 黑金输入框 */
 .wuxia-input {
   background-color: var(--color-field);
   border-radius: 12px;
   padding: 14px 16px;
-  border: none;
+  border: 1px solid rgba(212,175,55,0.2);
   font-size: 16px;
   color: var(--color-field-foreground);
 }
 
 .wuxia-input::placeholder {
-  color: var(--color-field-placeholder);
+  color: var(--muted);
 }
 
-/* 古风分割线 */
+/* 黑金分割线 */
 .wuxia-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.3) 20%, rgba(212,175,55,0.3) 80%, transparent 100%);
 }
 
-/* 古风标签 */
+/* 黑金标签 */
 .wuxia-tag {
-  background-color: rgba(139, 69, 19, 0.1);
+  background-color: rgba(212,175,55,0.1);
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 12px;
-  color: var(--wood);
+  color: var(--gold-light);
 }
 
-/* 古风头像框 */
+/* 黑金头像框 */
 .wuxia-avatar {
-  border: 2px solid var(--color-paper);
+  border: 2px solid var(--gold);
   border-radius: 50%;
-  shadow-color: var(--ink);
+  shadow-color: var(--gold);
   shadow-offset: 0 2px 4px;
-  shadow-opacity: 0.1;
+  shadow-opacity: 0.2;
   shadow-radius: 4;
 }
 
-/* 古风徽章 */
+/* 黑金徽章 */
 .wuxia-badge {
-  background: linear-gradient(135deg, var(--gold) 0%, #D4B896 100%);
+  background: linear-gradient(135deg, #D4AF37 0%, #E8C97D 100%);
   border-radius: 12px;
   padding: 2px 8px;
   font-size: 10px;
-  color: #3D2B1F;
+  color: #0D0D0F;
   font-weight: 600;
 }
 
