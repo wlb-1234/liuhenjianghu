@@ -50,12 +50,12 @@ router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Respons
 
     // 验证密码
     const pool = getPool();
-    const [userResult] = await pool.query(
-      'SELECT password FROM users WHERE id = ?',
+    const userResult = await pool.query(
+      'SELECT password FROM users WHERE id = $1',
       [userId]
     );
     
-    if (!Array.isArray(userResult) || userResult.length === 0) {
+    if (!userResult.rows || userResult.rows.length === 0) {
       res.status(404).json({
         success: false,
         error: '用户不存在',
@@ -63,7 +63,7 @@ router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Respons
       return;
     }
 
-    const user = userResult[0] as { password?: string };
+    const user = userResult.rows[0] as { password?: string };
     
     // 验证密码（支持新旧格式）
     let isValidPassword = false;
@@ -90,7 +90,7 @@ router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Respons
 
     // 执行账户注销（软删除：更新状态）
     await pool.query(
-      'UPDATE users SET status = ?, deleted_at = NOW() WHERE id = ?',
+      'UPDATE users SET status = $1, deleted_at = NOW() WHERE id = $2',
       ['deleted', userId]
     );
 
@@ -116,29 +116,29 @@ router.get('/preview', authMiddlewareWithUser, async (req: Request, res: Respons
     const pool = getPool();
 
     // 获取用户发帖数
-    const [postResult] = await pool.query(
-      'SELECT COUNT(*) as count FROM posts WHERE user_id = ?',
+    const postResult = await pool.query(
+      'SELECT COUNT(*) as count FROM posts WHERE user_id = $1',
       [userId]
     );
 
     // 获取用户评论数
-    const [commentResult] = await pool.query(
-      'SELECT COUNT(*) as count FROM comments WHERE user_id = ?',
+    const commentResult = await pool.query(
+      'SELECT COUNT(*) as count FROM comments WHERE user_id = $1',
       [userId]
     );
 
     // 获取用户点赞数
-    const [likeResult] = await pool.query(
-      'SELECT COUNT(*) as count FROM likes WHERE user_id = ?',
+    const likeResult = await pool.query(
+      'SELECT COUNT(*) as count FROM likes WHERE user_id = $1',
       [userId]
     );
 
     res.json({
       success: true,
       data: {
-        posts: (postResult as any)[0]?.count || 0,
-        comments: (commentResult as any)[0]?.count || 0,
-        likes: (likeResult as any)[0]?.count || 0,
+        posts: parseInt(postResult.rows[0]?.count || '0', 10),
+        comments: parseInt(commentResult.rows[0]?.count || '0', 10),
+        likes: parseInt(likeResult.rows[0]?.count || '0', 10),
       },
     });
   } catch (error: any) {
@@ -175,12 +175,12 @@ router.post('/admin/delete', authMiddlewareWithUser, async (req: Request, res: R
     const pool = getPool();
 
     // 检查用户是否存在
-    const [userResult] = await pool.query(
-      'SELECT id, status FROM users WHERE id = ?',
+    const userResult = await pool.query(
+      'SELECT id, status FROM users WHERE id = $1',
       [userId]
     );
 
-    if (!Array.isArray(userResult) || userResult.length === 0) {
+    if (!userResult.rows || userResult.rows.length === 0) {
       res.status(404).json({
         success: false,
         error: '用户不存在',
@@ -190,7 +190,7 @@ router.post('/admin/delete', authMiddlewareWithUser, async (req: Request, res: R
 
     // 执行软删除
     await pool.query(
-      'UPDATE users SET status = ?, deleted_at = NOW() WHERE id = ?',
+      'UPDATE users SET status = $1, deleted_at = NOW() WHERE id = $2',
       ['deleted', userId]
     );
 
