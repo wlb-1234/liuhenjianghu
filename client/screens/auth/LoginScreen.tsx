@@ -218,15 +218,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 5,
   },
+  titleContainer: {
+    marginTop: 60,
+    paddingHorizontal: 20,
+  },
   mainTitle: {
-    fontSize: 52,
+    fontSize: 44,
     fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
-    letterSpacing: 8,
+    letterSpacing: 4,
     textShadowColor: 'rgba(255, 215, 0, 0.9)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
+    textShadowRadius: 25,
   },
   subtitleContainer: {
     flexDirection: 'row',
@@ -240,9 +244,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   subtitleText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#FFFFFF',
-    letterSpacing: 3,
+    letterSpacing: 1,
     fontWeight: '300',
   },
   loginBox: {
