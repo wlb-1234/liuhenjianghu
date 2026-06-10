@@ -221,13 +221,16 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginTop: 60,
     paddingHorizontal: 20,
+    width: '100%',
+    alignItems: 'center',
   },
   mainTitle: {
-    fontSize: 44,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
-    letterSpacing: 4,
+    letterSpacing: 2,
+    includeFontPadding: false,
     textShadowColor: 'rgba(255, 215, 0, 0.9)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 25,
@@ -239,14 +242,14 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
   arrow: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#D4AF37',
-    marginHorizontal: 15,
+    marginHorizontal: 8,
   },
   subtitleText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#FFFFFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     fontWeight: '300',
   },
   loginBox: {
