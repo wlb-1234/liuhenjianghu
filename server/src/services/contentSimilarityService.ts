@@ -2,85 +2,86 @@ import crypto from 'crypto';
 
 /**
  * 内容相似度检测服务
- * 使用 SimHash 算法检测文本相似度
+ * 使用字符级 N-gram + Jaccard 相似度算法
+ * 适用于中文短文本检测
  */
 
-// 中文字符处理
-function tokenize(text: string): string[] {
+// 停用词列表（常见无意义词）
+const STOP_WORDS = new Set([
+  '的', '了', '是', '在', '和', '有', '我', '你', '他', '她', '它',
+  '这', '那', '就', '也', '都', '要', '会', '可以', '不', '吗',
+  '啊', '吧', '呢', '哦', '嗯', '好', '很', '太', '真', '个', '一下'
+]);
+
+/**
+ * 生成字符级 N-gram
+ * @param text 文本
+ * @param n gram大小，默认3
+ */
+function getNGrams(text: string, n: number = 3): Set<string> {
   // 移除特殊字符，保留中文、英文、数字
-  const cleanText = text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, ' ');
+  const cleanText = text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').toLowerCase();
   
-  // 分词（简单按空格和标点分词）
-  const tokens = cleanText.split(/\s+/).filter(t => t.length >= 2);
+  const ngrams = new Set<string>();
   
-  return tokens;
-}
-
-// 计算 SimHash
-export function computeSimHash(text: string): string {
-  const tokens = tokenize(text);
-  console.log('[SimHash] 文本:', text, '分词结果:', tokens);
-  
-  // 如果没有有效分词，使用整体文本的hash
-  if (tokens.length === 0) {
-    const hash = crypto.createHash('md5').update(text).digest('hex');
-    console.log('[SimHash] 无分词，使用整体hash:', hash);
-    return hash;
-  }
-  
-  const hashBits = 64;
-  const v = new Array(hashBits).fill(0);
-  
-  for (const token of tokens) {
-    // 计算 token 的 hash
-    const hash = crypto.createHash('md5').update(token).digest('hex');
-    const hashInt = BigInt('0x' + hash);
-    
-    // 累加每一位
-    for (let i = 0; i < hashBits; i++) {
-      const bit = (hashInt >> BigInt(i)) & 1n;
-      v[i] += bit === 1n ? 1 : -1;
+  for (let i = 0; i <= cleanText.length - n; i++) {
+    const gram = cleanText.slice(i, i + n);
+    // 过滤掉全是停用词的gram
+    let isAllStopWords = true;
+    for (const char of gram) {
+      if (!STOP_WORDS.has(char)) {
+        isAllStopWords = false;
+        break;
+      }
+    }
+    if (!isAllStopWords) {
+      ngrams.add(gram);
     }
   }
   
-  // 生成 fingerprint
-  let fingerprint = 0n;
-  for (let i = 0; i < hashBits; i++) {
-    if (v[i] > 0) {
-      fingerprint |= 1n << BigInt(i);
+  return ngrams;
+}
+
+/**
+ * 计算 Jaccard 相似度
+ * @param set1 集合1
+ * @param set2 集合2
+ */
+function jaccardSimilarity(set1: Set<string>, set2: Set<string>): number {
+  if (set1.size === 0 && set2.size === 0) return 1;
+  if (set1.size === 0 || set2.size === 0) return 0;
+  
+  let intersection = 0;
+  for (const item of set1) {
+    if (set2.has(item)) {
+      intersection++;
     }
   }
   
-  return fingerprint.toString(16);
+  const union = set1.size + set2.size - intersection;
+  return intersection / union;
 }
 
-// 计算两个 SimHash 的海明距离
-function hammingDistance(hash1: string, hash2: string): number {
-  const h1 = BigInt('0x' + hash1);
-  const h2 = BigInt('0x' + hash2);
-  let xor = h1 ^ h2;
-  let distance = 0;
-  
-  while (xor > 0n) {
-    distance += Number(xor & 1n);
-    xor >>= 1n;
-  }
-  
-  return distance;
+/**
+ * 计算两个文本的相似度（0-1）
+ * 使用字符级 3-gram + Jaccard
+ */
+export function calculateSimilarity(text1: string, text2: string): number {
+  const ngrams1 = getNGrams(text1, 3);
+  const ngrams2 = getNGrams(text2, 3);
+  return jaccardSimilarity(ngrams1, ngrams2);
 }
 
-// 计算相似度（0-1之间）
-export function calculateSimilarity(hash1: string, hash2: string): number {
-  const distance = hammingDistance(hash1, hash2);
-  // 海明距离越小，相似度越高
-  // 64位hash，最大距离64
-  const similarity = 1 - (distance / 64);
-  return Math.max(0, similarity);
-}
-
-// 检查内容是否相似（阈值：海明距离 <= 10 即相似度 >= 0.84）
-export function isSimilarContent(hash1: string, hash2: string, maxDistance: number = 10): boolean {
-  return hammingDistance(hash1, hash2) <= maxDistance;
+/**
+ * 检测两个文本是否相似
+ * @param text1 文本1
+ * @param text2 文本2
+ * @param threshold 相似度阈值，默认0.4
+ */
+export function isSimilarContent(text1: string, text2: string, threshold: number = 0.4): boolean {
+  const similarity = calculateSimilarity(text1, text2);
+  console.log(`[相似度] "${text1}" vs "${text2}" = ${similarity.toFixed(2)}`);
+  return similarity >= threshold;
 }
 
 /**
@@ -95,9 +96,6 @@ export function checkContentLimit(
   existingContents: Array<{ content: string; created_at: Date }>,
   maxSimilar: number = 3
 ): { canPost: boolean; similarCount: number; reason?: string } {
-  const newHash = computeSimHash(newContent);
-  console.log('[内容限制] 新内容hash:', newHash);
-  
   const today = new Date().toISOString().split('T')[0];
   
   // 筛选今天的内容
@@ -106,15 +104,15 @@ export function checkContentLimit(
     return contentDate === today;
   });
   
+  console.log('[内容限制] 新内容:', newContent);
   console.log('[内容限制] 今日历史内容:', todayContents.length, '条');
   
   // 统计相似内容数量
   let similarCount = 0;
   for (const existing of todayContents) {
-    const existingHash = computeSimHash(existing.content);
-    const distance = hammingDistance(newHash, existingHash);
-    const similar = distance <= 10;
-    console.log(`[内容限制] 对比"${existing.content}"，海明距离:${distance}，相似:${similar}`);
+    const similarity = calculateSimilarity(newContent, existing.content);
+    const similar = similarity >= 0.4; // 40%相似度
+    console.log(`[内容限制] 对比"${existing.content}"，相似度:${similarity.toFixed(2)}，相似:${similar}`);
     if (similar) {
       similarCount++;
     }
@@ -130,12 +128,8 @@ export function checkContentLimit(
     };
   }
   
-  return { canPost: true, similarCount };
+  return {
+    canPost: true,
+    similarCount
+  };
 }
-
-export default {
-  computeSimHash,
-  calculateSimilarity,
-  isSimilarContent,
-  checkContentLimit
-};
