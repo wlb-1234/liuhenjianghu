@@ -19,6 +19,15 @@ function tokenize(text: string): string[] {
 // 计算 SimHash
 export function computeSimHash(text: string): string {
   const tokens = tokenize(text);
+  console.log('[SimHash] 文本:', text, '分词结果:', tokens);
+  
+  // 如果没有有效分词，使用整体文本的hash
+  if (tokens.length === 0) {
+    const hash = crypto.createHash('md5').update(text).digest('hex');
+    console.log('[SimHash] 无分词，使用整体hash:', hash);
+    return hash;
+  }
+  
   const hashBits = 64;
   const v = new Array(hashBits).fill(0);
   
@@ -87,6 +96,8 @@ export function checkContentLimit(
   maxSimilar: number = 3
 ): { canPost: boolean; similarCount: number; reason?: string } {
   const newHash = computeSimHash(newContent);
+  console.log('[内容限制] 新内容hash:', newHash);
+  
   const today = new Date().toISOString().split('T')[0];
   
   // 筛选今天的内容
@@ -95,13 +106,21 @@ export function checkContentLimit(
     return contentDate === today;
   });
   
+  console.log('[内容限制] 今日历史内容:', todayContents.length, '条');
+  
   // 统计相似内容数量
   let similarCount = 0;
   for (const existing of todayContents) {
-    if (isSimilarContent(newHash, computeSimHash(existing.content))) {
+    const existingHash = computeSimHash(existing.content);
+    const distance = hammingDistance(newHash, existingHash);
+    const similar = distance <= 10;
+    console.log(`[内容限制] 对比"${existing.content}"，海明距离:${distance}，相似:${similar}`);
+    if (similar) {
       similarCount++;
     }
   }
+  
+  console.log('[内容限制] 相似内容数:', similarCount, '/', maxSimilar);
   
   if (similarCount >= maxSimilar) {
     return {
