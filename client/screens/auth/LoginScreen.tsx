@@ -48,19 +48,25 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0A0A0F" />
       
-      {/* 水墨背景效果 */}
-      <View style={styles.inkBackground}>
+      {/* 深色背景 + 金色光点 */}
+      <View style={styles.background}>
         <LinearGradient
-          colors={['rgba(20,20,30,0.9)', 'rgba(10,10,15,1)', 'rgba(5,5,10,1)']}
-          style={styles.inkGradient}
+          colors={['#0D0D15', '#0A0A10', '#080810']}
+          style={styles.gradient}
         />
-        {/* 金色墨点装饰 */}
-        <View style={[styles.inkSplash, styles.splash1]} />
-        <View style={[styles.inkSplash, styles.splash2]} />
-        <View style={[styles.inkSplash, styles.splash3]} />
-        <View style={[styles.inkSplash, styles.splash4]} />
-        <View style={[styles.inkSplash, styles.splash5]} />
-        <View style={[styles.inkSplash, styles.splash6]} />
+        {/* 金色飞溅点 */}
+        <View style={[styles.splash, styles.splash1]} />
+        <View style={[styles.splash, styles.splash2]} />
+        <View style={[styles.splash, styles.splash3]} />
+        <View style={[styles.splash, styles.splash4]} />
+        <View style={[styles.splash, styles.splash5]} />
+        <View style={[styles.splash, styles.splash6]} />
+        <View style={[styles.splash, styles.splash7]} />
+        <View style={[styles.splash, styles.splash8]} />
+        {/* 金色光斑 */}
+        <View style={[styles.glow, styles.glow1]} />
+        <View style={[styles.glow, styles.glow2]} />
+        <View style={[styles.glow, styles.glow3]} />
       </View>
 
       <KeyboardAvoidingView
@@ -72,9 +78,9 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 主标题 - 烫金色书法风格 */}
+          {/* 主标题 - 烫金色书法 */}
           <LinearGradient
-            colors={['#B8860B', '#FFD700', '#D4AF37', '#B8860B']}
+            colors={['#C9A84C', '#FFD700', '#E6C778', '#D4AF37', '#C9A84C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.titleGradient}
@@ -82,83 +88,83 @@ export default function LoginScreen() {
             <Text style={styles.mainTitle}>流痕江湖</Text>
           </LinearGradient>
 
-          {/* 副标题 - 国风风格 */}
+          {/* 副标题 - 带箭头 */}
           <View style={styles.subtitleContainer}>
-            <Text style={styles.subtitleArrow}>◀</Text>
+            <Text style={styles.arrow}>◀</Text>
             <Text style={styles.subtitleText}>人海为江湖，留言皆流痕</Text>
-            <Text style={styles.subtitleArrow}>▶</Text>
+            <Text style={styles.arrow}>▶</Text>
           </View>
 
-          {/* 登录卡片 - 金色边框 */}
-          <View style={styles.loginCard}>
-            {/* 金色装饰边框 */}
-            <View style={styles.cardBorder}>
-              <View style={[styles.corner, styles.cornerTL]} />
-              <View style={[styles.corner, styles.cornerTR]} />
-              <View style={[styles.corner, styles.cornerBL]} />
-              <View style={[styles.corner, styles.cornerBR]} />
-            </View>
-            
-            {/* 卡片标题 */}
-            <Text style={styles.cardTitle}>江湖登录</Text>
-
-            {/* 手机号输入 */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIconPhone}>📱</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="请输入手机号"
-                  placeholderTextColor="#666"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            {/* 密码输入 */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIconLock}>🔒</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="请输入密码"
-                  placeholderTextColor="#666"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
-              </View>
-            </View>
-
-            {/* 登录按钮 - 金色发光 */}
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
+          {/* 登录框 - 金色边框 */}
+          <View style={styles.loginBox}>
+            <LinearGradient
+              colors={['#D4AF37', '#FFD700', '#D4AF37']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.goldenBorder}
             >
-              <LinearGradient
-                colors={['#B8860B', '#FFD700', '#D4AF37', '#B8860B']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
-              >
-                <Text style={styles.buttonText}>
-                  {loading ? '登录中...' : '进入江湖'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
+              <View style={styles.innerBox}>
+                {/* 标题 */}
+                <Text style={styles.boxTitle}>江湖登录</Text>
 
-            {/* 注册链接 */}
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>还没有账号？</Text>
-              <TouchableOpacity onPress={() => router.push('/register')}>
-                <Text style={styles.registerLink}>立即注册</Text>
-              </TouchableOpacity>
-            </View>
+                {/* 手机号 */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.icon}>📱</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="请输入手机号"
+                      placeholderTextColor="#555"
+                      value={phone}
+                      onChangeText={setPhone}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                </View>
+
+                {/* 密码 */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputWrapper}>
+                    <Text style={styles.icon}>🔒</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="请输入密码"
+                      placeholderTextColor="#555"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry
+                    />
+                  </View>
+                </View>
+
+                {/* 登录按钮 */}
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={handleLogin}
+                  disabled={loading}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={['#C9A84C', '#FFD700', '#E6C778', '#FFD700', '#C9A84C']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.buttonGradient}
+                  >
+                    <Text style={styles.buttonText}>
+                      {loading ? '登录中...' : '进入江湖'}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* 注册 */}
+                <View style={styles.registerRow}>
+                  <Text style={styles.registerText}>还没有账号？</Text>
+                  <TouchableOpacity onPress={() => router.push('/register')}>
+                    <Text style={styles.registerLink}>立即注册</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -171,31 +177,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0F',
   },
-  inkBackground: {
+  background: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  inkGradient: {
+  gradient: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  inkSplash: {
+  splash: {
     position: 'absolute',
-    borderRadius: 100,
     backgroundColor: '#D4AF37',
+    borderRadius: 100,
   },
-  splash1: { width: 80, height: 80, top: '5%', left: '-5%', opacity: 0.08 },
-  splash2: { width: 120, height: 120, top: '15%', right: '-8%', opacity: 0.06 },
-  splash3: { width: 60, height: 60, top: '40%', left: '5%', opacity: 0.05 },
-  splash4: { width: 100, height: 100, bottom: '25%', right: '0%', opacity: 0.07 },
-  splash5: { width: 70, height: 70, bottom: '10%', left: '10%', opacity: 0.06 },
-  splash6: { width: 90, height: 90, top: '60%', right: '5%', opacity: 0.04 },
+  splash1: { width: 6, height: 6, top: '8%', left: '15%', opacity: 0.6 },
+  splash2: { width: 4, height: 4, top: '12%', right: '20%', opacity: 0.5 },
+  splash3: { width: 8, height: 8, top: '25%', left: '8%', opacity: 0.4 },
+  splash4: { width: 5, height: 5, top: '35%', right: '10%', opacity: 0.55 },
+  splash5: { width: 7, height: 7, bottom: '30%', left: '12%', opacity: 0.5 },
+  splash6: { width: 4, height: 4, bottom: '25%', right: '18%', opacity: 0.6 },
+  splash7: { width: 6, height: 6, bottom: '15%', left: '25%', opacity: 0.45 },
+  splash8: { width: 5, height: 5, bottom: '20%', right: '8%', opacity: 0.5 },
+  glow: {
+    position: 'absolute',
+    backgroundColor: '#D4AF37',
+    borderRadius: 100,
+  },
+  glow1: { width: 150, height: 150, top: '-30%', right: '-20%', opacity: 0.04 },
+  glow2: { width: 200, height: 200, bottom: '-40%', left: '-30%', opacity: 0.05 },
+  glow3: { width: 100, height: 100, top: '50%', left: '60%', opacity: 0.03 },
   keyboardView: {
     flex: 1,
   },
@@ -203,144 +219,119 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 24,
+    paddingVertical: 80,
+    paddingHorizontal: 30,
   },
   titleGradient: {
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingHorizontal: 50,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   mainTitle: {
-    fontSize: 48,
+    fontSize: 52,
     fontWeight: 'bold',
     color: '#FFD700',
-    textShadowColor: 'rgba(255, 215, 0, 0.6)',
+    textAlign: 'center',
+    letterSpacing: 12,
+    textShadowColor: 'rgba(255, 215, 0, 0.8)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 25,
-    letterSpacing: 10,
+    textShadowRadius: 30,
   },
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 50,
+    marginTop: 25,
+    marginBottom: 60,
   },
-  subtitleArrow: {
-    fontSize: 14,
+  arrow: {
+    fontSize: 12,
     color: '#D4AF37',
-    marginHorizontal: 12,
+    marginHorizontal: 15,
   },
   subtitleText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#FFFFFF',
-    letterSpacing: 3,
+    letterSpacing: 4,
     fontWeight: '300',
   },
-  loginCard: {
+  loginBox: {
     width: '100%',
-    maxWidth: 360,
-    backgroundColor: 'rgba(20, 20, 28, 0.95)',
+    maxWidth: 340,
+  },
+  goldenBorder: {
+    padding: 2,
+    borderRadius: 14,
+  },
+  innerBox: {
+    backgroundColor: 'rgba(15, 15, 22, 0.98)',
     borderRadius: 12,
-    padding: 30,
-    borderWidth: 1.5,
-    borderColor: '#D4AF37',
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 30,
-    elevation: 15,
+    padding: 28,
   },
-  cardBorder: {
-    position: 'absolute',
-    top: -1,
-    left: -1,
-    right: -1,
-    bottom: -1,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-  },
-  corner: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderColor: '#D4AF37',
-  },
-  cornerTL: { top: -1, left: -1, borderTopWidth: 2, borderLeftWidth: 2 },
-  cornerTR: { top: -1, right: -1, borderTopWidth: 2, borderRightWidth: 2 },
-  cornerBL: { bottom: -1, left: -1, borderBottomWidth: 2, borderLeftWidth: 2 },
-  cornerBR: { bottom: -1, right: -1, borderBottomWidth: 2, borderRightWidth: 2 },
-  cardTitle: {
-    fontSize: 22,
+  boxTitle: {
+    fontSize: 24,
     color: '#D4AF37',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
     fontWeight: 'bold',
-    letterSpacing: 6,
+    letterSpacing: 8,
   },
-  inputContainer: {
-    marginBottom: 20,
+  inputGroup: {
+    marginBottom: 18,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#15151A',
+    backgroundColor: '#1A1A22',
     borderRadius: 8,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#B8860B',
-    paddingHorizontal: 15,
-    height: 52,
+    paddingHorizontal: 16,
+    height: 50,
   },
-  inputIconPhone: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  inputIconLock: {
-    fontSize: 20,
+  icon: {
+    fontSize: 18,
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#FFF',
+    fontSize: 15,
+    color: '#FFFFFF',
     padding: 0,
   },
   loginButton: {
-    marginTop: 25,
-    marginBottom: 20,
+    marginTop: 28,
+    marginBottom: 22,
     borderRadius: 8,
     overflow: 'hidden',
     shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 12,
   },
   buttonGradient: {
-    paddingVertical: 16,
+    paddingVertical: 15,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1A1A1F',
-    letterSpacing: 4,
+    color: '#0A0A10',
+    letterSpacing: 6,
   },
-  registerContainer: {
+  registerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   registerText: {
     fontSize: 14,
-    color: '#888',
+    color: '#666',
   },
   registerLink: {
     fontSize: 14,
     color: '#D4AF37',
-    marginLeft: 5,
+    marginLeft: 6,
     fontWeight: 'bold',
   },
 });
