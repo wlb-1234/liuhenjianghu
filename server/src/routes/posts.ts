@@ -5,6 +5,8 @@ import {
   getComments, createComment, getPostById, deletePost
 } from '../services/postService';
 import { getUserById } from '../services/userService';
+import { getPool } from '../config/database';
+import { checkContentLimit } from '../services/contentSimilarityService';
 
 const router = Router();
 
@@ -107,6 +109,30 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         error: '今日发帖次数已用完',
         limit: user.member_level + 5,
         used: user.today_post_count
+      });
+    }
+    
+    // 检查相似内容限制（同区域、同一天最多3条相似内容）
+    const pool = getPool();
+    const today = new Date().toISOString().split('T')[0];
+    const existingPosts = await pool.query(
+      `SELECT content, created_at FROM posts 
+       WHERE user_id = $1 AND region_code = $2 AND DATE(created_at) = $3
+       ORDER BY created_at DESC`,
+      [req.userId!, region_code, today]
+    );
+    
+    const limitCheck = checkContentLimit(
+      content.trim(),
+      existingPosts.rows,
+      3 // 最多3条相似
+    );
+    
+    if (!limitCheck.canPost) {
+      return res.status(429).json({ 
+        error: limitCheck.reason,
+        similarCount: limitCheck.similarCount,
+        maxSimilar: 3
       });
     }
     
