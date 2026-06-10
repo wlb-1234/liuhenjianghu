@@ -49,6 +49,7 @@ import userStatsRoutes from './routes/userStats';
 import checkInRoutes from './routes/checkIn';
 import notificationsRoutes from './routes/notifications';
 import reviewRoutes from './routes/review';
+import accountDeletionRoutes from './routes/accountDeletion';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/regions', regionRoutes);
@@ -65,6 +66,7 @@ app.use('/api/v1/user-stats', userStatsRoutes);
 app.use('/api/v1/check-in', checkInRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/moderation', reviewRoutes);
+app.use('/api/v1/account', accountDeletionRoutes);
 app.use('/api/v1/logs', logsRouter);
 app.use('/api/v1/cache', createCacheRouter());
 
