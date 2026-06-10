@@ -10,13 +10,10 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
-import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   onSwitchToRegister: () => void;
@@ -50,16 +47,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0D0D0F' }}>
-      {/* 左上角水纹标志 */}
-      <View style={[styles.logoCorner, { top: insets.top + 10, left: 16 }]}>
-        <Image
-          source={require('@/assets/logo-water.png')}
-          style={styles.logoCornerImage}
-          resizeMode="contain"
-        />
-      </View>
-      
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -76,29 +64,18 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
 
           {/* 登录表单 */}
           <View style={styles.formSection}>
-            <View
-              style={{
-                borderRadius: 28,
-                padding: 28,
-                borderWidth: 1.5,
-                borderColor: 'rgba(212,175,55,0.4)',
-                backgroundColor: 'rgba(26,26,31,0.98)',
-              }}
+            <LinearGradient
+              colors={['rgba(26,26,31,0.98)', 'rgba(26,26,31,0.98)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.formGradient}
             >
               <Text style={styles.loginTitle}>江湖登录</Text>
-              
+
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>手机号</Text>
                 <TextInput
-                  style={{
-                    backgroundColor: 'rgba(31,31,36,0.9)',
-                    borderRadius: 16,
-                    padding: 16,
-                    fontSize: 16,
-                    color: '#E8E4DC',
-                    borderWidth: 1,
-                    borderColor: 'rgba(212,175,55,0.3)',
-                  }}
+                  style={styles.input}
                   placeholder="请输入手机号"
                   placeholderTextColor="rgba(138,133,128,0.7)"
                   value={phone}
@@ -112,15 +89,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>密码</Text>
                 <TextInput
-                  style={{
-                    backgroundColor: 'rgba(31,31,36,0.9)',
-                    borderRadius: 16,
-                    padding: 16,
-                    fontSize: 16,
-                    color: '#E8E4DC',
-                    borderWidth: 1,
-                    borderColor: 'rgba(212,175,55,0.3)',
-                  }}
+                  style={styles.input}
                   placeholder="请输入密码"
                   placeholderTextColor="rgba(138,133,128,0.7)"
                   value={password}
@@ -141,16 +110,12 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                   colors={['#B8960C', '#D4AF37', '#E8C97D']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={{
-                    paddingVertical: 18,
-                    alignItems: 'center',
-                    borderRadius: 28,
-                  }}
+                  style={styles.buttonGradient}
                 >
                   {loading ? (
                     <ActivityIndicator color="#0D0D0F" />
                   ) : (
-                    <Text style={{ color: '#0D0D0F', fontSize: 22, fontWeight: '700', letterSpacing: 4 }}>进入江湖</Text>
+                    <Text style={styles.buttonText}>进入江湖</Text>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
@@ -162,7 +127,7 @@ export default function LoginScreen({ onSwitchToRegister }: Props) {
                 <Text style={styles.switchText}>还没有江湖身份？</Text>
                 <Text style={styles.switchLink}>立即注册</Text>
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
           </View>
 
           <Text style={styles.footerHint}>网页端建议优先使用移动端体验更佳</Text>
@@ -177,21 +142,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0D0D0F',
   },
-  logoCorner: {
-    position: 'absolute',
-    zIndex: 10,
-  },
-  logoCornerImage: {
-    width: 80,
-    height: 40,
-  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   logoSection: {
     alignItems: 'center',
@@ -200,7 +157,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#D4AF37',  // 黄金色
+    color: '#D4AF37',
     letterSpacing: 6,
     marginBottom: 12,
     textShadowColor: 'rgba(212,175,55,0.5)',
@@ -209,7 +166,7 @@ const styles = StyleSheet.create({
   },
   slogan: {
     fontSize: 14,
-    color: '#8A8580',  // 暗灰文字
+    color: '#8A8580',
     letterSpacing: 4,
     fontStyle: 'italic',
     fontWeight: '300',
@@ -227,13 +184,13 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: 28,
     borderWidth: 1.5,
-    borderColor: 'rgba(212,175,55,0.4)',  // 金色边框
-    backgroundColor: 'rgba(26,26,31,0.95)',  // 深灰背景
+    borderColor: 'rgba(212,175,55,0.4)',
+    backgroundColor: 'rgba(26,26,31,0.98)',
   },
   loginTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#D4AF37',  // 黄金色
+    color: '#D4AF37',
     textAlign: 'center',
     marginBottom: 28,
     letterSpacing: 4,
@@ -243,18 +200,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    color: '#E8C97D',  // 浅金色
+    color: '#E8C97D',
     marginBottom: 10,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: 'rgba(31,31,36,0.8)',
+    backgroundColor: 'rgba(31,31,36,0.9)',
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: '#E8E4DC',  // 月白文字
+    color: '#E8E4DC',
     borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.2)',  // 金色边框
+    borderColor: 'rgba(212,175,55,0.3)',
   },
   loginButton: {
     marginTop: 20,
@@ -272,7 +229,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   buttonText: {
-    color: '#0D0D0F',  // 墨黑色
+    color: '#0D0D0F',
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 4,
@@ -289,18 +246,18 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 12,
-    color: '#8A8580',  // 暗灰
+    color: '#8A8580',
   },
   switchLink: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#D4AF37',  // 黄金色
+    color: '#D4AF37',
   },
   footerHint: {
     marginTop: 40,
     textAlign: 'center',
     fontSize: 12,
-    color: 'rgba(138,133,128,0.6)',  // 暗灰
+    color: 'rgba(138,133,128,0.6)',
     fontWeight: '300',
   },
 });
