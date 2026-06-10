@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { getPool } from '../config/database';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, authMiddlewareWithUser } from '../middleware/auth';
 
 const router = Router();
 
