@@ -476,6 +476,42 @@ CREATE TABLE users (
 
 ---
 
+### 内容反垃圾
+
+**更新时间**: 2026-06-10 14:45
+
+#### 相似内容频率限制
+
+**功能说明**: 同一用户在同城、同一天发布的相似广告内容不得超过2条，用于防止刷屏广告。
+
+**实现方案**:
+- 字符级 N-gram 分词 (3-gram)
+- Jaccard 相似度算法
+- 相似度阈值: 30%
+
+**文件位置**:
+- 服务端: `server/src/services/contentSimilarityService.ts`
+- 调用位置: `server/src/routes/posts.ts`
+
+**API 逻辑**:
+```typescript
+// 发帖前检查
+const limitCheck = checkContentLimit(content, existingPosts, 2);
+// 超过阈值返回错误
+{
+  "error": "今日该区域已发布 2 条相似内容，请稍后再试",
+  "similarCount": 2,
+  "maxSimilar": 3
+}
+```
+
+**检测规则**:
+- 区域范围: 按 region_code 匹配
+- 时间范围: 当天 (00:00 - 23:59)
+- 相似度计算: Jaccard(交集/并集) ≥ 0.30
+
+---
+
 ## 部署配置
 
 ### Railway
