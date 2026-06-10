@@ -78,7 +78,7 @@ export function calculateSimilarity(text1: string, text2: string): number {
  * @param text2 文本2
  * @param threshold 相似度阈值，默认0.4
  */
-export function isSimilarContent(text1: string, text2: string, threshold: number = 0.4): boolean {
+export function isSimilarContent(text1: string, text2: string, threshold: number = 0.3): boolean {
   const similarity = calculateSimilarity(text1, text2);
   console.log(`[相似度] "${text1}" vs "${text2}" = ${similarity.toFixed(2)}`);
   return similarity >= threshold;
@@ -111,7 +111,7 @@ export function checkContentLimit(
   let similarCount = 0;
   for (const existing of todayContents) {
     const similarity = calculateSimilarity(newContent, existing.content);
-    const similar = similarity >= 0.4; // 40%相似度
+    const similar = similarity >= 0.3; // 30%相似度
     console.log(`[内容限制] 对比"${existing.content}"，相似度:${similarity.toFixed(2)}，相似:${similar}`);
     if (similar) {
       similarCount++;
