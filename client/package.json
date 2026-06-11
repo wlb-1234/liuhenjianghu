@@ -12,7 +12,7 @@
     "test": "jest --watchAll",
     "android": "expo run:android",
     "web:export": "expo export --platform web",
-    "web:serve": "npx serve dist",
+    "web:serve": "npx serve dist"
   },
   "jest": {
     "preset": "jest-expo"
