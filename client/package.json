@@ -16,7 +16,7 @@
     "start": "expo start --web --clear",
     "test": "jest --watchAll",
     "android": "expo run:android",
-    "web:export": "expo export --platform web",
+    "build": "expo export --platform web",
     "web:serve": "npx serve dist"
   },
   "jest": {
