@@ -10,7 +10,7 @@ RUN npx expo export --platform web
 
 FROM nginx:alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /app
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
