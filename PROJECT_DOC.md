@@ -612,14 +612,33 @@ client/
 | 22:15 | 调整字号确保文字横排显示 | screens/auth/LoginScreen.tsx |
 | 22:30 | 优化输入框、按钮金色效果 | screens/auth/LoginScreen.tsx |
 
-#### 部署配置
+#### Railway 前端部署修复 (23:41)
 
 | 时间 | 变更内容 | 文件 |
 |------|----------|------|
-| 21:00 | 添加前端 Dockerfile 用于 Railway 部署 | client/Dockerfile |
-| 21:15 | 添加 Vercel 配置文件 | client/vercel.json |
-| 21:20 | 添加 nginx.conf | client/nginx.conf |
-| 21:25 | 添加 server.js 静态文件服务 | client/server.js |
+| 23:00 | 移除 package.json 的 packageManager 字段避免 pnpm 版本锁定 | client/package.json |
+| 23:05 | 修改 Dockerfile 使用 npm 替代 pnpm | client/Dockerfile |
+| 23:10 | 添加 build 脚本用于 Railway 构建 | client/package.json |
+| 23:35 | 修复 nginx.conf root 路径从 /app 改为 /usr/share/nginx/html | client/nginx.conf |
+| 23:38 | 修复 nginx.conf 端口从 8080 改为 80 | client/nginx.conf |
+| 23:40 | 更新 railway.json 配置 | client/railway.json |
+
+#### Railway Settings 配置
+
+| 配置项 | 值 | 说明 |
+|--------|-----|------|
+| Root Directory | client | 代码根目录 |
+| Builder | DOCKERFILE | 使用 Dockerfile 构建 |
+| Dockerfile Path | Dockerfile | Dockerfile 路径 |
+| Custom Build Command | npm install && npm run build | 构建命令 |
+| Custom Start Command | nginx -g 'daemon off;' | 启动命令 |
+| Teardown | 启用 | 新部署时终止旧部署 |
+
+#### 前端访问地址
+
+| 环境 | 域名 | 状态 |
+|------|------|------|
+| 生产 | https://expo-app-production-c11a.up.railway.app | ✅ 正常 |
 
 #### 设计方案
 
