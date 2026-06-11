@@ -1,8 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package*.json ./
-RUN pnpm install --ignore-scripts
+RUN npm install --ignore-scripts
 COPY . .
 RUN npx expo export --platform web --output-dir dist
 

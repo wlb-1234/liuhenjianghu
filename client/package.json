@@ -3,6 +3,11 @@
   "description": "my-expo-app",
   "main": "expo-router/entry",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "check-deps": "npx depcheck",
     "postinstall": "npm run install-missing",
