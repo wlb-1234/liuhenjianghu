@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 import { apiService } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, User, FileText } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface SearchResult {
   type: "user" | "post";
@@ -114,7 +114,7 @@ export default function SearchScreen() {
 
       {/* 搜索框 */}
       <View style={styles.searchBox}>
-        <Search size={20} color="#999" style={styles.searchIcon} />
+        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
         <TextInput
           style={styles.input}
           placeholder="搜索用户/帖子..."
@@ -132,7 +132,7 @@ export default function SearchScreen() {
           style={[styles.tab, activeTab === "users" && styles.activeTab]}
           onPress={() => setActiveTab("users")}
         >
-          <User size={18} color={activeTab === "users" ? "#C9A962" : "#999"} />
+          <Ionicons name="person" size={18} color={activeTab === "users" ? "#C9A962" : "#999"} />
           <Text style={[styles.tabText, activeTab === "users" && styles.activeTabText]}>
             用户
           </Text>
@@ -141,7 +141,7 @@ export default function SearchScreen() {
           style={[styles.tab, activeTab === "posts" && styles.activeTab]}
           onPress={() => setActiveTab("posts")}
         >
-          <FileText size={18} color={activeTab === "posts" ? "#C9A962" : "#999"} />
+          <Ionicons name="document-text" size={18} color={activeTab === "posts" ? "#C9A962" : "#999"} />
           <Text style={[styles.tabText, activeTab === "posts" && styles.activeTabText]}>
             帖子
           </Text>
