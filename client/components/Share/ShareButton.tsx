@@ -9,8 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
-import * as Sharing from 'expo-sharing';
 import * as Linking from 'expo-linking';
 
 interface ShareButtonProps {
@@ -27,37 +25,40 @@ export function ShareButton({ postId, title, size = 24, color }: ShareButtonProp
   const shareText = title ? `${title}\n${shareUrl}` : shareUrl;
 
   const handleCopyLink = async () => {
-    await Clipboard.setStringAsync(shareUrl);
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.navigator) {
+      // Web 平台：使用原生 Clipboard API
+      await window.navigator.clipboard.writeText(shareUrl);
+    }
     setModalVisible(false);
     Alert.alert('已复制', '链接已复制到剪贴板');
   };
 
   const handleShare = async () => {
-    if (Platform.OS === 'web') {
-      // Web 平台：复制链接
-      handleCopyLink();
-    } else {
-      // 原生平台：使用分享
-      try {
-        const isAvailable = await Sharing.isAvailableAsync();
-        if (isAvailable) {
-          // 使用 Alert 模拟分享（实际应用中可集成更多分享方式）
-          Alert.alert('分享', `分享链接: ${shareUrl}`, [
-            { text: '取消', style: 'cancel' },
-            { text: '复制链接', onPress: handleCopyLink },
-          ]);
-        } else {
-          handleCopyLink();
-        }
-      } catch (error) {
-        handleCopyLink();
-      }
+    // Web 平台：复制链接
+    handleCopyLink();
+  };
+
+  const handleShareToWechat = () => {
+    const wechatShareUrl = `https://api.uomg.com/api/qrcode?url=${encodeURIComponent(shareUrl)}`;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(wechatShareUrl, '_blank');
     }
     setModalVisible(false);
   };
 
-  const handleOpenBrowser = () => {
-    Linking.openURL(shareUrl);
+  const handleShareToWeibo = () => {
+    const weiboShareUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title || '流痕江湖')}`;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(weiboShareUrl, '_blank');
+    }
+    setModalVisible(false);
+  };
+
+  const handleShareToQQ = () => {
+    const qqShareUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title || '流痕江湖')}`;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(qqShareUrl, '_blank');
+    }
     setModalVisible(false);
   };
 
@@ -74,45 +75,52 @@ export function ShareButton({ postId, title, size = 24, color }: ShareButtonProp
         onRequestClose={() => setModalVisible(false)}
       >
         <TouchableOpacity
-          style={styles.overlay}
+          style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setModalVisible(false)}
         >
-          <View style={styles.sheet}>
-            <Text style={styles.title}>分享到</Text>
-            
-            <View style={styles.options}>
-              <TouchableOpacity style={styles.option} onPress={handleShare}>
-                <View style={[styles.iconBg, { backgroundColor: '#07C160' }]}>
-                  <Ionicons name="chatbubble" size={24} color="#fff" />
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>分享到</Text>
+
+            <View style={styles.shareOptions}>
+              <TouchableOpacity style={styles.shareOption} onPress={handleShareToWechat}>
+                <View style={[styles.shareIcon, { backgroundColor: '#07C160' }]}>
+                  <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
                 </View>
-                <Text style={styles.optionText}>微信</Text>
+                <Text style={styles.shareLabel}>微信</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.option} onPress={handleShare}>
-                <View style={[styles.iconBg, { backgroundColor: '#FF9500' }]}>
-                  <Ionicons name="logo-snapchat" size={24} color="#fff" />
+              <TouchableOpacity style={styles.shareOption} onPress={handleShareToWechat}>
+                <View style={[styles.shareIcon, { backgroundColor: '#07C160' }]}>
+                  <Ionicons name="people" size={24} color="#fff" />
                 </View>
-                <Text style={styles.optionText}>朋友圈</Text>
+                <Text style={styles.shareLabel}>朋友圈</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.option} onPress={handleShare}>
-                <View style={[styles.iconBg, { backgroundColor: '#12B7F5' }]}>
-                  <Ionicons name="logo-twitter" size={24} color="#fff" />
+              <TouchableOpacity style={styles.shareOption} onPress={handleShareToWeibo}>
+                <View style={[styles.shareIcon, { backgroundColor: '#E6162D' }]}>
+                  <Ionicons name="logo-sina-weibo" size={24} color="#fff" />
                 </View>
-                <Text style={styles.optionText}>微博</Text>
+                <Text style={styles.shareLabel}>微博</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.option} onPress={handleCopyLink}>
-                <View style={[styles.iconBg, { backgroundColor: '#07C160' }]}>
+              <TouchableOpacity style={styles.shareOption} onPress={handleShareToQQ}>
+                <View style={[styles.shareIcon, { backgroundColor: '#1296DB' }]}>
+                  <Ionicons name="chatbox-ellipses" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>QQ</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareOption} onPress={handleCopyLink}>
+                <View style={[styles.shareIcon, { backgroundColor: '#8B8B8B' }]}>
                   <Ionicons name="link" size={24} color="#fff" />
                 </View>
-                <Text style={styles.optionText}>复制链接</Text>
+                <Text style={styles.shareLabel}>复制链接</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={styles.cancelBtn}
+              style={styles.cancelButton}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.cancelText}>取消</Text>
@@ -125,52 +133,58 @@ export function ShareButton({ postId, title, size = 24, color }: ShareButtonProp
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  sheet: {
+  modalContent: {
     backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     paddingBottom: 40,
   },
-  title: {
-    color: '#fff',
-    fontSize: 16,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFD700',
     textAlign: 'center',
     marginBottom: 20,
   },
-  options: {
+  shareOptions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-around',
     marginBottom: 20,
   },
-  option: {
+  shareOption: {
     alignItems: 'center',
+    width: '25%',
+    marginBottom: 20,
   },
-  iconBg: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  shareIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
-  optionText: {
-    color: '#fff',
+  shareLabel: {
     fontSize: 12,
+    color: '#fff',
   },
-  cancelBtn: {
-    backgroundColor: '#2a2a2a',
+  cancelButton: {
+    backgroundColor: '#333',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#fff',
     fontSize: 16,
+    color: '#fff',
   },
 });
+
+export default ShareButton;
