@@ -175,20 +175,10 @@ export default function AdminDashboardScreen() {
 
               <TouchableOpacity
                 className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
-                onPress={() => router.push('/admin/members')}
+                onPress={() => router.push('/admin/reports')}
               >
-                <Text className="text-2xl mb-2">👑</Text>
-                <Text className="text-stone-200 font-medium">会员等级</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="flex-row -mx-2 mt-4">
-              <TouchableOpacity
-                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
-                onPress={() => router.push('/admin/logs')}
-              >
-                <Text className="text-2xl mb-2">📋</Text>
-                <Text className="text-stone-200 font-medium">操作日志</Text>
+                <Text className="text-2xl mb-2">🚩</Text>
+                <Text className="text-stone-200 font-medium">举报管理</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -197,6 +187,24 @@ export default function AdminDashboardScreen() {
               >
                 <Text className="text-2xl mb-2">🛡️</Text>
                 <Text className="text-stone-200 font-medium">内容审核</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row -mx-2 mt-4">
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/members')}
+              >
+                <Text className="text-2xl mb-2">👑</Text>
+                <Text className="text-stone-200 font-medium">会员等级</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/logs')}
+              >
+                <Text className="text-2xl mb-2">📋</Text>
+                <Text className="text-stone-200 font-medium">操作日志</Text>
               </TouchableOpacity>
             </View>
           </View>
