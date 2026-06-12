@@ -250,7 +250,7 @@
 ## API 接口列表
 
 ### 基础信息
-- Base URL: `https://liuhenjianghu-production.up.railway.app/api/v1`
+- Base URL: `https://server-production-64d28.up.railway.app/api/v1`
 - 认证方式: `Authorization: Bearer <token>`
 
 ### 认证相关 `/auth`
@@ -516,7 +516,7 @@ const limitCheck = checkContentLimit(content, existingPosts, 2);
 
 ### Railway
 - 项目: https://railway.app/project/liuhenjianghu
-- 域名: https://liuhenjianghu-production.up.railway.app
+- 域名: https://server-production-64d28.up.railway.app
 - 区域: US West (California)
 
 ### 构建配置

@@ -94,7 +94,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "fonts": ["./assets/fonts/calligraphy.ttf", "./assets/fonts/NotoSerifKR.otf"]
     },
     "extra": {
-      "EXPO_PUBLIC_BACKEND_BASE_URL": "https://liuhenjianghu-production.up.railway.app"
+      "EXPO_PUBLIC_BACKEND_BASE_URL": "https://server-production-64d28.up.railway.app"
     }
   }
 }
