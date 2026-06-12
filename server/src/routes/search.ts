@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, users, posts } from "../storage/database";
-import { like, or, sql } from "drizzle-orm";
+import { like, sql } from "drizzle-orm";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
@@ -22,17 +22,11 @@ router.get("/users", async (req, res) => {
         id: users.id,
         nickname: users.nickname,
         avatar: users.avatar,
-        bio: users.bio,
         postsCount: sql<number>`(SELECT COUNT(*) FROM posts WHERE posts.user_id = ${users.id})`,
         followersCount: sql<number>`(SELECT COUNT(*) FROM follows WHERE follows.followed_id = ${users.id})`,
       })
       .from(users)
-      .where(
-        or(
-          like(users.nickname, searchPattern),
-          like(users.bio, searchPattern)
-        )
-      )
+      .where(like(users.nickname, searchPattern))
       .limit(20);
 
     res.json({ users: result });
