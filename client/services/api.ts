@@ -295,6 +295,34 @@ class ApiService {
     }
     return data;
   }
+
+  // ============ 收藏相关 ============
+
+  // 添加收藏
+  async addCollection(postId: number): Promise<{ success: boolean; message: string }> {
+    return this.request('/collections', {
+      method: 'POST',
+      body: { postId },
+    });
+  }
+
+  // 取消收藏
+  async removeCollection(postId: number): Promise<{ success: boolean; message: string }> {
+    return this.request(`/collections/${postId}`, { method: 'DELETE' });
+  }
+
+  // 获取收藏列表
+  async getCollections(page = 1, pageSize = 20): Promise<{ 
+    data: any[]; 
+    pagination: { page: number; pageSize: number; total: number; totalPages: number } 
+  }> {
+    return this.request(`/collections?page=${page}&pageSize=${pageSize}`);
+  }
+
+  // 检查是否已收藏
+  async checkCollection(postId: number): Promise<{ isCollected: boolean }> {
+    return this.request(`/collections/check/${postId}`);
+  }
 }
 
 export const api = new ApiService();

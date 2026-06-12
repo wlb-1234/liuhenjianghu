@@ -223,3 +223,15 @@ export const smsCodes = pgTable("sms_codes", {
 	used: boolean().default(false),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 });
+
+// 收藏表
+export const collections = pgTable("collections", {
+	id: serial("id").primaryKey(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: 'cascade' }),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+	userIdx: index("collections_user_id_idx").on(table.userId),
+	postIdx: index("collections_post_id_idx").on(table.postId),
+	userPostUnique: unique("collections_user_post_unique").on(table.userId, table.postId),
+}));
