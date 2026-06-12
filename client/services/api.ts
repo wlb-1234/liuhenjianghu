@@ -233,7 +233,7 @@ class ApiService {
 
   // 获取会话列表
   async getConversations(): Promise<{ conversations: any[] }> {
-    return this.request('/social/conversations');
+    return this.request('/messages/conversations');
   }
 
   // 发送私信

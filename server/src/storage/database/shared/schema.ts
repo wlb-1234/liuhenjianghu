@@ -235,3 +235,31 @@ export const collections = pgTable("collections", {
 	postIdx: index("collections_post_id_idx").on(table.postId),
 	userPostUnique: unique("collections_user_post_unique").on(table.userId, table.postId),
 }));
+
+// 会话表
+export const conversations = pgTable("conversations", {
+	id: serial("id").primaryKey(),
+	userId1: integer("user_id_1").notNull(),
+	userId2: integer("user_id_2").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+	user1Idx: index("conversations_user_id_1_idx").on(table.userId1),
+	user2Idx: index("conversations_user_id_2_idx").on(table.userId2),
+}));
+
+// 消息表
+export const messages = pgTable("messages", {
+	id: serial("id").primaryKey(),
+	conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+	senderId: integer("sender_id").notNull(),
+	receiverId: integer("receiver_id").notNull(),
+	content: text("content").notNull(),
+	type: varchar("type", { length: 20 }).default("text"), // text, image, voice
+	isRead: boolean("is_read").default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+	conversationIdx: index("messages_conversation_id_idx").on(table.conversationId),
+	senderIdx: index("messages_sender_id_idx").on(table.senderId),
+	receiverIdx: index("messages_receiver_id_idx").on(table.receiverId),
+}));
