@@ -14,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 9091;
 
 // 中间件
+import searchRoutes from './routes/search';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -72,6 +73,7 @@ app.use('/api/v1/account', accountDeletionRoutes);
 app.use('/api/v1/logs', logsRouter);
 app.use('/api/v1/collections', collectionsRoutes);
 app.use('/api/v1/messages', messagesRoutes);
+app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/cache', createCacheRouter());
 
 // 错误处理（放在所有路由之后）

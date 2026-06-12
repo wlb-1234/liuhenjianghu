@@ -279,6 +279,16 @@ class ApiService {
     });
   }
 
+  // ============ 搜索 ============
+  
+  async searchUsers(keyword: string): Promise<{ users: any[] }> {
+    return this.request(`/search/users?keyword=${encodeURIComponent(keyword)}`);
+  }
+
+  async searchPosts(keyword: string): Promise<{ posts: any[] }> {
+    return this.request(`/search/posts?keyword=${encodeURIComponent(keyword)}`);
+  }
+
   // ============ 文件上传 ============
   
   async uploadImages(formData: FormData): Promise<{ files: any[] }> {
