@@ -694,11 +694,41 @@ client/
 
 ### 新增数据库表
 
-| 表名 | 功能 |
-|------|------|
-| collections | 收藏表 |
-| conversations | 会话表 |
-| messages | 消息表 |
+#### collections (收藏表)
+```sql
+CREATE TABLE collections (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, post_id)
+);
+```
+
+#### conversations (会话表)
+```sql
+CREATE TABLE conversations (
+  id SERIAL PRIMARY KEY,
+  user_id_1 INTEGER NOT NULL,
+  user_id_2 INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### messages (消息表)
+```sql
+CREATE TABLE messages (
+  id SERIAL PRIMARY KEY,
+  conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  sender_id INTEGER NOT NULL,
+  receiver_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  type VARCHAR(20) DEFAULT 'text',
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ### 服务部署状态
 
