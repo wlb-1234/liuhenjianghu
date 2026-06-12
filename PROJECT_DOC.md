@@ -645,3 +645,78 @@ client/
 | 版本 | 日期 | 内容 |
 |------|------|------|
 | 方案D | 2025-06-11 | 黑金武侠风格：毛笔书法烫金色标题 + 水墨纹理背景 + 金色边框输入框 + 渐变金色按钮 |
+
+---
+
+## 2026-06-12 新增功能开发
+
+### 功能开发记录
+
+| 时间 | 功能 | 文件 |
+|------|------|------|
+| 22:38 | 完善管理后台 - 添加顶部导航栏、举报管理入口 | client/app/admin/_layout.tsx, screens/admin/ReportsScreen.tsx |
+| 22:45 | 添加举报管理页面（查看/处理用户举报） | client/screens/admin/ReportsScreen.tsx, app/admin/reports.tsx |
+| 22:50 | 开发收藏功能 - 后端 API | server/src/routes/collections.ts |
+| 22:55 | 添加收藏数据库表结构 | server/src/storage/database/shared/schema.ts |
+| 23:00 | 开发收藏前端页面 | client/screens/collection/index.tsx, app/(tabs)/collection.tsx |
+| 23:10 | 开发分享功能 - ShareButton组件 | client/components/Share/ShareButton.tsx |
+| 23:15 | 添加分享落地页 | client/app/post/[id].tsx |
+| 23:20 | 修复 app/index.tsx 路由冲突 | client/app/index.tsx (已删除) |
+| 23:30 | 开发聊天功能 - 后端 API | server/src/routes/messages.ts |
+| 23:35 | 添加聊天数据库表结构（conversations/messages） | server/src/storage/database/shared/schema.ts |
+| 23:40 | 开发聊天前端页面（会话列表、私信） | client/screens/chat/index.tsx, [userId]/index.tsx |
+| 23:50 | 添加帖子详情私信入口 | client/app/post-detail/index.tsx |
+| 23:55 | 开发搜索功能 - 后端 API | server/src/routes/search.ts |
+| 24:00 | 开发搜索前端页面 | client/screens/search/index.tsx, app/(tabs)/search.tsx |
+| 24:10 | 添加后端 Railway 部署配置 | server/Dockerfile, server/railway.json |
+| 24:15 | 修复后端构建错误（导入路径、重复定义） | server/src/storage/database/shared/schema.ts |
+
+### 新增页面
+
+| 页面 | 路径 | 功能 |
+|------|------|------|
+| 收藏 | /collection | 我的收藏列表 |
+| 聊天列表 | /chat | 会话列表 |
+| 私信 | /chat/[userId] | 与用户一对一聊天 |
+| 搜索 | /search | 搜索用户和帖子 |
+| 举报管理 | /admin/reports | 管理用户举报 |
+
+### 新增 API
+
+| API | 方法 | 功能 |
+|-----|------|------|
+| /api/v1/collections | GET/POST/DELETE | 收藏列表、添加/取消收藏 |
+| /api/v1/messages/conversations | GET | 获取会话列表 |
+| /api/v1/messages/:userId | GET | 获取聊天记录 |
+| /api/v1/messages | POST | 发送消息 |
+| /api/v1/search/users | GET | 搜索用户 |
+| /api/v1/search/posts | GET | 搜索帖子 |
+
+### 新增数据库表
+
+| 表名 | 功能 |
+|------|------|
+| collections | 收藏表 |
+| conversations | 会话表 |
+| messages | 消息表 |
+
+### 服务部署状态
+
+| 服务 | 域名 | 状态 | 说明 |
+|------|------|------|------|
+| 前端 | https://expo-app-production-c11a.up.railway.app | ✅ 正常 | Web 应用 |
+| 后端 | https://server-production-64d28.up.railway.app | ✅ 正常 | API 服务 |
+
+### 功能清单
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 登录/注册 | ✅ | 手机号登录/注册 |
+| 首页帖子 | ✅ | 帖子列表、点赞、评论 |
+| 发帖 | ✅ | 发布图文帖子 |
+| 收藏 | ✅ | 收藏/取消收藏帖子 |
+| 聊天 | ✅ | 私信功能 |
+| 搜索 | ✅ | 搜索用户/帖子 |
+| 分享 | ✅ | 分享帖子链接 |
+| 个人中心 | ✅ | 头像、昵称、设置 |
+| 管理后台 | ✅ | 仪表盘、用户管理、内容审核、举报管理 |
