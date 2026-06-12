@@ -2,14 +2,14 @@ import { Router } from "express";
 import { db, messages, conversations, users } from "../storage/database";
 import { eq, and, or, desc, sql, ne } from "drizzle-orm";
 import { z } from "zod";
-import { authenticate } from "../middleware/auth";
+import { authMiddleware as authenticate } from "../middleware/auth";
 
 const router = Router();
 
 // 获取当前用户的会话列表
 router.get("/conversations", authenticate, async (req: any, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.userId;
 
     // 获取会话列表，包含对方用户信息
     const conversationList = await db
@@ -73,7 +73,7 @@ router.get("/conversations", authenticate, async (req: any, res) => {
 // 获取与某个用户的聊天记录
 router.get("/:userId", authenticate, async (req: any, res) => {
   try {
-    const currentUserId = req.user.id;
+    const currentUserId = req.userId;
     const otherUserId = parseInt(req.params.userId);
 
     // 查找或创建会话
@@ -150,7 +150,7 @@ router.get("/:userId", authenticate, async (req: any, res) => {
 // 发送消息
 router.post("/", authenticate, async (req: any, res) => {
   try {
-    const senderId = req.user.id;
+    const senderId = req.userId;
     const { receiverId, content, type = "text" } = req.body;
 
     if (!receiverId || !content) {

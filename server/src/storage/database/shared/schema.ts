@@ -179,42 +179,7 @@ export const friends = pgTable("friends", {
 	unique("friends_user_id_friend_id_key").on(table.userId, table.friendId),
 ]);
 
-export const messages = pgTable("messages", {
-	id: serial().primaryKey().notNull(),
-	senderId: integer("sender_id").notNull(),
-	receiverId: integer("receiver_id").notNull(),
-	content: text().notNull(),
-	isRead: boolean("is_read").default(false),
-	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-	index("idx_messages_receiver").using("btree", table.receiverId.asc().nullsLast().op("int4_ops")),
-	index("idx_messages_sender").using("btree", table.senderId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.senderId],
-			foreignColumns: [users.id],
-			name: "messages_sender_id_fkey"
-		}),
-	foreignKey({
-			columns: [table.receiverId],
-			foreignColumns: [users.id],
-			name: "messages_receiver_id_fkey"
-		}),
-]);
-
-export const memberLevels = pgTable("member_levels", {
-	id: serial().primaryKey().notNull(),
-	level: integer().notNull(),
-	name: varchar({ length: 50 }).notNull(),
-	price: numeric({ precision: 10, scale:  2 }),
-	regionLimit: integer("region_limit").notNull(),
-	dailyLimit: integer("daily_limit").notNull(),
-	retentionDays: integer("retention_days").notNull(),
-	canPin: boolean("can_pin").default(false),
-	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-	unique("member_levels_level_key").on(table.level),
-]);
-
+// 短信验证码表
 export const smsCodes = pgTable("sms_codes", {
 	id: serial().primaryKey().notNull(),
 	phone: varchar({ length: 20 }).notNull(),
