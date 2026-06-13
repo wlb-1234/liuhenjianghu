@@ -1,11 +1,40 @@
 import { Router } from 'express';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 const router = Router();
 
-// 内置的行政区划数据（编译时内联）
-// 使用静态导入确保数据被包含在构建产物中
-const regionData = {
-  "provinces": [
+// 尝试从JSON文件加载行政区划数据
+let regionData: any = {
+  provinces: [],
+  cities: {},
+  districts: {},
+  streets: {}
+};
+
+try {
+  // 优先从dist目录加载（构建后）
+  const distPath = join(process.cwd(), 'dist', 'data', 'regions.json');
+  const srcPath = join(process.cwd(), 'src', 'data', 'regions.json');
+  
+  const jsonPath = existsSync(distPath) ? distPath : srcPath;
+  console.log(`[regions] Loading data from: ${jsonPath}`);
+  
+  if (existsSync(jsonPath)) {
+    const content = readFileSync(jsonPath, 'utf-8');
+    regionData = JSON.parse(content);
+    console.log(`[regions] Loaded ${regionData.provinces.length} provinces`);
+    console.log(`[regions] Loaded ${Object.keys(regionData.cities).length} provinces with cities`);
+  } else {
+    console.warn('[regions] No regions.json found, using empty data');
+  }
+} catch (error) {
+  console.error('[regions] Error loading regions data:', error);
+}
+
+// 备用内联数据（仅包含少量数据作为兜底）
+const fallbackData: any = {
+  provinces: [
     {"code":"11","name":"北京市"},{"code":"12","name":"天津市"},{"code":"13","name":"河北省"},
     {"code":"14","name":"山西省"},{"code":"15","name":"内蒙古自治区"},{"code":"21","name":"辽宁省"},
     {"code":"22","name":"吉林省"},{"code":"23","name":"黑龙江省"},{"code":"31","name":"上海市"},
@@ -19,7 +48,7 @@ const regionData = {
     {"code":"65","name":"新疆维吾尔自治区"},{"code":"71","name":"台湾省"},{"code":"81","name":"香港特别行政区"},
     {"code":"82","name":"澳门特别行政区"}
   ],
-  "cities": {
+  cities: {
     "11":[{"code":"1101","name":"北京市辖区"}],
     "12":[{"code":"1201","name":"天津市辖区"}],
     "13":[{"code":"1301","name":"石家庄市"},{"code":"1302","name":"唐山市"},{"code":"1303","name":"秦皇岛市"},{"code":"1304","name":"邯郸市"},{"code":"1305","name":"邢台市"},{"code":"1306","name":"保定市"},{"code":"1307","name":"张家口市"},{"code":"1308","name":"承德市"},{"code":"1309","name":"沧州市"},{"code":"1310","name":"廊坊市"},{"code":"1311","name":"衡水市"}],
@@ -52,12 +81,18 @@ const regionData = {
     "64":[{"code":"6401","name":"银川市"},{"code":"6402","name":"石嘴山市"},{"code":"6403","name":"吴忠市"},{"code":"6404","name":"固原市"},{"code":"6405","name":"中卫市"}],
     "65":[{"code":"6501","name":"乌鲁木齐市"},{"code":"6502","name":"克拉玛依市"},{"code":"6504","name":"吐鲁番市"},{"code":"6505","name":"哈密市"},{"code":"6523","name":"昌吉回族自治州"},{"code":"6527","name":"博尔塔拉蒙古自治州"},{"code":"6528","name":"巴音郭楞蒙古自治州"},{"code":"6529","name":"阿克苏地区"},{"code":"6530","name":"克孜勒苏柯尔克孜自治州"},{"code":"6531","name":"喀什地区"},{"code":"6532","name":"和田地区"},{"code":"6540","name":"伊犁哈萨克自治州"},{"code":"6542","name":"塔城地区"},{"code":"6543","name":"阿勒泰地区"}]
   },
-  "districts": {
+  districts: {
     "1101":[{"code":"110101","name":"东城区"},{"code":"110102","name":"西城区"},{"code":"110105","name":"朝阳区"},{"code":"110106","name":"丰台区"},{"code":"110107","name":"石景山区"},{"code":"110108","name":"海淀区"},{"code":"110109","name":"门头沟区"},{"code":"110111","name":"房山区"},{"code":"110112","name":"通州区"},{"code":"110113","name":"顺义区"},{"code":"110114","name":"昌平区"},{"code":"110115","name":"大兴区"},{"code":"110116","name":"怀柔区"},{"code":"110117","name":"平谷区"}],
     "3101":[{"code":"310101","name":"黄浦区"},{"code":"310104","name":"徐汇区"},{"code":"310105","name":"长宁区"},{"code":"310106","name":"静安区"},{"code":"310107","name":"普陀区"},{"code":"310109","name":"虹口区"},{"code":"310110","name":"杨浦区"},{"code":"310112","name":"闵行区"},{"code":"310113","name":"宝山区"},{"code":"310114","name":"嘉定区"},{"code":"310115","name":"浦东新区"},{"code":"310116","name":"金山区"},{"code":"310117","name":"松江区"},{"code":"310118","name":"青浦区"},{"code":"310120","name":"奉贤区"},{"code":"310151","name":"崇明区"}]
   },
-  "streets": {}
+  streets: {}
 };
+
+// 如果JSON加载的数据为空或不完整，使用备用数据
+if (!regionData.provinces || regionData.provinces.length === 0) {
+  console.log('[regions] Using fallback data');
+  regionData = fallbackData;
+}
 
 // 获取省份列表
 router.get('/provinces', (req, res) => {
@@ -65,7 +100,7 @@ router.get('/provinces', (req, res) => {
     code: 0,
     message: 'success',
     data: regionData.provinces,
-    buildTime: '2024-01-15-inline-v3'  // 调试版本标识
+    buildTime: '2024-01-15-json-v7'  // 调试版本标识
   });
 });
 
