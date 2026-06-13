@@ -35,7 +35,7 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   
   // 区域选择
-  const [showRegionPicker, setShowRegionPicker] = useState(false);
+  const [showRegionPicker, setShowRegionPicker] = useState(true); // 默认展开
   const [regions, setRegions] = useState<{ provinces: Region[]; cities: Region[]; districts: Region[]; towns: Region[] }>({
     provinces: [],
     cities: [],

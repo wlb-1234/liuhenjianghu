@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Modal, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import HomeScreen from '@/screens/home/HomeScreen';
 import PostScreen from '@/screens/post/PostScreen';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 
 interface Post {
   id: number;
@@ -25,10 +27,25 @@ interface Props {
 }
 
 export default function HomeTab({ onPostPress }: Props) {
+  const { isAuthenticated } = useAuth();
+  const router = useSafeRouter();
   const [showPostModal, setShowPostModal] = useState(false);
 
   const handlePostSuccess = () => {
     setShowPostModal(false);
+  };
+
+  const handleOpenPost = () => {
+    if (!isAuthenticated) {
+      Alert.alert('提示', '请先登录后再发布留言', [
+        { text: '取消', style: 'cancel' },
+        { text: '去登录', onPress: () => {
+          router.push('/login');
+        }}
+      ]);
+      return;
+    }
+    setShowPostModal(true);
   };
 
   return (
@@ -38,7 +55,7 @@ export default function HomeTab({ onPostPress }: Props) {
       {/* 发布按钮 */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setShowPostModal(true)}
+        onPress={handleOpenPost}
         activeOpacity={0.8}
       >
         <View style={styles.fabInner}>
