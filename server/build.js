@@ -1,10 +1,12 @@
 import * as esbuild from 'esbuild';
 import { createRequire } from 'module';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 const dependencies = pkg.dependencies || {};
-// 只把真正的外部依赖标记为 external，不要包含本地定义的函数
 const externalList = [
   '@supabase/supabase-js',
   '@pinata/sdk',
@@ -26,6 +28,7 @@ const externalList = [
   'uuid',
   'zod',
 ];
+
 try {
   await esbuild.build({
     entryPoints: ['src/index.ts'],
@@ -38,6 +41,27 @@ try {
     minify: false,
     sourcemap: false,
   });
+  
+  // 复制data目录到dist
+  const dataDir = join(process.cwd(), 'src', 'data');
+  const distDataDir = join(process.cwd(), 'dist', 'data');
+  
+  if (existsSync(dataDir)) {
+    if (!existsSync(distDataDir)) {
+      mkdirSync(distDataDir, { recursive: true });
+    }
+    
+    const files = ['regions.json', 'provinces.json'];
+    for (const file of files) {
+      const src = join(dataDir, file);
+      const dest = join(distDataDir, file);
+      if (existsSync(src)) {
+        copyFileSync(src, dest);
+        console.log(`Copied ${file} to dist/data/`);
+      }
+    }
+  }
+  
   console.log('⚡ Build complete!');
 } catch (e) {
   console.error(e);
