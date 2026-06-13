@@ -38,18 +38,15 @@ export default function ProfileScreen({ onUpgrade, onLogout, onSettings }: Props
     }, [])
   );
 
-  const handleLogout = () => {
-    Alert.alert('提示', '确定要退出登录吗？', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '确定',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          onLogout();
-        },
-      },
-    ]);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      if (onLogout) {
+        onLogout();
+      }
+    } catch (error) {
+      console.error('退出登录失败:', error);
+    }
   };
 
   const getMemberInfo = (level: number) => {
