@@ -31,7 +31,7 @@ app.get('/api/v1/health', (req, res) => {
     status: 'ok', 
     message: '流痕江湖 API 服务运行中',
     timestamp: new Date().toISOString(),
-    buildId: 'v5-20240613-inline'
+    buildId: 'v6-20240613-inline-FORCE-REBUILD'
   });
 });
 
