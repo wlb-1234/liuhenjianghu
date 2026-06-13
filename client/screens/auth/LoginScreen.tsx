@@ -242,11 +242,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   titleContainer: {
-    paddingHorizontal: 40,
-    paddingVertical: 10,
-    marginBottom: 5,
-  },
-  titleContainer: {
     marginTop: 60,
     paddingHorizontal: 20,
     width: '100%',
