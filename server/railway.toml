@@ -1,6 +1,6 @@
 [build]
   builder = "NIXPACKS"
-  buildCommand = "npm install && npm run build"
+  buildCommand = "cd server && npm install && npm run build"
   buildCache = false
 
 [deploy]
