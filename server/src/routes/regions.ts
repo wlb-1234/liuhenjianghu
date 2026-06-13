@@ -94,6 +94,27 @@ if (!regionData.provinces || regionData.provinces.length === 0) {
   regionData = fallbackData;
 }
 
+// 调试端点 - 检查数据加载状态
+router.get('/debug', (req, res) => {
+  const distPath = join(process.cwd(), 'dist', 'data', 'regions.json');
+  const srcPath = join(process.cwd(), 'src', 'data', 'regions.json');
+  const distExists = existsSync(distPath);
+  const srcExists = existsSync(srcPath);
+  
+  res.json({
+    cwd: process.cwd(),
+    distPath,
+    srcPath,
+    distExists,
+    srcExists,
+    provincesCount: regionData.provinces.length,
+    citiesKeysCount: Object.keys(regionData.cities).length,
+    districtsKeysCount: Object.keys(regionData.districts).length,
+    hasHebei: '13' in regionData.cities,
+    hebefCities: regionData.cities['13'] || []
+  });
+});
+
 // 获取省份列表
 router.get('/provinces', (req, res) => {
   res.json({
