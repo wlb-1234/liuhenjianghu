@@ -64,7 +64,8 @@ router.get('/provinces', (req, res) => {
   res.json({
     code: 0,
     message: 'success',
-    data: regionData.provinces
+    data: regionData.provinces,
+    version: 'inline-v2'  // 调试版本标识
   });
 });
 
