@@ -1,23 +1,28 @@
-# 后端 Dockerfile
-FROM node:20-alpine
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g pnpm
 
 WORKDIR /app
 
-# 复制 package 文件
+# 先复制package.json
 COPY package*.json ./
 
 # 安装依赖
-RUN npm install
+RUN pnpm install --ignore-scripts
 
 # 复制源代码
-COPY . .
+COPY . ./
 
-# 构建 TypeScript
-RUN npm run build
+# 构建项目
+RUN pnpm run build
 
-# 暴露端口
-EXPOSE 80
+# 调试：确保dist/data目录存在
+RUN ls -la dist/ || echo "dist not found"
+RUN ls -la dist/data/ || echo "dist/data not found"
+RUN cat dist/data/regions.json | head -c 500 || echo "regions.json not found"
 
-# 启动命令
-ENV PORT=80
-CMD ["sh", "-c", "node dist/index.js"]
+EXPOSE 5000
+
+CMD ["pnpm", "start"]
