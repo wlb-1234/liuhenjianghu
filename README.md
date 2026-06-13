@@ -260,3 +260,5 @@ import { Screen } from '../../../components/Screen';
 
 `coze dev`：用来首次启动前后端服务，也可以用来重启前后端服务（该命令会先尝试杀掉占用端口的进程，再启动服务）
 <!-- trigger rebuild Sat Jun 13 21:55:21 CST 2026 -->
+
+<!-- Railway Redeploy Trigger Sat Jun 13 22:16:56 CST 2026 -->
