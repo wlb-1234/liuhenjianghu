@@ -4,14 +4,15 @@ import * as path from 'path';
 
 const router = Router();
 
-// 加载JSON数据
-const dataPath = path.join(__dirname, '../data/regions.json');
+// 加载JSON数据 - 使用相对于项目根目录的路径
+const dataPath = path.join(process.cwd(), 'src', 'data', 'regions.json');
 let regionData: any = { provinces: [], cities: {}, districts: {}, streets: {} };
 
 try {
   const rawData = fs.readFileSync(dataPath, 'utf-8');
   regionData = JSON.parse(rawData);
-  console.log('[Regions] Loaded region data from JSON file');
+  console.log('[Regions] Loaded region data from:', dataPath);
+  console.log('[Regions] Cities count:', Object.keys(regionData.cities).length);
 } catch (err) {
   console.error('[Regions] Failed to load region data:', err);
 }
