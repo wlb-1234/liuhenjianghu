@@ -194,10 +194,21 @@ const regionsData = {
 // 获取省份列表
 router.get('/provinces', async (req: Request, res: Response) => {
   try {
-    res.json({ data: regionsData.provinces });
+    // 优先从数据库获取，否则使用内置数据
+    const pool = getPool();
+    const result = await pool.query(
+      "SELECT code, name FROM administrative_divisions WHERE level = 1 ORDER BY code"
+    );
+    
+    if (result.rows.length > 0) {
+      res.json({ data: result.rows.map(r => ({ code: r.code, name: r.name })) });
+    } else {
+      res.json({ data: regionsData.provinces });
+    }
   } catch (error) {
     console.error('获取省份失败:', error);
-    res.status(500).json({ error: '获取省份失败' });
+    // 回退到内置数据
+    res.json({ data: regionsData.provinces });
   }
 });
 
@@ -205,11 +216,22 @@ router.get('/provinces', async (req: Request, res: Response) => {
 router.get('/cities/:provinceCode', async (req: Request, res: Response) => {
   try {
     const { provinceCode } = req.params;
-    const cities = regionsData.cities.filter(c => c.parentCode === provinceCode);
-    res.json({ data: cities });
+    const pool = getPool();
+    const result = await pool.query(
+      "SELECT code, name FROM administrative_divisions WHERE level = 2 AND parent_code = $1 ORDER BY code",
+      [provinceCode]
+    );
+    
+    if (result.rows.length > 0) {
+      res.json({ data: result.rows.map(r => ({ code: r.code, name: r.name, parentCode: provinceCode })) });
+    } else {
+      const cities = regionsData.cities.filter(c => c.parentCode === provinceCode);
+      res.json({ data: cities });
+    }
   } catch (error) {
     console.error('获取城市失败:', error);
-    res.status(500).json({ error: '获取城市失败' });
+    const cities = regionsData.cities.filter(c => c.parentCode === req.params.provinceCode);
+    res.json({ data: cities });
   }
 });
 
@@ -217,11 +239,22 @@ router.get('/cities/:provinceCode', async (req: Request, res: Response) => {
 router.get('/districts/:cityCode', async (req: Request, res: Response) => {
   try {
     const { cityCode } = req.params;
-    const districts = regionsData.districts.filter(d => d.parentCode === cityCode);
-    res.json({ data: districts });
+    const pool = getPool();
+    const result = await pool.query(
+      "SELECT code, name FROM administrative_divisions WHERE level = 3 AND parent_code = $1 ORDER BY code",
+      [cityCode]
+    );
+    
+    if (result.rows.length > 0) {
+      res.json({ data: result.rows.map(r => ({ code: r.code, name: r.name, parentCode: cityCode })) });
+    } else {
+      const districts = regionsData.districts.filter(d => d.parentCode === cityCode);
+      res.json({ data: districts });
+    }
   } catch (error) {
     console.error('获取区县失败:', error);
-    res.status(500).json({ error: '获取区县失败' });
+    const districts = regionsData.districts.filter(d => d.parentCode === req.params.cityCode);
+    res.json({ data: districts });
   }
 });
 
@@ -229,11 +262,22 @@ router.get('/districts/:cityCode', async (req: Request, res: Response) => {
 router.get('/towns/:districtCode', async (req: Request, res: Response) => {
   try {
     const { districtCode } = req.params;
-    const towns = regionsData.towns.filter(t => t.parentCode === districtCode);
-    res.json({ data: towns });
+    const pool = getPool();
+    const result = await pool.query(
+      "SELECT code, name FROM administrative_divisions WHERE level = 4 AND parent_code = $1 ORDER BY code",
+      [districtCode]
+    );
+    
+    if (result.rows.length > 0) {
+      res.json({ data: result.rows.map(r => ({ code: r.code, name: r.name, parentCode: districtCode })) });
+    } else {
+      const towns = regionsData.towns.filter(t => t.parentCode === districtCode);
+      res.json({ data: towns });
+    }
   } catch (error) {
     console.error('获取乡镇失败:', error);
-    res.status(500).json({ error: '获取乡镇失败' });
+    const towns = regionsData.towns.filter(t => t.parentCode === req.params.districtCode);
+    res.json({ data: towns });
   }
 });
 
