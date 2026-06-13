@@ -18,8 +18,10 @@ COPY server/ ./
 # 构建项目
 RUN pnpm run build
 
-# 确保dist目录存在
+# 调试：确保dist/data目录存在
 RUN ls -la dist/ || echo "dist not found"
+RUN ls -la dist/data/ || echo "dist/data not found"
+RUN cat dist/data/regions.json | head -c 500 || echo "regions.json not found"
 
 EXPOSE 5000
 

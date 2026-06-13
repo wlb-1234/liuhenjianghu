@@ -1,7 +1,6 @@
 [build]
-  builder = "NIXPACKS"
-  buildCommand = "cd server && npm install && npm run build"
-  buildCache = false
+  builder = "DOCKERFILE"
+  dockerfilePath = "Dockerfile"
 
 [deploy]
   numReplicas = 1
