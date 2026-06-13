@@ -65,7 +65,7 @@ router.get('/provinces', (req, res) => {
     code: 0,
     message: 'success',
     data: regionData.provinces,
-    version: 'inline-v2'  // 调试版本标识
+    buildTime: '2024-01-15-inline-v3'  // 调试版本标识
   });
 });
 
