@@ -244,14 +244,14 @@ const DISTRICTS: Record<string, Array<{ code: string; name: string }>> = {
 
 // 获取所有省份
 router.get('/provinces', (req, res) => {
-  res.json(PROVINCES);
+  res.json({ data: PROVINCES });
 });
 
 // 获取城市
 router.get('/cities/:provinceCode', (req, res) => {
   const { provinceCode } = req.params;
   const cities = CITIES[provinceCode] || [];
-  res.json(cities);
+  res.json({ data: cities });
 });
 
 // 获取区县
