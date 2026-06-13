@@ -207,7 +207,13 @@ export default function ProfileScreen({ onUpgrade, onLogout, onSettings }: Props
         </View>
 
         {/* 退出登录 */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: '#C0392B' }]} 
+          onPress={() => {
+            console.log('退出登录按钮被点击');
+            handleLogout();
+          }}
+        >
           <Text style={styles.logoutText}>退出登录</Text>
         </TouchableOpacity>
 
