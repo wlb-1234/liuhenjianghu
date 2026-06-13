@@ -1,0 +1,6 @@
+[build]
+  builder = "NIXPACKS"
+  buildCache = false
+
+[deploy]
+  numReplicas = 1
