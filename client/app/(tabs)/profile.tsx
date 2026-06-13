@@ -2,11 +2,7 @@ import React from 'react';
 import ProfileScreen from '@/screens/profile/ProfileScreen';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 
-interface Props {
-  onLogout: () => void;
-}
-
-export default function ProfileTab({ onLogout }: Props) {
+export default function ProfileTab() {
   const router = useSafeRouter();
 
   const handleUpgrade = () => {
@@ -18,6 +14,6 @@ export default function ProfileTab({ onLogout }: Props) {
   };
 
   return (
-    <ProfileScreen onUpgrade={handleUpgrade} onLogout={onLogout} onSettings={handleSettings} />
+    <ProfileScreen onUpgrade={handleUpgrade} onSettings={handleSettings} />
   );
 }

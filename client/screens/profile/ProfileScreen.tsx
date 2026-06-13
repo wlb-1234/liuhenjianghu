@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/services/api';
 import { buildAssetUrl } from '@/utils';
@@ -22,8 +23,9 @@ interface Props {
   onSettings: () => void;
 }
 
-export default function ProfileScreen({ onUpgrade, onLogout, onSettings }: Props) {
+export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
   const { user, logout } = useAuth();
+  const router = useSafeRouter();
   const [stats, setStats] = useState({
     total_posts: 0,
     total_likes: 0,
@@ -41,9 +43,7 @@ export default function ProfileScreen({ onUpgrade, onLogout, onSettings }: Props
   const handleLogout = async () => {
     try {
       await logout();
-      if (onLogout) {
-        onLogout();
-      }
+      router.replace('/login');
     } catch (error) {
       console.error('退出登录失败:', error);
     }
