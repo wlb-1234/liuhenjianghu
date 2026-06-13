@@ -1,12 +1,9 @@
 [build]
-  builder = "DOCKERFILE"
-  dockerfilePath = "Dockerfile"
+  builder = "NIXPACKS"
+  buildCommand = "cd server && pnpm install && pnpm run build"
+  buildCache = false
 
 [deploy]
   numReplicas = 1
   restartPolicyType = "ON_FAILURE"
   restartPolicyMaxRetries = 10
-
-[environment]
-  RAILWAY_DEPLOY_VERSION = "v9-$(date +%s)"
-
