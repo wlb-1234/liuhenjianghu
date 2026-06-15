@@ -9,12 +9,19 @@ import logsRouter from './middleware/logger';
 import { rateLimiters } from './middleware/rateLimiter';
 import { createCacheRouter } from './middleware/cache';
 import { csrfProtection } from './middleware/csrfProtection';
+import { apiKeyAuth } from './middleware/apiKeyAuth';
+import { statsMiddleware } from './middleware/stats';
+
+// Swagger文档
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 const app = express();
 const PORT = process.env.PORT || 9091;
 
 // 中间件
 import searchRoutes from './routes/search';
+import statsRoutes from './routes/stats';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -25,7 +32,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // 请求日志中间件
 app.use(requestLogger);
 
-// 健康检查（独立于数据库）
+// 健康检查（独立于数据库，公开接口）
 app.get('/api/v1/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -34,6 +41,22 @@ app.get('/api/v1/health', (req, res) => {
     buildId: 'v6-20240613-inline-FORCE-REBUILD'
   });
 });
+
+// Swagger API文档（公开接口）
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: '中国行政区划API文档'
+}));
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// API统计中间件（对/api/v1下所有请求进行统计）
+app.use('/api/v1', statsMiddleware);
+
+// API Key认证中间件（作用于/api/v1/regions路径）
+app.use('/api/v1/regions', apiKeyAuth);
 
 // 导入路由（延迟加载，避免启动时就连接数据库）
 import authRoutes from './routes/auth';
@@ -76,6 +99,7 @@ app.use('/api/v1/collections', collectionsRoutes);
 app.use('/api/v1/messages', messagesRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/cache', createCacheRouter());
+app.use('/api/v1/stats', statsRoutes);
 
 // 错误处理（放在所有路由之后）
 app.use(notFoundHandler);

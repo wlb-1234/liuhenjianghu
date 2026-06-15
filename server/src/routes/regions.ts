@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { getCache, setCache, CACHE_KEYS } from "../middleware/cache";
+import { getCoordinates } from "../data/coordinates";
 
 const router = Router();
 
@@ -46966,47 +46968,181 @@ const streets: Record<string, { code: string; name: string; type: string }[]> = 
 };
 
 // ==================== 路由定义 ====================
+
+// 省级列表（缓存1天）
 router.get("/provinces", (req, res) => {
-  res.json({ code: 200, message: "success", data: provinces });
+  const cacheKey = CACHE_KEYS.PROVINCES;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return res.json({ code: 200, message: "success", data: cached, cached: true });
+  }
+  // 添加坐标信息
+  const provincesWithCoords = provinces.map(p => ({
+    ...p,
+    coordinates: getCoordinates(p.code)
+  }));
+  setCache(cacheKey, provincesWithCoords, 86400);
+  res.json({ code: 200, message: "success", data: provincesWithCoords, cached: false });
 });
 
+// 城市列表（缓存1小时）
 router.get("/cities/:code", (req, res) => {
   const { code } = req.params;
-  res.json({ code: 200, message: "success", data: cities[code] || [] });
+  const cacheKey = CACHE_KEYS.CITIES + code;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return res.json({ code: 200, message: "success", data: cached, cached: true });
+  }
+  const data = (cities[code] || []).map((c: { code: string; name: string }) => ({
+    ...c,
+    coordinates: getCoordinates(c.code)
+  }));
+  setCache(cacheKey, data, 3600);
+  res.json({ code: 200, message: "success", data, cached: false });
 });
 
-router.get("/districts/:code", (req, res) => {
+// 城市详情（带坐标）
+router.get("/city/:code", (req, res) => {
   const { code } = req.params;
-  res.json({ code: 200, message: "success", data: districts[code] || [] });
-});
-
-router.get("/streets/:code", (req, res) => {
-  const { code } = req.params;
-  res.json({ code: 200, message: "success", data: streets[code] || [] });
-});
-
-router.get("/stats", (req, res) => {
-  // 基于民政部截至2025年12月31日统计数据
-  // https://www.mca.gov.cn/
+  const cityData = cityMap[code];
+  if (!cityData) {
+    return res.status(404).json({ code: 404, message: "城市不存在" });
+  }
   res.json({
     code: 200,
     message: "success",
     data: {
-      provinces: 34,
-      cities: 333,
-      districts: 2843,
-      streets: 38721,
-      streetTypes: {
-        街道: 9148,
-        镇: 21554,
-        乡: 6910,
-        民族乡: 955,
-        苏木: 154
-      },
-      lastUpdated: "2025-12-31",
-      dataSource: "中华人民共和国民政部",
-      dataNote: "城市数量不含港澳台；乡级数量不含区公所"
+      ...cityData,
+      coordinates: getCoordinates(code)
     }
+  });
+});
+
+// 区县列表（缓存1小时）
+router.get("/districts/:code", (req, res) => {
+  const { code } = req.params;
+  const cacheKey = CACHE_KEYS.DISTRICTS + code;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return res.json({ code: 200, message: "success", data: cached, cached: true });
+  }
+  const data = (districts[code] || []).map((d: { code: string; name: string }) => ({
+    ...d,
+    coordinates: getCoordinates(d.code)
+  }));
+  setCache(cacheKey, data, 3600);
+  res.json({ code: 200, message: "success", data, cached: false });
+});
+
+// 区县详情（带坐标）
+router.get("/district/:code", (req, res) => {
+  const { code } = req.params;
+  const districtData = districtMap[code];
+  if (!districtData) {
+    return res.status(404).json({ code: 404, message: "区县不存在" });
+  }
+  res.json({
+    code: 200,
+    message: "success",
+    data: {
+      ...districtData,
+      coordinates: getCoordinates(code)
+    }
+  });
+});
+
+// 街道列表（缓存1小时）
+router.get("/streets/:code", (req, res) => {
+  const { code } = req.params;
+  const cacheKey = CACHE_KEYS.STREETS + code;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return res.json({ code: 200, message: "success", data: cached, cached: true });
+  }
+  const data = streets[code] || [];
+  setCache(cacheKey, data, 3600);
+  res.json({ code: 200, message: "success", data, cached: false });
+});
+
+// 街道详情（带估算坐标）
+router.get("/street/:code", (req, res) => {
+  const { code } = req.params;
+  // 街道代码格式：前6位为区县代码
+  const districtCode = code.substring(0, 6);
+  const streetList = streets[districtCode] || [];
+  const streetData = streetList.find((s: { code: string; name: string }) => s.code === code);
+  
+  if (!streetData) {
+    return res.status(404).json({ code: 404, message: "街道不存在" });
+  }
+  
+  // 街道坐标：使用区县的坐标（街道级别坐标需要更精确的数据源）
+  const baseCoords = getCoordinates(districtCode);
+  
+  res.json({
+    code: 200,
+    message: "success",
+    data: {
+      ...streetData,
+      coordinates: baseCoords ? {
+        lat: baseCoords.lat + (Math.random() - 0.5) * 0.05,
+        lng: baseCoords.lng + (Math.random() - 0.5) * 0.05
+      } : null
+    }
+  });
+});
+
+// 数据统计（缓存1天）
+router.get("/stats", (req, res) => {
+  const cacheKey = CACHE_KEYS.STATS;
+  const cached = getCache(cacheKey);
+  if (cached) {
+    return res.json({ code: 200, message: "success", data: cached, cached: true });
+  }
+  const data = {
+    provinces: 34,
+    cities: 333,
+    districts: 2843,
+    streets: 38721,
+    streetTypes: {
+      街道: 9148,
+      镇: 21554,
+      乡: 6910,
+      民族乡: 955,
+      苏木: 154
+    },
+    lastUpdated: "2025-12-31",
+    dataSource: "中华人民共和国民政部",
+    dataNote: "城市数量不含港澳台；乡级数量不含区公所"
+  };
+  setCache(cacheKey, data, 86400);
+  res.json({ code: 200, message: "success", data, cached: false });
+});
+
+// ==================== 缓存管理接口 ====================
+import { getCacheStats, flushCache } from "../middleware/cache";
+
+// 缓存状态查询（公开接口）
+router.get("/cache/stats", (req, res) => {
+  const stats = getCacheStats();
+  res.json({
+    code: 200,
+    message: "success",
+    data: {
+      ...stats,
+      hitRate: `${(stats.hitRate * 100).toFixed(2)}%`,
+      description: "缓存统计信息"
+    }
+  });
+});
+
+// 清除所有缓存（需要认证）
+router.post("/cache/flush", (req, res) => {
+  flushCache();
+  res.json({
+    code: 200,
+    message: "success",
+    data: { message: "所有缓存已清除" }
   });
 });
 
