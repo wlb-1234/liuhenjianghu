@@ -292,10 +292,24 @@
 | GET | /members/status | 获取会员状态 | 是 |
 
 ### 地区相关 `/regions`
+
+**说明**: 提供完整的四级行政区划数据（省/市/区县/街道），支持模糊搜索、路径查询等功能。
+
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
-| GET | /regions | 获取地区列表 | 否 |
-| GET | /regions/:code | 获取地区详情 | 否 |
+| GET | /regions/provinces | 省级列表 | 是 |
+| GET | /regions/cities/:code | 城市列表 | 是 |
+| GET | /regions/districts/:code | 区县列表 | 是 |
+| GET | /regions/streets/:code | 街道列表 | 是 |
+| GET | /regions/children/:code | 通用下级查询 | 是 |
+| GET | /regions/search?keyword= | 模糊搜索 | 是 |
+| GET | /regions/path/:code | 完整路径查询 | 是 |
+| GET | /regions/stats | 数据统计 | 否 |
+| GET | /regions/city/:code | 城市详情(含坐标) | 是 |
+| GET | /regions/district/:code | 区县详情 | 是 |
+| GET | /regions/street/:code | 街道详情 | 是 |
+
+**详细API文档**: 见下方「行政区划API」章节
 
 ### 敏感词 `/sensitive-words`
 | 方法 | 路径 | 说明 | 认证 |
@@ -594,6 +608,372 @@ client/
 4. 推送通知
 5. 用户反馈入口
 6. 数据库索引优化
+
+---
+
+# 中国行政区划API
+
+**文档更新时间**: 2026-06-15 15:00:00
+
+## 一、数据概览
+
+| 级别 | 数量 | 数据来源 |
+|------|------|----------|
+| 省级 | 34个 | 中华人民共和国民政部标准 |
+| 城市 | 364个 | 中华人民共和国民政部标准 |
+| 区县 | 2843个 | 中华人民共和国民政部标准 |
+| 乡级 | 38721个 | 中华人民共和国民政部标准 |
+
+### 乡级数据明细
+| 类型 | 数量 |
+|------|------|
+| 街道 | 9,148个 |
+| 镇 | 21,554个 |
+| 乡 | 6,910个 |
+| 民族乡 | 955个 |
+| 苏木 | 154个 |
+
+### 港澳台数据
+| 地区 | 城市/区 | 区县/区 |
+|------|---------|----------|
+| 台湾省 | 20个城市 | 333个区县 |
+| 香港特别行政区 | 1个城市 | 18个区 |
+| 澳门特别行政区 | 1个城市 | 8个区 |
+
+---
+
+## 二、编码规则
+
+### 行政区划代码结构
+```
+省级(2位) + 城市(2位) + 区县(2位) + 街道(3位)
+  11        01        01        001
+  ↑         ↑         ↑         ↑
+  北京市   北京市    东城区    东华门街道
+```
+
+### 省级代码范围
+| 范围 | 地区 |
+|------|------|
+| 11-15 | 华北地区（北京、天津、河北、山西、内蒙古） |
+| 21-23 | 东北地区（辽宁、吉林、黑龙江） |
+| 31-37 | 华东地区（上海、江苏、浙江、安徽、福建、江西、山东） |
+| 41-46 | 华中地区（河南、湖北、湖南） + 华南地区（广东、广西、海南） |
+| 50-54 | 西南地区（重庆、四川、贵州、云南、西藏） |
+| 61-65 | 西北地区（陕西、甘肃、青海、宁夏、新疆） |
+| 71 | 台湾省 |
+| 81 | 香港特别行政区 |
+| 82 | 澳门特别行政区 |
+
+---
+
+## 三、数据模型
+
+### Province (省级)
+```typescript
+interface Province {
+  code: string;        // 2位代码，如 "11"
+  name: string;        // 名称，如 "北京市"
+  lat?: number;       // 纬度 (仅省级有)
+  lng?: number;       // 经度 (仅省级有)
+}
+```
+
+### City (城市)
+```typescript
+interface City {
+  code: string;       // 4位代码，如 "1101"
+  name: string;       // 名称，如 "市辖区"
+  provinceCode: string; // 所属省份，如 "11"
+  lat?: number;       // 纬度
+  lng?: number;       // 经度
+}
+```
+
+### District (区县)
+```typescript
+interface District {
+  code: string;       // 6位代码，如 "110101"
+  name: string;        // 名称，如 "东城区"
+  cityCode: string;    // 所属城市，如 "1101"
+}
+```
+
+### Street (街道)
+```typescript
+interface Street {
+  code: string;        // 9位代码，如 "110101001"
+  name: string;        // 名称，如 "东华门街道"
+  districtCode: string; // 所属区县，如 "110101"
+}
+```
+
+---
+
+## 四、API接口详情
+
+### 基础信息
+- **Base URL**: `http://localhost:9091/api/v1` (本地)
+- **认证方式**: `x-api-key: sk_dev_key_abc123`
+- **限流**: 100次/分钟
+
+### 4.1 省级列表
+```
+GET /regions/provinces
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "code": "11",
+      "name": "北京市",
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    {
+      "code": "71",
+      "name": "台湾省",
+      "lat": 23.6978,
+      "lng": 120.9605
+    }
+  ],
+  "cached": false
+}
+```
+
+### 4.2 城市列表
+```
+GET /regions/cities/:code
+```
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| code | string | 省级代码（2位） |
+
+**示例**: `GET /regions/cities/44` (广东省)
+
+### 4.3 区县列表
+```
+GET /regions/districts/:code
+```
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| code | string | 城市代码（4位） |
+
+**示例**: `GET /regions/districts/4401` (广州市)
+
+### 4.4 街道列表
+```
+GET /regions/streets/:code
+```
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| code | string | 区县代码（6位） |
+
+**示例**: `GET /regions/streets/440103` (越秀区)
+
+### 4.5 通用下级查询
+```
+GET /regions/children/:code
+```
+
+**功能**: 根据任意code自动查询下级数据
+
+**示例**:
+- `GET /regions/children/11` → 返回北京市下级城市
+- `GET /regions/children/1101` → 返回北京市辖区列表
+- `GET /regions/children/4401` → 返回广州市辖区列表
+- `GET /regions/children/440103` → 返回越秀区街道列表
+- `GET /regions/children/71` → 返回台湾省城市列表
+- `GET /regions/children/81` → 返回香港特别行政区区列表
+
+### 4.6 模糊搜索
+```
+GET /regions/search?keyword=<关键词>
+```
+
+**参数**:
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| keyword | string | 搜索关键词 |
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "keyword": "广州",
+  "data": [
+    { "code": "4401", "name": "广州市", "level": 2 },
+    { "code": "440103", "name": "越秀区", "level": 3 },
+    { "code": "440104", "name": "海珠区", "level": 3 }
+  ],
+  "total": 3
+}
+```
+
+### 4.7 完整路径查询
+```
+GET /regions/path/:code
+```
+
+**功能**: 查询任意code的完整上级路径
+
+**示例**: `GET /regions/path/440103001`
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "code": "440103001",
+    "name": "洪桥街道",
+    "level": 4,
+    "path": [
+      { "code": "44", "name": "广东省", "level": 1 },
+      { "code": "4401", "name": "广州市", "level": 2 },
+      { "code": "440103", "name": "越秀区", "level": 3 },
+      { "code": "440103001", "name": "洪桥街道", "level": 4 }
+    ]
+  }
+}
+```
+
+### 4.8 数据统计
+```
+GET /regions/stats
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "data": {
+    "provinces": 34,
+    "cities": 364,
+    "districts": 2843,
+    "streets": 38721,
+    "total": 41962,
+    "hkMacauTaiwan": {
+      "taiwan": { "cities": 20, "districts": 333 },
+      "hongKong": { "districts": 18 },
+      "macau": { "districts": 8 }
+    }
+  },
+  "cached": true
+}
+```
+
+---
+
+## 五、响应状态码
+
+| 状态码 | 说明 |
+|--------|------|
+| 200 | 请求成功 |
+| 400 | 请求参数错误 |
+| 401 | 缺少API密钥 |
+| 403 | API密钥无效 |
+| 404 | 资源不存在 |
+| 429 | 请求过于频繁 |
+| 500 | 服务器内部错误 |
+
+### 错误响应格式
+```json
+{
+  "success": false,
+  "error": "错误信息",
+  "code": "ERROR_CODE"
+}
+```
+
+---
+
+## 六、认证说明
+
+### 公开接口（无需认证）
+| 接口 | 说明 |
+|------|------|
+| `GET /regions/stats` | 数据统计 |
+| `GET /health` | 健康检查 |
+| `GET /api-docs` | Swagger文档 |
+
+### 认证接口
+除公开接口外，其他接口需要在请求头中携带:
+```
+x-api-key: sk_dev_key_abc123
+```
+
+### 密钥配置
+开发/生产环境可配置不同的API密钥，详见 `server/src/middleware/apiKeyAuth.ts`
+
+---
+
+## 七、限流配置
+
+- **限制**: 100次/分钟
+- **窗口**: 滑动窗口
+- **响应头**:
+  - `X-RateLimit-Limit`: 100
+  - `X-RateLimit-Remaining`: 剩余次数
+  - `X-RateLimit-Reset`: 重置时间戳
+
+### 限流响应
+```json
+{
+  "success": false,
+  "error": "请求过于频繁，请稍后再试",
+  "code": "RATE_LIMIT_EXCEEDED"
+}
+```
+
+---
+
+## 八、数据更新记录
+
+| 日期 | 版本 | 更新内容 |
+|------|------|----------|
+| 2026-06-15 | v1.0 | 初始版本，包含完整四级行政区划数据 |
+| 2026-06-15 | v1.1 | 添加经纬度坐标支持 |
+| 2026-06-15 | v1.2 | 匹配民政部2025年12月统计数据 |
+
+---
+
+## 九、文件结构
+
+```
+server/
+├── src/
+│   ├── routes/
+│   │   └── regions.ts        # 行政区划路由与数据
+│   ├── middleware/
+│   │   ├── apiKeyAuth.ts    # API密钥认证
+│   │   ├── rateLimiter.ts   # 接口限流
+│   │   ├── cache.ts         # 缓存管理
+│   │   ├── stats.ts         # 统计中间件
+│   │   └── logger.ts        # 请求日志
+│   ├── config/
+│   │   └── swagger.ts       # Swagger配置
+│   └── data/
+│       └── coordinates.ts   # 经纬度坐标数据
+└── package.json
+```
+
+---
+
+## 十、测试文件
+
+| 文件 | 说明 |
+|------|------|
+| `test_results/regions_api_test_report_final.md` | 完整测试报告 |
+| `test_results/regions_api_data_structure.md` | 数据结构文档 |
 
 ---
 
