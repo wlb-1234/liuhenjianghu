@@ -29,4 +29,6 @@ RUN cat src/data/regions.json 2>/dev/null | head -c 500 || echo "regions.json no
 
 EXPOSE 8080
 
+ENV PORT=8080
+
 CMD ["pnpm", "start"]
