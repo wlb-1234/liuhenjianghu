@@ -6,11 +6,14 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# 先复制package.json
+# 先复制package.json和lock文件
 COPY server/package*.json ./
 
-# 安装依赖
-RUN pnpm install --ignore-scripts
+# 清理旧的node_modules（如果有）
+RUN rm -rf node_modules pnpm-lock.yaml
+
+# 安装依赖（强制重新安装）
+RUN pnpm install --ignore-scripts --force
 
 # 复制server源代码（包括src/data目录）
 COPY server/ ./
@@ -26,6 +29,9 @@ RUN cat dist/data/regions.json 2>/dev/null | head -c 500 || echo "regions.json n
 # 同时检查src/data
 RUN ls -la src/data/ || echo "src/data not found"
 RUN cat src/data/regions.json 2>/dev/null | head -c 500 || echo "regions.json not found in src/data"
+
+# 检查是否还有node-cache
+RUN ls node_modules/ 2>/dev/null | grep -v node-cache || echo "no unwanted packages"
 
 EXPOSE 8080
 
