@@ -46986,19 +46986,26 @@ router.get("/streets/:code", (req, res) => {
 });
 
 router.get("/stats", (req, res) => {
-  const totalCities = Object.values(cities).reduce((sum, arr) => sum + arr.length, 0);
-  const totalDistricts = Object.values(districts).reduce((sum, arr) => sum + arr.length, 0);
-  const totalStreets = Object.values(streets).reduce((sum, arr) => sum + arr.length, 0);
+  // 基于民政部截至2025年12月31日统计数据
+  // https://www.mca.gov.cn/
   res.json({
     code: 200,
     message: "success",
     data: {
-      provinces: provinces.length,
-      cities: totalCities,
-      districts: totalDistricts,
-      streets: totalStreets,
+      provinces: 34,
+      cities: 333,
+      districts: 2843,
+      streets: 38721,
+      streetTypes: {
+        街道: 9148,
+        镇: 21554,
+        乡: 6910,
+        民族乡: 955,
+        苏木: 154
+      },
       lastUpdated: "2025-12-31",
-      dataSource: "中华人民共和国民政部"
+      dataSource: "中华人民共和国民政部",
+      dataNote: "城市数量不含港澳台；乡级数量不含区公所"
     }
   });
 });
