@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authMiddleware } from './auth';
+import { logRequest } from './logPersistence';
 
 // 敏感字段列表
 const SENSITIVE_FIELDS = [
@@ -154,6 +155,19 @@ export const requestLogger = (req: any, res: any, next: any) => {
     }
 
     addLog(logEntry);
+    
+    // 持久化日志（文件）
+    logRequest({
+      id: requestId,
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      path: req.originalUrl,
+      statusCode: res.statusCode,
+      responseTime,
+      ip: req.ip || req.connection?.remoteAddress || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown',
+      apiKeyPrefix: req.headers['x-api-key']?.toString().substring(0, 12) + '...',
+    });
 
     // 控制台输出
     const statusColor = res.statusCode >= 500 ? '\x1b[31m' : 
