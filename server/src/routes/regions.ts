@@ -46967,6 +46967,45 @@ const streets: Record<string, { code: string; name: string; type: string }[]> = 
   ],
 };
 
+// 构建城市映射表
+const cityMap: Record<string, { code: string; name: string; provinceCode: string; type: string }> = {};
+for (const [provinceCode, cityList] of Object.entries(cities)) {
+  for (const city of cityList as any[]) {
+    cityMap[city.code] = {
+      code: city.code,
+      name: city.name,
+      provinceCode,
+      type: city.type
+    };
+  }
+}
+
+// 构建区县映射表
+const districtMap: Record<string, { code: string; name: string; cityCode: string; type: string }> = {};
+for (const [cityCode, districtList] of Object.entries(districts)) {
+  for (const district of districtList as any[]) {
+    districtMap[district.code] = {
+      code: district.code,
+      name: district.name,
+      cityCode,
+      type: district.type
+    };
+  }
+}
+
+// 构建街道映射表
+const streetMap: Record<string, { code: string; name: string; districtCode: string; type: string }> = {};
+for (const [districtCode, streetList] of Object.entries(streets)) {
+  for (const street of streetList as any[]) {
+    streetMap[street.code] = {
+      code: street.code,
+      name: street.name,
+      districtCode,
+      type: street.type
+    };
+  }
+}
+
 // ==================== 路由定义 ====================
 
 // 省级列表（缓存1天）
@@ -46983,6 +47022,169 @@ router.get("/provinces", (req, res) => {
   }));
   setCache(cacheKey, provincesWithCoords, 86400);
   res.json({ code: 200, message: "success", data: provincesWithCoords, cached: false });
+});
+
+// 通用下级查询接口
+router.get("/children/:code", (req, res) => {
+  const { code } = req.params;
+  
+  if (code.length === 2) {
+    // 查询城市
+    const data = (cities[code] || []).map((c: { code: string; name: string }) => ({
+      code: c.code,
+      name: c.name,
+      level: "city",
+      type: c.type
+    }));
+    return res.json({ code: 200, message: "success", data });
+  }
+  
+  if (code.length === 4) {
+    // 查询区县
+    const data = (districts[code] || []).map((d: { code: string; name: string }) => ({
+      code: d.code,
+      name: d.name,
+      level: "district",
+      type: d.type
+    }));
+    return res.json({ code: 200, message: "success", data });
+  }
+  
+  if (code.length === 6) {
+    // 查询街道
+    const data = (streets[code] || []).map((s: { code: string; name: string }) => ({
+      code: s.code,
+      name: s.name,
+      level: "street",
+      type: s.type
+    }));
+    return res.json({ code: 200, message: "success", data });
+  }
+  
+  res.status(400).json({ code: 400, message: "无效的行政区划代码" });
+});
+
+// 模糊搜索接口
+router.get("/search", (req, res) => {
+  const { keyword, level = "all", limit = 20 } = req.query;
+  
+  if (!keyword || typeof keyword !== "string") {
+    return res.status(400).json({ code: 400, message: "请提供搜索关键词" });
+  }
+  
+  const kw = keyword.toLowerCase();
+  const results: any[] = [];
+  const limitNum = Math.min(Number(limit) || 20, 100);
+  
+  // 搜索省级
+  if (level === "all" || level === "province") {
+    for (const p of provinces) {
+      if (p.name.toLowerCase().includes(kw)) {
+        results.push({ code: p.code, name: p.name, level: "province", path: [p.name] });
+      }
+    }
+  }
+  
+  // 搜索城市
+  if (results.length < limitNum && (level === "all" || level === "city")) {
+    for (const [pCode, cityList] of Object.entries(cities)) {
+      const pName = provinces.find(p => p.code === pCode)?.name || "";
+      for (const c of cityList as any[]) {
+        if (c.name.toLowerCase().includes(kw)) {
+          results.push({ code: c.code, name: c.name, level: "city", path: [pName, c.name] });
+          if (results.length >= limitNum) break;
+        }
+      }
+    }
+  }
+  
+  // 搜索区县
+  if (results.length < limitNum && (level === "all" || level === "district")) {
+    for (const [cCode, districtList] of Object.entries(districts)) {
+      const cityData = cityMap[cCode];
+      if (!cityData) continue;
+      const provinceName = provinces.find(p => p.code === cityData.provinceCode)?.name || "";
+      for (const d of districtList as any[]) {
+        if (d.name.toLowerCase().includes(kw)) {
+          results.push({ code: d.code, name: d.name, level: "district", path: [provinceName, cityData.name, d.name] });
+          if (results.length >= limitNum) break;
+        }
+      }
+    }
+  }
+  
+  // 搜索街道
+  if (results.length < limitNum && (level === "all" || level === "street")) {
+    for (const [dCode, streetList] of Object.entries(streets)) {
+      const districtData = districts[dCode.substring(0, 4)]?.find((d: any) => d.code === dCode);
+      if (!districtData) continue;
+      const cityData = cityMap[dCode.substring(0, 4)];
+      const provinceName = provinces.find(p => p.code === cityData?.provinceCode)?.name || "";
+      for (const s of streetList as any[]) {
+        if (s.name.toLowerCase().includes(kw)) {
+          results.push({ code: s.code, name: s.name, level: "street", path: [provinceName, cityData?.name || "", districtData.name, s.name] });
+          if (results.length >= limitNum) break;
+        }
+      }
+    }
+  }
+  
+  res.json({ code: 200, message: "success", count: results.length, data: results });
+});
+
+// 完整路径查询接口
+router.get("/path/:code", (req, res) => {
+  const { code } = req.params;
+  
+  if (!/^\d{2,9}$/.test(code)) {
+    return res.status(400).json({ code: 400, message: "无效的行政区划代码" });
+  }
+  
+  const result: any = {};
+  
+  // 获取省级
+  if (code.length >= 2) {
+    const provinceCode = code.substring(0, 2);
+    const province = provinces.find(p => p.code === provinceCode);
+    if (province) {
+      result.province = { code: province.code, name: province.name };
+    }
+  }
+  
+  // 获取城市
+  if (code.length >= 4) {
+    const cityCode = code.substring(0, 4);
+    const cityData = cityMap[cityCode];
+    if (cityData) {
+      result.city = { code: cityData.code, name: cityData.name };
+    }
+  }
+  
+  // 获取区县
+  if (code.length >= 6) {
+    const districtCode = code.substring(0, 6);
+    for (const cityList of Object.values(districts)) {
+      const district = (cityList as any[]).find(d => d.code === districtCode);
+      if (district) {
+        result.district = { code: district.code, name: district.name };
+        break;
+      }
+    }
+  }
+  
+  // 获取街道
+  if (code.length === 9) {
+    const streetCode = code;
+    for (const districtList of Object.values(streets)) {
+      const street = (districtList as any[]).find(s => s.code === streetCode);
+      if (street) {
+        result.street = { code: street.code, name: street.name };
+        break;
+      }
+    }
+  }
+  
+  res.json({ code: 200, message: "success", data: result });
 });
 
 // 城市列表（缓存1小时）
