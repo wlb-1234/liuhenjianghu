@@ -7,10 +7,11 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
 import logsRouter from './middleware/logger';
 import { rateLimiters } from './middleware/rateLimiter';
-import { createCacheRouter } from './middleware/cache';
+import { createCacheRouter, initCache } from './middleware/cache';
 import { csrfProtection } from './middleware/csrfProtection';
 import { apiKeyAuth } from './middleware/apiKeyAuth';
 import { statsMiddleware } from './middleware/stats';
+import { metricsMiddleware, metricsHandler } from './middleware/prometheus';
 
 const app = express();
 const PORT = process.env.PORT || 9091;
@@ -25,8 +26,14 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 静态文件服务
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Prometheus 指标端点（放在路由注册之前）
+app.get('/metrics', metricsHandler());
+
 // 请求日志中间件
 app.use(requestLogger);
+
+// Prometheus 指标中间件
+app.use(metricsMiddleware);
 
 // 健康检查（独立于数据库，公开接口）
 app.get('/api/v1/health', (req, res) => {
@@ -91,7 +98,7 @@ app.use('/api/v1/stats', statsRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log('');
   console.log('╔════════════════════════════════════════════╗');
   console.log('║      🗡️  流痕江湖 API 服务已启动      🗡️');
@@ -100,6 +107,10 @@ app.listen(PORT, () => {
   console.log(`║  🌐 地址: http://localhost:${PORT}           ║`);
   console.log('╚════════════════════════════════════════════╝');
   console.log('');
+
+  // 初始化Redis缓存
+  await initCache();
+  console.log('📊 Prometheus metrics: http://localhost:' + PORT + '/metrics');
 });
 
 // CSRF 防护（仅对需要认证的 API 生效）

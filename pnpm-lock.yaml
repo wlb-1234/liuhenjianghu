@@ -291,7 +291,7 @@ importers:
         version: 2.8.6
       coze-coding-dev-sdk:
         specifier: ^0.7.22
-        version: 0.7.22(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
+        version: 0.7.22(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
       dayjs:
         specifier: ^1.11.20
         version: 1.11.20
@@ -300,10 +300,10 @@ importers:
         version: 17.2.4
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.1(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2)
+        version: 0.45.1(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2))(zod@4.3.6)
+        version: 0.8.3(drizzle-orm@0.45.1(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2))(zod@4.3.6)
       express:
         specifier: ^4.22.1
         version: 4.22.1
@@ -1460,6 +1460,10 @@ packages:
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
+
+  '@opentelemetry/api@1.9.1':
+    resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
+    engines: {node: '>=8.0.0'}
 
   '@pinata/sdk@2.1.0':
     resolution: {integrity: sha512-hkS0tcKtsjf9xhsEBs2Nbey5s+Db7x5rlOH9TaWHBXkJ7IwwOs2xnEDigNaxAHKjYAwcw+m2hzpO5QgOfeF7Zw==}
@@ -8257,12 +8261,12 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@langchain/core@1.1.46(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)':
+  '@langchain/core@1.1.46(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@standard-schema/spec': 1.1.0
       js-tiktoken: 1.0.21
-      langsmith: 0.7.1(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
+      langsmith: 0.7.1(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       zod: 4.3.6
@@ -8273,9 +8277,9 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/openai@1.4.5(@langchain/core@1.1.46(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0))(ws@8.19.0)':
+  '@langchain/openai@1.4.5(@langchain/core@1.1.46(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0))(ws@8.19.0)':
     dependencies:
-      '@langchain/core': 1.1.46(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
+      '@langchain/core': 1.1.46(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
       js-tiktoken: 1.0.21
       openai: 6.38.0(ws@8.19.0)(zod@4.3.6)
       zod: 4.3.6
@@ -8328,6 +8332,9 @@ snapshots:
       '@emnapi/core': 1.8.1
       '@emnapi/runtime': 1.8.1
       '@tybys/wasm-util': 0.10.1
+    optional: true
+
+  '@opentelemetry/api@1.9.1':
     optional: true
 
   '@pinata/sdk@2.1.0':
@@ -9912,10 +9919,10 @@ snapshots:
       path-type: 4.0.0
       yaml: 1.10.2
 
-  coze-coding-dev-sdk@0.7.22(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0):
+  coze-coding-dev-sdk@0.7.22(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0):
     dependencies:
-      '@langchain/core': 1.1.46(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
-      '@langchain/openai': 1.4.5(@langchain/core@1.1.46(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0))(ws@8.19.0)
+      '@langchain/core': 1.1.46(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0)
+      '@langchain/openai': 1.4.5(@langchain/core@1.1.46(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0))(ws@8.19.0)
       '@supabase/supabase-js': 2.95.3
       axios: 1.16.1
       pg: 8.17.2
@@ -10160,15 +10167,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2):
+  drizzle-orm@0.45.1(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2):
     optionalDependencies:
+      '@opentelemetry/api': 1.9.1
       '@types/pg': 8.16.0
       mysql2: 3.22.3(@types/node@25.9.1)
       pg: 8.17.2
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2))(zod@4.3.6):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2))(zod@4.3.6):
     dependencies:
-      drizzle-orm: 0.45.1(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2)
+      drizzle-orm: 0.45.1(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.17.2)
       zod: 4.3.6
 
   dunder-proto@1.0.1:
@@ -12076,10 +12084,11 @@ snapshots:
 
   lan-network@0.1.7: {}
 
-  langsmith@0.7.1(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0):
+  langsmith@0.7.1(@opentelemetry/api@1.9.1)(openai@6.38.0(ws@8.19.0)(zod@4.3.6))(ws@8.19.0):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:
+      '@opentelemetry/api': 1.9.1
       openai: 6.38.0(ws@8.19.0)(zod@4.3.6)
       ws: 8.19.0
 

@@ -58,8 +58,8 @@ export const errorHandler = (err: any, req: any, res: any, next: any) => {
   res.status(statusCode).json(response);
 };
 
-// 404 处理
-export const notFoundHandler = (req: any, res: any) => {
+// 404 处理（普通中间件，接受3个参数）
+export const notFoundHandler = (req: any, res: any, _next: any) => {
   res.status(404).json({
     success: false,
     message: `路由 ${req.method} ${req.originalUrl} 不存在`,
