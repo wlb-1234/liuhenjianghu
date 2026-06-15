@@ -1,18 +1,107 @@
-import NodeCache from 'node-cache';
 import { Router } from 'express';
 
 /**
- * 内存缓存配置
- * 使用 node-cache 实现内存缓存，适合单实例部署
+ * 简单的内存缓存实现（兼容ESM）
+ * 使用 Map + 过期时间实现
  */
 
+interface CacheItem<T> {
+  value: T;
+  expireAt: number;
+}
+
+class SimpleCache {
+  private cache: Map<string, CacheItem<any>> = new Map();
+  private maxKeys: number = 1000;
+  private cleanInterval: NodeJS.Timeout;
+
+  constructor(maxKeys: number = 1000, checkPeriod: number = 300) {
+    this.maxKeys = maxKeys;
+    // 定期清理过期缓存
+    this.cleanInterval = setInterval(() => this.clean(), checkPeriod * 1000);
+  }
+
+  /**
+   * 获取缓存
+   */
+  get<T>(key: string): T | undefined {
+    const item = this.cache.get(key);
+    if (!item) return undefined;
+    
+    // 检查是否过期
+    if (Date.now() > item.expireAt) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    
+    return item.value as T;
+  }
+
+  /**
+   * 设置缓存
+   */
+  set<T>(key: string, value: T, ttl: number = 3600): boolean {
+    // 如果缓存已满，删除最旧的条目
+    if (this.cache.size >= this.maxKeys) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    
+    this.cache.set(key, {
+      value,
+      expireAt: Date.now() + (ttl * 1000)
+    });
+    return true;
+  }
+
+  /**
+   * 删除缓存
+   */
+  del(key: string): number {
+    return this.cache.delete(key) ? 1 : 0;
+  }
+
+  /**
+   * 清空所有缓存
+   */
+  flush(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * 获取缓存统计
+   */
+  getStats(): { keys: number; hits: number; misses: number } {
+    return {
+      keys: this.cache.size,
+      hits: 0,
+      misses: 0
+    };
+  }
+
+  /**
+   * 清理过期缓存
+   */
+  private clean(): void {
+    const now = Date.now();
+    for (const [key, item] of this.cache.entries()) {
+      if (now > item.expireAt) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * 销毁缓存实例
+   */
+  destroy(): void {
+    clearInterval(this.cleanInterval);
+    this.cache.clear();
+  }
+}
+
 // 创建缓存实例
-export const cache = new NodeCache({
-  stdTTL: 3600,        // 默认过期时间：1小时
-  checkperiod: 300,    // 检查过期时间：5分钟
-  useClones: true,     // 克隆值而不是引用
-  maxKeys: 1000        // 最大缓存key数量
-});
+export const cache = new SimpleCache(1000, 300);
 
 // 缓存key前缀
 export const CACHE_KEYS = {
@@ -51,70 +140,39 @@ export function delCache(key: string): number {
 }
 
 /**
- * 清除所有缓存
+ * 清空所有缓存
  */
 export function flushCache(): void {
-  cache.flushAll();
+  cache.flush();
 }
 
 /**
- * 获取缓存统计信息
+ * 获取缓存统计
  */
 export function getCacheStats() {
-  const stats = cache.getStats();
-  return {
-    keys: cache.keys().length,
-    hits: stats.hits,
-    misses: stats.misses,
-    hitRate: stats.hits / (stats.hits + stats.misses) || 0,
-    ksize: stats.ksize,
-    vsize: stats.vsize,
-  };
+  return cache.getStats();
 }
 
-/**
- * 创建通用缓存管理路由
- */
-export function createCacheRouter() {
+// 创建缓存管理路由
+export const createCacheRouter = () => {
   const router = Router();
-  
+
   // 获取缓存统计
-  router.get('/stats', (req, res) => {
-    const stats = getCacheStats();
+  router.get('/stats', (_req, res) => {
     res.json({
-      code: 200,
-      message: 'success',
-      data: {
-        keys: stats.keys,
-        hits: stats.hits,
-        misses: stats.misses,
-        hitRate: `${(stats.hitRate * 100).toFixed(2)}%`,
-      }
+      success: true,
+      data: getCacheStats()
     });
   });
-  
-  // 清除所有缓存
-  router.post('/flush', (req, res) => {
+
+  // 清空缓存
+  router.post('/flush', (_req, res) => {
     flushCache();
     res.json({
-      code: 200,
-      message: 'success',
-      data: { message: '所有缓存已清除' }
+      success: true,
+      message: '缓存已清空'
     });
   });
-  
-  // 获取缓存key列表
-  router.get('/keys', (req, res) => {
-    const keys = cache.keys();
-    res.json({
-      code: 200,
-      message: 'success',
-      data: {
-        count: keys.length,
-        keys: keys.slice(0, 100) // 最多返回100个key
-      }
-    });
-  });
-  
+
   return router;
-}
+};

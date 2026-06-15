@@ -3,7 +3,6 @@
  * 记录每个API的调用次数和响应时间
  */
 import { Request, Response, NextFunction } from "express";
-import NodeCache from "node-cache";
 
 interface ApiStats {
   count: number;           // 调用次数
@@ -24,9 +23,8 @@ interface RequestLog {
   userAgent: string;
 }
 
-// 统计数据缓存（内存）
-const statsCache = new NodeCache({ stdTTL: 86400, checkperiod: 3600 });
-const statsKey = "api:stats";
+// 统计数据缓存（内存，使用 Map）
+const statsCache = new Map<string, ApiStats>();
 
 // 最近请求日志（内存中保留最近1000条）
 const recentLogs: RequestLog[] = [];
@@ -34,7 +32,6 @@ const MAX_LOGS = 1000;
 
 // 获取统计数据的key
 function getEndpointKey(method: string, path: string): string {
-  // 移除动态参数部分
   return `${method}:${path}`;
 }
 
@@ -43,7 +40,8 @@ function getEndpointKey(method: string, path: string): string {
  */
 export function recordApiCall(method: string, path: string, statusCode: number, responseTime: number) {
   const key = getEndpointKey(method, path);
-  const stats = (statsCache.get(key) as ApiStats) || {
+  const existing = statsCache.get(key);
+  const stats: ApiStats = existing || {
     count: 0,
     totalTime: 0,
     avgTime: 0,
@@ -86,14 +84,10 @@ export function recordApiCall(method: string, path: string, statusCode: number, 
  * 获取所有统计
  */
 export function getStats(): Record<string, ApiStats> {
-  const keys = statsCache.keys();
   const result: Record<string, ApiStats> = {};
   
-  for (const key of keys) {
-    const stats = statsCache.get(key) as ApiStats;
-    if (stats) {
-      result[key] = stats;
-    }
+  for (const [key, stats] of statsCache.entries()) {
+    result[key] = stats;
   }
   
   return result;
@@ -157,27 +151,27 @@ export function getTopEndpoints(limit: number = 10): Array<{ endpoint: string } 
 export function statsMiddleware(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
   
-  // 响应完成后记录统计
+  // 响应结束后的处理
   res.on("finish", () => {
     const responseTime = Date.now() - startTime;
-    recordApiCall(req.method, req.path, res.statusCode, responseTime);
+    const path = req.route?.path || req.path;
+    recordApiCall(req.method, path, res.statusCode, responseTime);
   });
   
   next();
 }
 
 /**
- * 获取活跃时段统计
+ * 获取每小时活跃度统计
  */
 export function getActiveHours(): Record<number, number> {
-  const logs = getRecentLogs(10000);
   const hours: Record<number, number> = {};
   
   for (let i = 0; i < 24; i++) {
     hours[i] = 0;
   }
   
-  for (const log of logs) {
+  for (const log of recentLogs) {
     const hour = new Date(log.timestamp).getHours();
     hours[hour]++;
   }
@@ -188,26 +182,24 @@ export function getActiveHours(): Record<number, number> {
 /**
  * 获取每日统计
  */
-export function getDailyStats(): Record<string, { requests: number; avgTime: number }> {
-  const logs = getRecentLogs(10000);
-  const days: Record<string, { requests: number; totalTime: number }> = {};
+export function getDailyStats(): Record<string, number> {
+  const days: Record<string, number> = {};
   
-  for (const log of logs) {
-    const day = log.timestamp.split("T")[0];
-    if (!days[day]) {
-      days[day] = { requests: 0, totalTime: 0 };
+  // 最近30天
+  const today = new Date();
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const key = date.toISOString().split('T')[0];
+    days[key] = 0;
+  }
+  
+  for (const log of recentLogs) {
+    const key = log.timestamp.split('T')[0];
+    if (days[key] !== undefined) {
+      days[key]++;
     }
-    days[day].requests++;
-    days[day].totalTime += log.responseTime;
   }
   
-  const result: Record<string, { requests: number; avgTime: number }> = {};
-  for (const [day, data] of Object.entries(days)) {
-    result[day] = {
-      requests: data.requests,
-      avgTime: Math.round(data.totalTime / data.requests)
-    };
-  }
-  
-  return result;
+  return days;
 }

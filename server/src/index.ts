@@ -12,10 +12,6 @@ import { csrfProtection } from './middleware/csrfProtection';
 import { apiKeyAuth } from './middleware/apiKeyAuth';
 import { statsMiddleware } from './middleware/stats';
 
-// Swagger文档
-import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './config/swagger';
-
 const app = express();
 const PORT = process.env.PORT || 9091;
 
@@ -40,16 +36,6 @@ app.get('/api/v1/health', (req, res) => {
     timestamp: new Date().toISOString(),
     buildId: 'v6-20240613-inline-FORCE-REBUILD'
   });
-});
-
-// Swagger API文档（公开接口）
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: '中国行政区划API文档'
-}));
-app.get('/api-docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
 });
 
 // API统计中间件（对/api/v1下所有请求进行统计）
