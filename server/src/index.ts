@@ -13,7 +13,10 @@ import { apiKeyAuth } from './middleware/apiKeyAuth';
 import { createApiKeyRouter } from './middleware/apiKeyManager';
 import { statsMiddleware } from './middleware/stats';
 import { metricsMiddleware, metricsHandler } from './middleware/prometheus';
+import swaggerRouter from './routes/swagger';
 import { createLogsRouter } from './middleware/logPersistence';
+import webhooksRouter from './routes/webhooks';
+import geoRouter from './routes/geo';
 
 const app = express();
 const PORT = process.env.PORT || 9091;
@@ -91,6 +94,10 @@ app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/moderation', reviewRoutes);
 app.use('/api/v1/account', accountDeletionRoutes);
 app.use('/api/v1/collections', collectionsRoutes);
+// Swagger文档（放在前面，避免被其他路由拦截）
+app.use(swaggerRouter);
+
+// API路由
 app.use('/api/v1/messages', messagesRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/cache', createCacheRouter());
@@ -98,6 +105,8 @@ app.use('/api/v1/stats', statsRoutes);
 app.use('/api/v1/apikeys', createApiKeyRouter());
 app.use('/api/v1/geojson', geojsonRoutes);
 app.use('/api/v1/logs', createLogsRouter());
+app.use('/api/v1/webhooks', webhooksRouter);
+app.use('/api/v1/geo', geoRouter);
 
 // 错误处理（放在所有路由之后）
 app.use(notFoundHandler);

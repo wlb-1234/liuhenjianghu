@@ -181,9 +181,17 @@ export const createCacheRouter = () => {
   return router;
 };
 
-// 初始化（占位）
+// 初始化（集成Redis支持）
 export async function initCache(): Promise<void> {
-  console.log('[Cache] Using in-memory cache');
+  // 导入Redis客户端
+  const { initRedis, getRedisStats } = await import('./redisClient');
+  const result = await initRedis();
+  
+  if (result.type === 'redis') {
+    console.log('[Cache] Redis distributed cache initialized:', result.url);
+  } else {
+    console.log('[Cache] Using in-memory cache');
+  }
 }
 
 export default {
