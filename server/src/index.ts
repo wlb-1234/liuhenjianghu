@@ -10,6 +10,7 @@ import { rateLimiters } from './middleware/rateLimiter';
 import { createCacheRouter, initCache } from './middleware/cache';
 import { csrfProtection } from './middleware/csrfProtection';
 import { apiKeyAuth } from './middleware/apiKeyAuth';
+import { createApiKeyRouter } from './middleware/apiKeyManager';
 import { statsMiddleware } from './middleware/stats';
 import { metricsMiddleware, metricsHandler } from './middleware/prometheus';
 
@@ -26,7 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 静态文件服务
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Prometheus 指标端点（放在路由注册之前）
+// Prometheus 指标端点
 app.get('/metrics', metricsHandler());
 
 // 请求日志中间件
@@ -93,6 +94,7 @@ app.use('/api/v1/messages', messagesRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/cache', createCacheRouter());
 app.use('/api/v1/stats', statsRoutes);
+app.use('/api/v1/apikeys', createApiKeyRouter());
 
 // 错误处理（放在所有路由之后）
 app.use(notFoundHandler);

@@ -1,15 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
+import { validateApiKey, recordApiKeyUsage } from './apiKeyManager';
 
-// API Keys配置（生产环境应使用环境变量）
-const API_KEYS = new Set([
-  'sk_dev_key_abc123',
-  'sk_prod_key_xyz789',
-]);
-
-// 公开接口路径（不需要认证）- 使用原始URL匹配
+// 公开接口路径（不需要认证）
 const PUBLIC_PATHS = [
   '/api/v1/health',
   '/api/v1/regions/stats',
+  '/api/v1/apikeys',
+  '/api/v1/stats',
+  '/api/v1/cache',
+  '/metrics',
   '/api-docs',
 ];
 
@@ -17,7 +16,6 @@ const PUBLIC_PATHS = [
  * API Key认证中间件
  */
 export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
-  // 使用 originalUrl 获取完整路径
   const fullPath = req.originalUrl.split('?')[0];
   
   // 公开接口直接放行
@@ -40,20 +38,21 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
     });
   }
   
-  if (!API_KEYS.has(apiKey)) {
+  const result = validateApiKey(apiKey);
+  if (!result.valid) {
     return res.status(403).json({
       code: 403,
-      message: 'API密钥无效',
+      message: 'API密钥无效或已禁用',
       data: null
     });
   }
   
+  // 记录使用
+  recordApiKeyUsage(apiKey);
   next();
 }
 
 /**
- * 获取当前API Keys列表（仅开发环境）
+ * 获取当前API Keys列表
  */
-export function getApiKeys(): string[] {
-  return Array.from(API_KEYS);
-}
+export { listApiKeys } from './apiKeyManager';
