@@ -18,6 +18,11 @@ import collectionsRouter from './routes/collections.js';
 import { createWhitelistRouter } from './middleware/ipWhitelistMiddleware.js';
 import webhookRouter from './routes/webhooks.js';
 import { router as alertsRouter } from './routes/alerts.js';
+import imageModerationRouter from './routes/imageModeration.js';
+import advancedCacheRouter from './routes/advancedCache.js';
+import pushNotificationsRouter from './routes/pushNotifications.js';
+import feedbackRouter from './routes/feedback.js';
+import databaseOptimizationRouter from './routes/databaseOptimization.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -67,6 +72,11 @@ app.use('/api/v1/geo', collectionsRouter);
 app.use('/api/v1/whitelist', createWhitelistRouter());
 app.use('/api/v1/webhooks', webhookRouter);
 app.use('/api/v1/alerts', alertsRouter);
+app.use('/api/v1/moderation', imageModerationRouter);
+app.use('/api/v1/cache', advancedCacheRouter);
+app.use('/api/v1/notifications', pushNotificationsRouter);
+app.use('/api/v1/feedback', feedbackRouter);
+app.use('/api/v1/db', databaseOptimizationRouter);
 
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
