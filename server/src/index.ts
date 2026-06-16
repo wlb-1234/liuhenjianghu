@@ -23,6 +23,14 @@ import advancedCacheRouter from './routes/advancedCache.js';
 import pushNotificationsRouter from './routes/pushNotifications.js';
 import feedbackRouter from './routes/feedback.js';
 import databaseOptimizationRouter from './routes/databaseOptimization.js';
+import messageRecallRouter from './routes/messageRecall.js';
+import searchRouter from './routes/search.js';
+import dataExportRouter from './routes/dataExport.js';
+import socialRouter from './routes/social.js';
+import contentModerationRouter from './routes/contentModeration.js';
+import scheduledPostRouter from './routes/scheduledPost.js';
+import i18nRouter from './routes/i18n.js';
+import themeRouter from './routes/theme.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -77,6 +85,14 @@ app.use('/api/v1/cache', advancedCacheRouter);
 app.use('/api/v1/notifications', pushNotificationsRouter);
 app.use('/api/v1/feedback', feedbackRouter);
 app.use('/api/v1/db', databaseOptimizationRouter);
+app.use('/api/v1/messages', messageRecallRouter);
+app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/export', dataExportRouter);
+app.use('/api/v1/social', socialRouter);
+app.use('/api/v1/admin', contentModerationRouter);
+app.use('/api/v1/scheduled', scheduledPostRouter);
+app.use('/api/v1/i18n', i18nRouter);
+app.use('/api/v1/theme', themeRouter);
 
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
