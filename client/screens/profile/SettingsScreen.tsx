@@ -135,7 +135,7 @@ export default function SettingsScreen() {
             <Text style={styles.menuIcon}>电</Text>
             <View style={styles.menuContent}>
               <Text style={styles.menuText}>联系电话</Text>
-              <Text style={styles.menuValue}>156-1359-4588</Text>
+              <Text style={styles.menuValue}>请联系客服</Text>
             </View>
           </TouchableOpacity>
         </View>

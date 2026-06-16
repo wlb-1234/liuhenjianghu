@@ -107,7 +107,7 @@ export default function PrivacyScreen() {
                 style={styles.link}
                 onPress={() => Linking.openURL('tel:15613594588')}
               >
-                156-1359-4588
+                请联系客服
               </Text>
             </Text>
           </View>
@@ -132,7 +132,7 @@ export default function PrivacyScreen() {
             <Text style={styles.paragraph}>
               如您对本隐私政策有任何疑问，请通过以下方式联系我们：
             </Text>
-            <Text style={styles.listItem}>• 客服电话：156-1359-4588</Text>
+            <Text style={styles.listItem}>• 客服电话：请联系客服</Text>
             <Text style={styles.listItem}>• 服务时间：工作日 9:00-18:00</Text>
             <Text style={styles.listItem}>• 邮箱：support@liuhenjianghu.com（待配置）</Text>
           </View>

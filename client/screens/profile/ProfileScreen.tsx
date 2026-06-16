@@ -220,7 +220,7 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
           <Text style={styles.footerText}>流痕江湖 v1.0</Text>
           <Text style={styles.footerSubtext}>人海为江湖，留言皆流痕</Text>
           <Text style={styles.footerCopyright}>(C) 2024 流痕江湖 All Rights Reserved</Text>
-          <Text style={styles.footerContact}>联系：156-1359-4588</Text>
+          <Text style={styles.footerContact}>联系客服</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
