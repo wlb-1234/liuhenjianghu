@@ -49,12 +49,15 @@ app.use(requestLogger);
 const metricsRouter = createMetricsMiddleware();
 app.use('/metrics', metricsRouter);
 
+// 静态文件目录
+const publicDir = path.join(__dirname, 'public');
+
 // 静态文件（Web管理后台）
-app.use(express.static('/workspace/projects/server/public'));
+app.use(express.static(publicDir));
 
 // Web管理后台
 app.get('/admin', (req: Request, res: Response) => {
-  res.sendFile('/workspace/projects/server/public/admin.html');
+  res.sendFile(path.join(publicDir, 'admin.html'));
 });
 
 // 健康检查

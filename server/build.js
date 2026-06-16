@@ -62,6 +62,26 @@ try {
     }
   }
   
+  // 复制public目录到dist
+  const publicDir = join(process.cwd(), 'public');
+  const distPublicDir = join(process.cwd(), 'dist', 'public');
+  
+  if (existsSync(publicDir)) {
+    if (!existsSync(distPublicDir)) {
+      mkdirSync(distPublicDir, { recursive: true });
+    }
+    
+    // 复制public目录下的所有文件
+    const { readdirSync, copyFileSync: cpSync } = await import('fs');
+    const publicFiles = readdirSync(publicDir);
+    for (const file of publicFiles) {
+      const src = join(publicDir, file);
+      const dest = join(distPublicDir, file);
+      cpSync(src, dest);
+      console.log(`Copied ${file} to dist/public/`);
+    }
+  }
+  
   console.log('⚡ Build complete!');
 } catch (e) {
   console.error(e);
