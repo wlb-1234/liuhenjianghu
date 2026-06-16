@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,68 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  Alert,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 
+const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080';
+
+const themeOptions = [
+  { value: 'light', label: '亮色模式', icon: '☀️', desc: '经典白底界面' },
+  { value: 'dark', label: '暗黑模式', icon: '🌙', desc: '深色背景，省电护眼' },
+  { value: 'system', label: '跟随系统', icon: '📱', desc: '自动匹配手机设置' },
+];
+
 export default function SettingsScreen() {
   const router = useSafeRouter();
   const [showAgreement, setShowAgreement] = useState(false);
   const [agreementType, setAgreementType] = useState<'user' | 'privacy'>('user');
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('system');
+  const [loading, setLoading] = useState(false);
 
-  const handleCall = () => {
-    Linking.openURL('tel:15613594588');
+  // 加载主题设置
+  useEffect(() => {
+    loadThemeSetting();
+  }, []);
+
+  const loadThemeSetting = async () => {
+    try {
+      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/theme`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setCurrentTheme(data.data.mode || 'system');
+        }
+      }
+    } catch (error) {
+      console.log('加载主题设置失败', error);
+    }
+  };
+
+  const handleThemeChange = async (theme: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/theme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: theme }),
+      });
+      if (response.ok) {
+        setCurrentTheme(theme);
+        setShowThemeModal(false);
+      }
+    } catch (error) {
+      console.log('保存主题失败', error);
+    }
+    setLoading(false);
+  };
+
+  const getCurrentThemeLabel = () => {
+    const theme = themeOptions.find(t => t.value === currentTheme);
+    return theme ? theme.label : '跟随系统';
   };
 
   const handleAgreement = (type: 'user' | 'privacy') => {
@@ -92,6 +140,25 @@ export default function SettingsScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content}>
+        {/* 主题设置 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>显示设置</Text>
+          
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => setShowThemeModal(true)}
+          >
+            <Text style={styles.menuIcon}>🌙</Text>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuText}>深色模式</Text>
+              <View style={styles.menuRight}>
+                <Text style={styles.menuValue}>{getCurrentThemeLabel()}</Text>
+                <Text style={styles.menuArrow}>›</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* 关于我们 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>关于我们</Text>
@@ -131,7 +198,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>联系我们</Text>
           
-          <TouchableOpacity style={styles.menuItem} onPress={handleCall}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
             <Text style={styles.menuIcon}>电</Text>
             <View style={styles.menuContent}>
               <Text style={styles.menuText}>联系电话</Text>
@@ -148,6 +215,52 @@ export default function SettingsScreen() {
           <Text style={styles.copyrightText}>版权所有 · 保留一切权利</Text>
         </View>
       </ScrollView>
+
+      {/* 主题选择弹窗 */}
+      <Modal
+        visible={showThemeModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowThemeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.themeModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>深色模式</Text>
+              <TouchableOpacity onPress={() => setShowThemeModal(false)}>
+                <Text style={styles.modalClose}>关闭</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.themeList}>
+              {themeOptions.map((theme) => (
+                <TouchableOpacity
+                  key={theme.value}
+                  style={[
+                    styles.themeItem,
+                    currentTheme === theme.value && styles.themeItemActive,
+                  ]}
+                  onPress={() => handleThemeChange(theme.value)}
+                  disabled={loading}
+                >
+                  <Text style={styles.themeIcon}>{theme.icon}</Text>
+                  <View style={styles.themeInfo}>
+                    <Text style={[
+                      styles.themeLabel,
+                      currentTheme === theme.value && styles.themeLabelActive,
+                    ]}>
+                      {theme.label}
+                    </Text>
+                    <Text style={styles.themeDesc}>{theme.desc}</Text>
+                  </View>
+                  {currentTheme === theme.value && (
+                    <Text style={styles.themeCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* 协议弹窗 */}
       <Modal
@@ -251,6 +364,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 12,
   },
+  menuRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   menuText: {
     fontSize: 16,
     color: '#3D2B1F',
@@ -258,6 +375,7 @@ const styles = StyleSheet.create({
   menuValue: {
     fontSize: 14,
     color: '#8B7355',
+    marginRight: 8,
   },
   menuArrow: {
     fontSize: 18,
@@ -298,13 +416,19 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     overflow: 'hidden',
   },
+  themeModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    maxHeight: '60%',
+    overflow: 'hidden',
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8DFD0',
+    borderBottomColor: '#F0EBE3',
   },
   modalTitle: {
     fontSize: 18,
@@ -316,12 +440,53 @@ const styles = StyleSheet.create({
     color: '#8B4513',
   },
   modalBody: {
-    padding: 20,
+    padding: 16,
     maxHeight: 400,
   },
   agreementText: {
     fontSize: 14,
     color: '#3D2B1F',
     lineHeight: 24,
+  },
+  themeList: {
+    padding: 16,
+  },
+  themeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F9F7F4',
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  themeItemActive: {
+    backgroundColor: '#F5EDE3',
+    borderWidth: 2,
+    borderColor: '#8B4513',
+  },
+  themeIcon: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  themeInfo: {
+    flex: 1,
+  },
+  themeLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3D2B1F',
+  },
+  themeLabelActive: {
+    color: '#8B4513',
+  },
+  themeDesc: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginTop: 4,
+  },
+  themeCheck: {
+    fontSize: 20,
+    color: '#8B4513',
+    fontWeight: '700',
   },
 });
