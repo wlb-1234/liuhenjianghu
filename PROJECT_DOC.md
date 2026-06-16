@@ -1337,3 +1337,48 @@ server/src/routes/theme.ts
 server/src/utils/i18n.ts
 server/src/utils/theme.ts
 ```
+
+---
+
+## 2026-06-17 变更记录
+
+### 完成的功能
+
+#### 1. 收益统计
+- **路由文件**：`server/src/routes/revenue.ts`
+- **API端点**：
+  - `GET /api/v1/revenue/overview` - 收益概览（总收入、今日收益、订单数）
+  - `GET /api/v1/revenue/trend` - 收益趋势
+  - `GET /api/v1/revenue/members` - 会员收益
+  - `GET /api/v1/revenue/transactions` - 交易记录
+  - `GET /api/v1/revenue/payment-channels` - 支付渠道
+  - `GET /api/v1/revenue/member-levels` - 会员等级配置
+
+#### 2. 会员等级管理
+- **路由文件**：`server/src/routes/members.ts`
+- **API端点**：
+  - `GET /api/v1/members/` - 会员列表
+  - `GET /api/v1/members/:id` - 会员详情
+  - `PUT /api/v1/members/:id/level` - 调整会员等级
+  - `PUT /api/v1/members/batch-level` - 批量调整会员等级
+  - `GET /api/v1/members/config/levels` - 会员等级配置
+  - `GET /api/v1/members/stats/summary` - 会员统计
+  - `GET /api/v1/members/export/list` - 导出会员列表
+
+#### 3. 后台管理页面更新
+- 新增「收益统计」模块
+- 新增「会员管理」模块
+
+### 会员等级设置
+| 等级 | 价格 | 功能 |
+|------|------|------|
+| 免费用户 | ¥0 | 基础功能，每日100次API调用 |
+| 基础会员 | ¥29.9/月 | 每日1000次API调用，邮件支持 |
+| 高级会员 | ¥99/月 | 每日10000次API调用，优先支持 |
+| VIP会员 | ¥299/月 | 全部功能，无限API调用，专属客服 |
+
+### 新增文件
+```
+server/src/routes/revenue.ts
+server/src/routes/members.ts
+```
