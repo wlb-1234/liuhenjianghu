@@ -536,9 +536,9 @@ npm install @regions/api-client
         }
 
         async function upgradeMember(userId) {
-            const level = prompt('请输入会员等级（free/basic/pro/vip）：');
+            const level = prompt('请输入会员等级（free/L1/L2/L3/L4）：');
             if (!level) return;
-            const res = await fetchApi(`${API_BASE}/api/v1/members/${userId}/upgrade`, { method: 'POST', body: JSON.stringify({ level }) });
+            const res = await fetchApi(`${API_BASE}/api/v1/members/${userId}/level`, { method: 'PUT', body: JSON.stringify({ level }) });
             if (res.success) { alert('调整成功'); loadMembers(); }
         }
 

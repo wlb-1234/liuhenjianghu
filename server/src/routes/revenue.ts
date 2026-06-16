@@ -4,17 +4,15 @@ import { getPool } from '../config/database.js';
 const router = express.Router();
 
 /**
- * 会员等级定义
- * - free: 免费用户
- * - basic: 基础会员
- * - premium: 高级会员
- * - vip: VIP会员
+ * 会员等级定义（流痕江湖·级别留言体系）
+ * 增值付费功能：流痕留存+级别留言
  */
 const MEMBER_LEVELS = {
-  free: { name: '免费用户', color: '#9CA3AF', features: ['基础功能'] },
-  basic: { name: '基础会员', color: '#3B82F6', features: ['每日100次API', '基础功能'] },
-  premium: { name: '高级会员', color: '#8B5CF6', features: ['每日1000次API', '高级功能'] },
-  vip: { name: 'VIP会员', color: '#F59E0B', features: ['无限API调用', '全部功能'] }
+  free: { name: '免费用户', color: '#9CA3AF', scope: '镇/乡级', retentionDays: 7 },
+  L1: { name: 'L1·县级', color: '#10B981', scope: '县级', retentionDays: 15, price: 9 },
+  L2: { name: 'L2·市级', color: '#3B82F6', scope: '市级', retentionDays: 30, price: 50 },
+  L3: { name: 'L3·省级', color: '#8B5CF6', scope: '省级', retentionDays: 60, price: 200 },
+  L4: { name: 'L4·全国级', color: '#F59E0B', scope: '全国', retentionDays: 90, price: 2000, isPinned: true }
 };
 
 // 模拟收益数据（实际项目中应从支付系统获取）
@@ -35,9 +33,10 @@ const mockRevenue = {
   ],
   memberStats: [
     { level: 'free', count: 1250, revenue: 0 },
-    { level: 'basic', count: 320, revenue: 960.00 },
-    { level: 'premium', count: 85, revenue: 850.00 },
-    { level: 'vip', count: 12, revenue: 360.00 },
+    { level: 'L1', count: 180, revenue: 1620.00 },
+    { level: 'L2', count: 85, revenue: 4250.00 },
+    { level: 'L3', count: 25, revenue: 5000.00 },
+    { level: 'L4', count: 3, revenue: 6000.00 },
   ]
 };
 

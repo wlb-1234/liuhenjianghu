@@ -4,46 +4,70 @@ import { getPool } from '../config/database.js';
 const router = express.Router();
 
 /**
- * 会员等级定义
+ * 会员等级定义（流痕江湖·级别留言体系）
+ * 增值付费功能：流痕留存+级别留言
  */
 const MEMBER_LEVELS = {
   free: { 
     name: '免费用户', 
     color: '#9CA3AF', 
     price: 0,
-    features: ['基础功能', '每日100次API调用'],
-    description: '适合体验用户'
+    scope: '镇/乡级',           // 覆盖范围：仅本人所在镇/乡
+    dailyPosts: 10,            // 每日发布：10条
+    retentionDays: 7,          // 留言留存：7天
+    features: ['基础功能', '私聊', '加好友', '浏览'],
+    description: '基础功能永久免费，覆盖本人所在镇/乡'
   },
-  basic: { 
-    name: '基础会员', 
+  L1: { 
+    name: 'L1·县级', 
+    color: '#10B981', 
+    price: 9,
+    scope: '县级',            // 覆盖范围：本县
+    dailyPosts: 30,           // 每日发布：30条
+    retentionDays: 15,        // 留言留存：15天
+    features: ['覆盖本县', '30条/天', '15天留存'],
+    description: '适合本地社交'
+  },
+  L2: { 
+    name: 'L2·市级', 
     color: '#3B82F6', 
-    price: 29.9,
-    features: ['基础功能', '每日1000次API调用', '邮件支持'],
-    description: '适合个人开发者'
+    price: 50,
+    scope: '市级',            // 覆盖范围：本市的
+    dailyPosts: 80,           // 每日发布：80条
+    retentionDays: 30,        // 留言留存：30天
+    features: ['覆盖本市', '80条/天', '30天留存'],
+    description: '适合城市社交'
   },
-  premium: { 
-    name: '高级会员', 
+  L3: { 
+    name: 'L3·省级', 
     color: '#8B5CF6', 
-    price: 99.0,
-    features: ['高级功能', '每日10000次API调用', '优先支持'],
-    description: '适合团队使用'
+    price: 200,
+    scope: '省级',            // 覆盖范围：本省
+    dailyPosts: 200,          // 每日发布：200条
+    retentionDays: 60,        // 留言留存：60天
+    features: ['覆盖本省', '200条/天', '60天留存'],
+    description: '适合省内社交'
   },
-  vip: { 
-    name: 'VIP会员', 
+  L4: { 
+    name: 'L4·全国级', 
     color: '#F59E0B', 
-    price: 299.0,
-    features: ['全部功能', '无限API调用', '专属客服', '定制开发'],
-    description: '适合企业用户'
+    price: 2000,
+    scope: '全国',            // 覆盖范围：全国
+    dailyPosts: -1,           // 不限
+    retentionDays: 90,       // 留言留存：90天
+    isPinned: true,           // 置顶功能
+    features: ['覆盖全国', '发布不限', '90天留存', '内容置顶'],
+    description: '适合全国社交，留言置顶展示'
   }
 };
 
 // 模拟会员数据
 const mockMembers = [
-  { id: 1, user_id: 'user_001', phone: '138****5678', level: 'vip', expire_time: '2027-06-16', created_at: '2024-06-16' },
-  { id: 2, user_id: 'user_002', phone: '139****1234', level: 'premium', expire_time: '2026-12-31', created_at: '2025-01-15' },
-  { id: 3, user_id: 'user_003', phone: '137****8765', level: 'basic', expire_time: '2026-08-20', created_at: '2025-08-20' },
+  { id: 1, user_id: 'user_001', phone: '138****5678', level: 'L4', expire_time: '2027-06-16', created_at: '2024-06-16' },
+  { id: 2, user_id: 'user_002', phone: '139****1234', level: 'L3', expire_time: '2026-12-31', created_at: '2025-01-15' },
+  { id: 3, user_id: 'user_003', phone: '137****8765', level: 'L2', expire_time: '2026-08-20', created_at: '2025-08-20' },
   { id: 4, user_id: 'user_004', phone: '136****4321', level: 'free', expire_time: null, created_at: '2026-01-01' },
-  { id: 5, user_id: 'user_005', phone: '135****9876', level: 'premium', expire_time: '2026-09-15', created_at: '2025-03-10' },
+  { id: 5, user_id: 'user_005', phone: '135****9876', level: 'L1', expire_time: '2026-09-15', created_at: '2025-03-10' },
 ];
 
 /**
