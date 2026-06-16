@@ -157,3 +157,6 @@ router.get('/check/:postId', authMiddleware, async (req: AuthRequest, res: Respo
 });
 
 export default router;
+
+export { createCollectionsRouter };
+export { createCollectionsRouter };

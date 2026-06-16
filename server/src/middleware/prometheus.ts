@@ -219,3 +219,5 @@ export default {
   setCacheSize,
   recordApiCall,
 };
+
+export function createMetricsMiddleware() { return metricsMiddleware; }

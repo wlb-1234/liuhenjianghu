@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行政区划API - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; }
+        header h1 { font-size: 28px; margin-bottom: 8px; }
+        header p { opacity: 0.9; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 16px; color: #666; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .stat-value { font-size: 36px; font-weight: 700; color: #333; margin-bottom: 8px; }
+        .stat-label { font-size: 13px; color: #999; }
+        .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .section h2 { font-size: 18px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { font-weight: 600; color: #666; font-size: 13px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #e6f7ed; color: #1aa034; }
+        .badge-danger { background: #fee7e7; color: #d93026; }
+        .badge-warning { background: #fef7e6; color: #e37400; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #666; font-weight: 500; }
+        .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+        .alert-success { background: #e6f7ed; color: #1aa034; }
+        .alert-error { background: #fee7e7; color: #d93026; }
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .nav { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { padding: 10px 20px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .nav-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .toggle { position: relative; width: 48px; height: 24px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: 0.3s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        .toggle input:checked + .toggle-slider { background-color: #667eea; }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(24px); }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .metric-card { background: #f8f9fa; padding: 16px; border-radius: 8px; }
+        .metric-card .value { font-size: 24px; font-weight: 700; color: #333; }
+        .metric-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; overflow-x: auto; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>行政区划API - 管理后台</h1>
+            <p>实时监控系统状态，管理API密钥和告警配置</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showTab('dashboard')">仪表盘</button>
+            <button class="nav-btn" onclick="showTab('apikeys')">API密钥</button>
+            <button class="nav-btn" onclick="showTab('webhooks')">告警通知</button>
+            <button class="nav-btn" onclick="showTab('whitelist')">IP白名单</button>
+            <button class="nav-btn" onclick="showTab('docs')">API文档</button>
+        </nav>
+
+        <!-- 仪表盘 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3>📊 总请求数</h3>
+                    <div class="stat-value" id="totalRequests">-</div>
+                    <div class="stat-label">累计API调用</div>
+                </div>
+                <div class="card">
+                    <h3>✅ 成功率</h3>
+                    <div class="stat-value" id="successRate">-</div>
+                    <div class="stat-label">请求成功率</div>
+                </div>
+                <div class="card">
+                    <h3>⏱️ 平均响应</h3>
+                    <div class="stat-value" id="avgResponse">-</div>
+                    <div class="stat-label">毫秒</div>
+                </div>
+                <div class="card">
+                    <h3>💾 缓存命中率</h3>
+                    <div class="stat-value" id="cacheHitRate">-</div>
+                    <div class="stat-label">缓存效率</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>实时指标</h2>
+                <div class="metrics-grid" id="metricsGrid">
+                    <div class="metric-card"><div class="value" id="metricRequests">-</div><div class="label">请求数</div></div>
+                    <div class="metric-card"><div class="value" id="metricErrors">-</div><div class="label">错误数</div></div>
+                    <div class="metric-card"><div class="value" id="metricLatency">-</div><div class="label">延迟 (ms)</div></div>
+                    <div class="metric-card"><div class="value" id="metricCache">-</div><div class="label">缓存命中</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>接口调用排行</h2>
+                <table>
+                    <thead><tr><th>接口</th><th>调用次数</th><th>平均响应</th><th>错误率</th></tr></thead>
+                    <tbody id="endpointsTable"><tr><td colspan="4" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- API密钥管理 -->
+        <div id="apikeys" class="tab-content">
+            <div class="section">
+                <h2>API密钥管理</h2>
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="showCreateKeyForm()">+ 创建新密钥</button>
+                </div>
+                <div id="createKeyForm" style="display:none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <div class="form-group">
+                        <label>密钥名称</label>
+                        <input type="text" id="newKeyName" placeholder="例如：生产环境密钥">
+                    </div>
+                    <div class="form-group">
+                        <label>密钥权限</label>
+                        <select id="newKeyRole" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+                            <option value="read">只读</option>
+                            <option value="write">读写</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="createApiKey()">创建</button>
+                    <button class="btn btn-sm" onclick="hideCreateKeyForm()">取消</button>
+                </div>
+                <div id="apikeyAlert" class="alert" style="display:none;"></div>
+                <table>
+                    <thead><tr><th>名称</th><th>密钥</th><th>权限</th><th>调用次数</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody id="apikeysTable"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 告警通知 -->
+        <div id="webhooks" class="tab-content">
+            <div class="section">
+                <h2>Webhook配置</h2>
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="showWebhookForm()">+ 添加Webhook</button>
+                </div>
+                <div id="webhookForm" style="display:none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <div class="form-group">
+                        <label>名称</label>
+                        <input type="text" id="webhookName" placeholder="例如：钉钉告警群">
+                    </div>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" id="webhookUrl" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx">
+                    </div>
+                    <div class="form-group">
+                        <label>类型</label>
+                        <select id="webhookType" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+                            <option value="dingtalk">钉钉</option>
+                            <option value="wecom">企业微信</option>
+                            <option value="feishu">飞书</option>
+                            <option value="slack">Slack</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="createWebhook()">添加</button>
+                    <button class="btn btn-sm" onclick="hideWebhookForm()">取消</button>
+                </div>
+                <table>
+                    <thead><tr><th>名称</th><th>类型</th><th>状态</th><th>最近告警</th><th>操作</th></tr></thead>
+                    <tbody id="webhooksTable"><tr><td colspan="5" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- IP白名单 -->
+        <div id="whitelist" class="tab-content">
+            <div class="section">
+                <h2>IP白名单设置</h2>
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                    <label class="toggle">
+                        <input type="checkbox" id="whitelistEnabled" onchange="toggleWhitelist()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>启用IP白名单</span>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="showWhitelistForm()">+ 添加IP规则</button>
+                </div>
+                <div id="whitelistForm" style="display:none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <div class="form-group">
+                        <label>IP/网段</label>
+                        <input type="text" id="whitelistIp" placeholder="例如：192.168.1.1 或 10.0.0.0/8">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input type="text" id="whitelistDesc" placeholder="例如：内网服务器">
+                    </div>
+                    <button class="btn btn-primary" onclick="addWhitelistRule()">添加</button>
+                    <button class="btn btn-sm" onclick="hideWhitelistForm()">取消</button>
+                </div>
+                <table>
+                    <thead><tr><th>IP/网段</th><th>描述</th><th>操作</th></tr></thead>
+                    <tbody id="whitelistTable"><tr><td colspan="3" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- API文档 -->
+        <div id="docs" class="tab-content">
+            <div class="section">
+                <h2>快速开始</h2>
+                <div class="code-block">
+<span class="comment">// 1. 安装SDK</span>
+npm install @regions/api-client
+
+<span class="comment">// 2. 初始化客户端</span>
+<span class="keyword">import</span> { RegionsClient } <span class="keyword">from</span> <span class="string">'@regions/api-client'</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> RegionsClient({
+  apiKey: <span class="string">'YOUR_API_KEY'</span>,
+  baseUrl: <span class="string">'https://your-api.railway.app'</span>
+});
+
+<span class="comment">// 3. 查询省级列表</span>
+<span class="keyword">const</span> provinces = <span class="keyword">await</span> client.provinces();
+
+<span class="comment">// 4. 查询城市下级</span>
+<span class="keyword">const</span> cities = <span class="keyword">await</span> client.cities(<span class="string">'44'</span>); <span class="comment">// 广东省</span>
+
+<span class="comment">// 5. 反向地理编码</span>
+<span class="keyword">const</span> result = <span class="keyword">await</span> client.reverse(39.9042, 116.4074);
+</div>
+            </div>
+            <div class="section">
+                <h2>主要接口</h2>
+                <table>
+                    <thead><tr><th>接口</th><th>说明</th><th>示例</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>GET /provinces</code></td><td>省级列表</td><td><code>/api/v1/regions/provinces</code></td></tr>
+                        <tr><td><code>GET /cities/:code</code></td><td>城市列表</td><td><code>/api/v1/regions/cities/44</code></td></tr>
+                        <tr><td><code>GET /districts/:code</code></td><td>区县列表</td><td><code>/api/v1/regions/districts/4401</code></td></tr>
+                        <tr><td><code>GET /search</code></td><td>模糊搜索</td><td><code>/api/v1/regions/search?keyword=广州</code></td></tr>
+                        <tr><td><code>GET /reverse</code></td><td>反向地理编码</td><td><code>/api/v1/geo/reverse?lat=39.9&lng=116.4</code></td></tr>
+                        <tr><td><code>GET /distance</code></td><td>距离计算</td><td><code>/api/v1/geo/distance?fromLat=39.9&fromLng=116.4&toLat=31.2&toLng=121.5</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const API_KEY = 'sk_dev_key_abc123';
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function fetchApi(url, options = {}) {
+            try {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: { 'x-api-key': API_KEY, 'Content-Type': 'application/json', ...options.headers }
+                });
+                return await res.json();
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        }
+
+        // 仪表盘
+        async function loadDashboard() {
+            const [stats, endpoints, cache] = await Promise.all([
+                fetchApi(`${API_BASE}/api/v1/stats/summary`),
+                fetchApi(`${API_BASE}/api/v1/stats/endpoints`),
+                fetchApi(`${API_BASE}/api/v1/cache/stats`)
+            ]);
+
+            if (stats.success) {
+                document.getElementById('totalRequests').textContent = stats.data.totalRequests.toLocaleString();
+                document.getElementById('successRate').textContent = stats.data.successRate + '%';
+                document.getElementById('avgResponse').textContent = stats.data.avgResponseTime.toFixed(1);
+            }
+            if (cache.success) {
+                document.getElementById('cacheHitRate').textContent = (cache.data.hitRate * 100).toFixed(1) + '%';
+            }
+            if (endpoints.success) {
+                const top5 = endpoints.data.topEndpoints.slice(0, 5);
+                document.getElementById('endpointsTable').innerHTML = top5.map(e => 
+                    `<tr><td>${e.endpoint}</td><td>${e.count}</td><td>${e.avgLatency}ms</td><td>${(e.errorRate * 100).toFixed(1)}%</td></tr>`
+                ).join('');
+            }
+        }
+
+        // API密钥
+        async function loadApiKeys() {
+            const res = await fetchApi(`${API_BASE}/api/v1/apikeys/keys`);
+            if (res.success) {
+                document.getElementById('apikeysTable').innerHTML = res.data.map(k => 
+                    `<tr>
+                        <td>${k.name || '未命名'}</td>
+                        <td><code>${k.key.substring(0, 20)}...</code></td>
+                        <td>${k.role || 'read'}</td>
+                        <td>${k.callCount || 0}</td>
+                        <td><span class="badge ${k.active ? 'badge-success' : 'badge-danger'}">${k.active ? '启用' : '禁用'}</span></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteApiKey('${k.key}')">删除</button>
+                        </td>
+                    </tr>`
+                ).join('');
+            }
+        }
+
+        function showCreateKeyForm() { document.getElementById('createKeyForm').style.display = 'block'; }
+        function hideCreateKeyForm() { document.getElementById('createKeyForm').style.display = 'none'; }
+
+        async function createApiKey() {
+            const name = document.getElementById('newKeyName').value;
+            if (!name) return alert('请输入密钥名称');
+            const res = await fetchApi(`${API_BASE}/api/v1/apikeys/keys`, {
+                method: 'POST', body: JSON.stringify({ name, role: document.getElementById('newKeyRole').value })
+            });
+            if (res.success) {
+                document.getElementById('apikeyAlert').className = 'alert alert-success';
+                document.getElementById('apikeyAlert').innerHTML = `新密钥: <strong>${res.data.key}</strong> (请妥善保存)`;
+                document.getElementById('apikeyAlert').style.display = 'block';
+                loadApiKeys();
+            }
+        }
+
+        async function deleteApiKey(key) {
+            if (!confirm('确定删除此密钥?')) return;
+            await fetchApi(`${API_BASE}/api/v1/apikeys/keys/${key}`, { method: 'DELETE' });
+            loadApiKeys();
+        }
+
+        // Webhooks
+        async function loadWebhooks() {
+            const res = await fetchApi(`${API_BASE}/api/v1/webhooks`);
+            if (res.success) {
+                document.getElementById('webhooksTable').innerHTML = res.data.map(w =>
+                    `<tr>
+                        <td>${w.name || w.id}</td>
+                        <td>${w.type || 'custom'}</td>
+                        <td><span class="badge ${w.enabled ? 'badge-success' : 'badge-warning'}">${w.enabled ? '启用' : '禁用'}</span></td>
+                        <td>${w.lastAlert ? new Date(w.lastAlert).toLocaleString() : '无'}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteWebhook('${w.id}')">删除</button></td>
+                    </tr>`
+                ).join('');
+            }
+        }
+
+        function showWebhookForm() { document.getElementById('webhookForm').style.display = 'block'; }
+        function hideWebhookForm() { document.getElementById('webhookForm').style.display = 'none'; }
+
+        async function createWebhook() {
+            const name = document.getElementById('webhookName').value;
+            const url = document.getElementById('webhookUrl').value;
+            if (!name || !url) return alert('请填写完整信息');
+            await fetchApi(`${API_BASE}/api/v1/webhooks`, {
+                method: 'POST', body: JSON.stringify({ id: name, url, type: document.getElementById('webhookType').value, enabled: true })
+            });
+            hideWebhookForm();
+            loadWebhooks();
+        }
+
+        async function deleteWebhook(id) {
+            if (!confirm('确定删除?')) return;
+            await fetchApi(`${API_BASE}/api/v1/webhooks/${id}`, { method: 'DELETE' });
+            loadWebhooks();
+        }
+
+        // IP白名单
+        async function loadWhitelist() {
+            const res = await fetchApi(`${API_BASE}/api/v1/whitelist`);
+            if (res.success) {
+                document.getElementById('whitelistEnabled').checked = res.data.enabled;
+                document.getElementById('whitelistTable').innerHTML = (res.data.rules || []).map(r =>
+                    `<tr><td>${r.pattern}</td><td>${r.description || ''}</td><td><button class="btn btn-danger btn-sm" onclick="removeWhitelist('${r.pattern}')">移除</button></td></tr>`
+                ).join('') || '<tr><td colspan="3">暂无规则</td></tr>';
+            }
+        }
+
+        async function toggleWhitelist() {
+            const enabled = document.getElementById('whitelistEnabled').checked;
+            await fetchApi(`${API_BASE}/api/v1/whitelist`, { method: 'PUT', body: JSON.stringify({ enabled }) });
+        }
+
+        function showWhitelistForm() { document.getElementById('whitelistForm').style.display = 'block'; }
+        function hideWhitelistForm() { document.getElementById('whitelistForm').style.display = 'none'; }
+
+        async function addWhitelistRule() {
+            const pattern = document.getElementById('whitelistIp').value;
+            const desc = document.getElementById('whitelistDesc').value;
+            if (!pattern) return alert('请输入IP/网段');
+            await fetchApi(`${API_BASE}/api/v1/whitelist/rules`, {
+                method: 'POST', body: JSON.stringify({ pattern, description: desc })
+            });
+            hideWhitelistForm();
+            loadWhitelist();
+        }
+
+        async function removeWhitelist(pattern) {
+            await fetchApi(`${API_BASE}/api/v1/whitelist/rules/${encodeURIComponent(pattern)}`, { method: 'DELETE' });
+            loadWhitelist();
+        }
+
+        // 初始化
+        loadDashboard();
+        loadApiKeys();
+        loadWebhooks();
+        loadWhitelist();
+
+        // 定时刷新
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

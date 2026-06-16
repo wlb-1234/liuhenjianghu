@@ -351,3 +351,5 @@ configureWebhook('console', {
 });
 
 console.log('[Webhook] 告警服务已初始化');
+
+export async function initAlertSystem(): Promise<void> { console.log('[AlertSystem] Initialized'); }

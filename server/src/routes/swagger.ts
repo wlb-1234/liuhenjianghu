@@ -434,3 +434,6 @@ fetch('${swaggerConfig.baseUrl}/api/v1/health')<br>
 });
 
 export default router;
+
+export { createSwaggerRouter };
+export { createSwaggerRouter };

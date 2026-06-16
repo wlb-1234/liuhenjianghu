@@ -146,3 +146,4 @@ router.get("/logs", apiKeyAuth, (req, res) => {
 });
 
 export default router;
+export { createStatsRouter };

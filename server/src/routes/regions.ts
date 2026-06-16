@@ -47349,3 +47349,4 @@ router.post("/cache/flush", (req, res) => {
 });
 
 export default router;
+export { createRegionsRouter };

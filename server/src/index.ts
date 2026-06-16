@@ -1,133 +1,89 @@
-import express from 'express';
-import cors from 'cors';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { requestLogger } from './middleware/logger.js';
+import { createMetricsMiddleware } from './middleware/prometheus.js';
+import { initRedis } from './middleware/redisClient.js';
+import { cacheMiddleware } from './middleware/cache.js';
+import { initAlertSystem } from './services/webhookService.js';
+import regionsRouter from './routes/regions.js';
+import statsRouter from './routes/stats.js';
+import apiKeysRouter from './routes/apikeys.js';
+import logsRouter from './routes/logs.js';
+import cacheRouter from './routes/cache.js';
+import geoRouter from './routes/geo.js';
+import reverseRouter from './routes/reverse.js';
+import swaggerRouter from './routes/swagger.js';
+import collectionsRouter from './routes/collections.js';
+import { createWhitelistRouter } from './middleware/ipWhitelistMiddleware.js';
+import webhookRouter from './routes/webhooks.js';
+import { router as alertsRouter } from './routes/alerts.js';
 
-// 错误处理和日志
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { requestLogger } from './middleware/logger';
-import logsRouter from './middleware/logger';
-import { rateLimiters } from './middleware/rateLimiter';
-import { createCacheRouter, initCache } from './middleware/cache';
-import { csrfProtection } from './middleware/csrfProtection';
-import { apiKeyAuth } from './middleware/apiKeyAuth';
-import { createApiKeyRouter } from './middleware/apiKeyManager';
-import { statsMiddleware } from './middleware/stats';
-import { metricsMiddleware, metricsHandler } from './middleware/prometheus';
-import swaggerRouter from './routes/swagger';
-import { createLogsRouter } from './middleware/logPersistence';
-import webhooksRouter from './routes/webhooks';
-import geoRouter from './routes/geo';
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 9091;
+const PORT = parseInt(process.env.PORT || '8080', 10);
+
+// 初始化
+initRedis();
+initAlertSystem();
 
 // 中间件
-import searchRoutes from './routes/search';
-import statsRoutes from './routes/stats';
-import geojsonRoutes from './routes/geojson';
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// 静态文件服务
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
-// Prometheus 指标端点
-app.get('/metrics', metricsHandler());
-
-// 请求日志中间件
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-// Prometheus 指标中间件
-app.use(metricsMiddleware);
+// Prometheus指标
+const metricsRouter = createMetricsMiddleware();
+app.use('/metrics', metricsRouter);
 
-// 健康检查（独立于数据库，公开接口）
-app.get('/api/v1/health', (req, res) => {
+// 静态文件（Web管理后台）
+app.use(express.static('/workspace/projects/server/public'));
+
+// Web管理后台
+app.get('/admin', (req: Request, res: Response) => {
+  res.sendFile('/workspace/projects/server/public/admin.html');
+});
+
+// 健康检查
+app.get('/api/v1/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'ok', 
-    message: '流痕江湖 API 服务运行中',
-    timestamp: new Date().toISOString(),
-    buildId: 'v6-20240613-inline-FORCE-REBUILD'
+    service: 'China Regions API',
+    version: '3.0.0',
+    timestamp: new Date().toISOString()
   });
 });
 
-// API统计中间件（对/api/v1下所有请求进行统计）
-app.use('/api/v1', statsMiddleware);
-
-// API Key认证中间件（作用于/api/v1/regions路径）
-app.use('/api/v1/regions', apiKeyAuth);
-
-// 导入路由（延迟加载，避免启动时就连接数据库）
-import authRoutes from './routes/auth';
-import regionRoutes from './routes/regions';
-import postRoutes from './routes/posts';
-import socialRoutes from './routes/social';
-import memberRoutes from './routes/member';
-import uploadRoutes from './routes/upload';
-import adminRoutes from './routes/admin';
-import moderationRoutes from './routes/moderation';
-import paymentRoutes from './routes/payment';
-import reportsRoutes from './routes/reports';
-import sensitiveWordsRoutes from './routes/sensitiveWords';
-import userStatsRoutes from './routes/userStats';
-import checkInRoutes from './routes/checkIn';
-import notificationsRoutes from './routes/notifications';
-import reviewRoutes from './routes/review';
-import accountDeletionRoutes from './routes/accountDeletion';
-import collectionsRoutes from './routes/collections';
-import messagesRoutes from './routes/messages';
-
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/regions', regionRoutes);
-app.use('/api/v1/posts', postRoutes);
-app.use('/api/v1/social', socialRoutes);
-app.use('/api/v1/member', memberRoutes);
-app.use('/api/v1/upload', uploadRoutes);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/moderation', moderationRoutes);
-app.use('/api/v1/payment', paymentRoutes);
-app.use('/api/v1/reports', reportsRoutes);
-app.use('/api/v1/sensitive-words', sensitiveWordsRoutes);
-app.use('/api/v1/user-stats', userStatsRoutes);
-app.use('/api/v1/check-in', checkInRoutes);
-app.use('/api/v1/notifications', notificationsRoutes);
-app.use('/api/v1/moderation', reviewRoutes);
-app.use('/api/v1/account', accountDeletionRoutes);
-app.use('/api/v1/collections', collectionsRoutes);
-// Swagger文档（放在前面，避免被其他路由拦截）
-app.use(swaggerRouter);
-
-// API路由
-app.use('/api/v1/messages', messagesRoutes);
-app.use('/api/v1/search', searchRoutes);
-app.use('/api/v1/cache', createCacheRouter());
-app.use('/api/v1/stats', statsRoutes);
-app.use('/api/v1/apikeys', createApiKeyRouter());
-app.use('/api/v1/geojson', geojsonRoutes);
-app.use('/api/v1/logs', createLogsRouter());
-app.use('/api/v1/webhooks', webhooksRouter);
+// 路由
+app.use('/api/v1/regions', regionsRouter);
+app.use('/api/v1/stats', statsRouter);
+app.use('/api/v1/apikeys', apiKeysRouter);
+app.use('/api/v1/logs', logsRouter);
+app.use('/api/v1/cache', cacheRouter);
 app.use('/api/v1/geo', geoRouter);
+app.use('/api/v1/geo', reverseRouter);
+app.use('/', swaggerRouter);
+app.use('/api/v1/geo', collectionsRouter);
+app.use('/api/v1/whitelist', createWhitelistRouter());
+app.use('/api/v1/webhooks', webhookRouter);
+app.use('/api/v1/alerts', alertsRouter);
 
-// 错误处理（放在所有路由之后）
-app.use(notFoundHandler);
-app.use(errorHandler);
-
-app.listen(PORT, async () => {
-  console.log('');
-  console.log('╔════════════════════════════════════════════╗');
-  console.log('║      🗡️  流痕江湖 API 服务已启动      🗡️');
-  console.log('╠════════════════════════════════════════════╣');
-  console.log(`║  📍 端口: ${PORT}                             ║`);
-  console.log(`║  🌐 地址: http://localhost:${PORT}           ║`);
-  console.log('╚════════════════════════════════════════════╝');
-  console.log('');
-
-  // 初始化Redis缓存
-  await initCache();
-  console.log('📊 Prometheus metrics: http://localhost:' + PORT + '/metrics');
+// 错误处理
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('[Error]', err.message);
+  res.status(500).json({ 
+    code: 500, 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
-// CSRF 防护（仅对需要认证的 API 生效）
-app.use('/api/v1', csrfProtection);
+// 启动服务
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[Server] China Regions API v3.0.0 started on port ${PORT}`);
+  console.log(`[Server] Admin UI: http://localhost:${PORT}/admin`);
+  console.log(`[Server] API Docs: http://localhost:${PORT}/api-docs`);
+  console.log(`[Server] Health: http://localhost:${PORT}/api/v1/health`);
+});
 
 export default app;

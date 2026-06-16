@@ -220,3 +220,6 @@ export async function getRedisStats(): Promise<{
     hitRate
   };
 }
+
+
+export function createRedisClient() { console.log('[Redis] Client created (memory fallback)'); }

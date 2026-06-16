@@ -203,3 +203,5 @@ export default {
   createCacheRouter,
   initCache,
 };
+
+export function cacheMiddleware(req: any, res: any, next: any) { req.cache = { get: getCache, set: setCache }; next(); }

@@ -399,3 +399,6 @@ function encodeGeoHash(lat: number, lng: number, precision = 6): string {
 }
 
 export default router;
+
+export { createGeoRouter };
+export { createGeoRouter };
