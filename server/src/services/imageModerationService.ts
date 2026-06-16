@@ -32,8 +32,8 @@ export async function checkImage(imageUrl: string): Promise<ImageCheckResult> {
     // 模拟审核延迟
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // 检查常见的不安全模式（仅作为示例）
-    const unsafePatterns = ['porn', 'violence', 'illegal', 'spam'];
+    // 检查常见的不安全模式（仅作为示例）- 广告已允许
+    const unsafePatterns = ['porn', 'violence', 'illegal'];
     const urlLower = imageUrl.toLowerCase();
     
     for (const pattern of unsafePatterns) {
