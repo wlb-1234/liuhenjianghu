@@ -1251,3 +1251,89 @@ server/src/routes/pushNotifications.ts
 server/src/routes/feedback.ts
 server/src/routes/databaseOptimization.ts
 ```
+
+---
+
+## 2026-06-16 变更记录（第二批）
+
+### 完成的功能（8项）
+
+#### 1. 消息撤回
+- **路由文件**：`server/src/routes/messageRecall.ts`
+- **API端点**：
+  - `GET /api/v1/messages/recalled` - 获取撤回消息列表
+  - `POST /api/v1/messages/recall` - 撤回消息
+  - `DELETE /api/v1/messages/permanent/:id` - 永久删除
+
+#### 2. 内容搜索
+- **路由文件**：`server/src/routes/search.ts`
+- **API端点**：
+  - `GET /api/v1/search/` - 搜索内容
+  - `GET /api/v1/search/hot` - 热词列表
+  - `POST /api/v1/search/keywords` - 添加热词
+  - `DELETE /api/v1/search/keywords/:keyword` - 删除热词
+
+#### 3. 数据导出
+- **路由文件**：`server/src/routes/dataExport.ts`
+- **API端点**：
+  - `POST /api/v1/export/` - 创建导出任务
+  - `GET /api/v1/export/` - 获取导出任务列表
+  - `GET /api/v1/export/:id` - 获取导出详情
+  - `GET /api/v1/export/:id/download` - 下载导出文件
+
+#### 4. 关注系统优化
+- **路由文件**：`server/src/routes/social.ts`
+- **API端点**：
+  - `GET /api/v1/social/following` - 获取关注列表
+  - `GET /api/v1/social/followers` - 获取粉丝列表
+  - `POST /api/v1/social/follow/:userId` - 关注用户
+  - `DELETE /api/v1/social/follow/:userId` - 取消关注
+  - `GET /api/v1/social/mutual` - 互关列表
+
+#### 5. 内容置顶/加精
+- **路由文件**：`server/src/routes/contentModeration.ts`
+- **API端点**：
+  - `GET /api/v1/admin/pinned` - 获取置顶内容
+  - `POST /api/v1/admin/pin/:id` - 置顶内容
+  - `DELETE /api/v1/admin/pin/:id` - 取消置顶
+  - `GET /api/v1/admin/featured` - 获取加精内容
+  - `POST /api/v1/admin/feature/:id` - 加精内容
+  - `DELETE /api/v1/admin/feature/:id` - 取消加精
+
+#### 6. 定时发布
+- **路由文件**：`server/src/routes/scheduledPost.ts`
+- **API端点**：
+  - `GET /api/v1/scheduled/` - 获取预约列表
+  - `POST /api/v1/scheduled/` - 创建预约
+  - `PUT /api/v1/scheduled/:id` - 更新预约
+  - `DELETE /api/v1/scheduled/:id` - 删除预约
+
+#### 7. 多语言支持
+- **工具文件**：`server/src/utils/i18n.ts`
+- **路由文件**：`server/src/routes/i18n.ts`
+- **API端点**：
+  - `GET /api/v1/i18n/locales` - 获取支持的语言
+  - `GET /api/v1/i18n/translations/:locale` - 获取翻译文件
+
+#### 8. 暗黑模式
+- **工具文件**：`server/src/utils/theme.ts`
+- **路由文件**：`server/src/routes/theme.ts`
+- **API端点**：
+  - `GET /api/v1/theme` - 获取用户主题
+  - `POST /api/v1/theme` - 设置主题
+  - `GET /api/v1/theme/css` - 获取主题CSS
+  - `GET /api/v1/theme/previews` - 主题预览
+
+### 新增文件
+```
+server/src/routes/messageRecall.ts
+server/src/routes/search.ts
+server/src/routes/dataExport.ts
+server/src/routes/social.ts
+server/src/routes/contentModeration.ts
+server/src/routes/scheduledPost.ts
+server/src/routes/i18n.ts
+server/src/routes/theme.ts
+server/src/utils/i18n.ts
+server/src/utils/theme.ts
+```
