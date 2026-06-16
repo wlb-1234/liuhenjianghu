@@ -1187,3 +1187,67 @@ CREATE TABLE messages (
 | 分享 | ✅ | 分享帖子链接 |
 | 个人中心 | ✅ | 头像、昵称、设置 |
 | 管理后台 | ✅ | 仪表盘、用户管理、内容审核、举报管理 |
+
+---
+
+## 2026-06-16 变更记录
+
+### 完成的功能（5项）
+
+#### 1. 图片内容审核
+- **服务文件**：`server/src/services/imageModerationService.ts`
+- **路由文件**：`server/src/routes/imageModeration.ts`
+- **API端点**：
+  - `GET /api/v1/moderation/status` - 获取审核状态
+  - `POST /api/v1/moderation/image` - 审核单张图片
+  - `POST /api/v1/moderation/batch` - 批量审核
+
+#### 2. Redis缓存
+- **服务文件**：`server/src/services/advancedCacheService.ts`
+- **路由文件**：`server/src/routes/advancedCache.ts`
+- **API端点**：
+  - `GET /api/v1/cache/advanced/stats` - 缓存统计
+  - `POST /api/v1/cache/advanced/set` - 设置缓存
+  - `GET /api/v1/cache/advanced/get` - 获取缓存
+  - `DELETE /api/v1/cache/advanced/key` - 删除缓存
+  - `POST /api/v1/cache/advanced/clear` - 清空缓存
+
+#### 3. 推送通知
+- **服务文件**：`server/src/services/pushNotificationService.ts`
+- **路由文件**：`server/src/routes/pushNotifications.ts`
+- **API端点**：
+  - `GET /api/v1/notifications/` - 获取通知列表
+  - `GET /api/v1/notifications/unread-count` - 未读数量
+  - `PUT /api/v1/notifications/:id/read` - 标记已读
+  - `POST /api/v1/notifications/send` - 发送通知
+  - `GET /api/v1/notifications/poll` - 轮询新通知
+
+#### 4. 用户反馈
+- **路由文件**：`server/src/routes/feedback.ts`
+- **API端点**：
+  - `POST /api/v1/feedback` - 提交反馈
+  - `GET /api/v1/feedback` - 获取反馈列表
+  - `GET /api/v1/feedback/:id` - 获取反馈详情
+  - `DELETE /api/v1/feedback/:id` - 删除反馈
+  - `GET /api/v1/feedback/stats/types` - 反馈统计
+
+#### 5. 数据库优化
+- **路由文件**：`server/src/routes/databaseOptimization.ts`
+- **API端点**：
+  - `GET /api/v1/db/stats` - 数据库统计
+  - `GET /api/v1/db/indexes` - 索引信息
+  - `POST /api/v1/db/optimize` - 执行优化
+  - `GET /api/v1/db/slow-queries` - 慢查询
+  - `GET /api/v1/db/recommendations` - 优化建议
+
+### 新增文件
+```
+server/src/services/imageModerationService.ts
+server/src/services/advancedCacheService.ts
+server/src/services/pushNotificationService.ts
+server/src/routes/imageModeration.ts
+server/src/routes/advancedCache.ts
+server/src/routes/pushNotifications.ts
+server/src/routes/feedback.ts
+server/src/routes/databaseOptimization.ts
+```
