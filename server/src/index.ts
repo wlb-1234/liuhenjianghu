@@ -6,6 +6,8 @@ import { createMetricsMiddleware } from './middleware/prometheus.js';
 import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
+import { supabase } from './config/supabase.js';
+import crypto from 'crypto';
 import regionsRouter from './routes/regions.js';
 import statsRouter from './routes/stats.js';
 import apiKeysRouter from './routes/apikeys.js';
@@ -84,6 +86,53 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
     version: '3.0.0',
     timestamp: new Date().toISOString()
   });
+});
+
+// 管理员登录
+app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
+  try {
+    const { phone, password } = req.body;
+    
+    if (!phone || !password) {
+      return res.json({ success: false, error: '请输入手机号和密码' });
+    }
+    
+    // 验证密码 (默认密码: admin123)
+    const validPassword = 'admin123';
+    if (password !== validPassword) {
+      return res.json({ success: false, error: '手机号或密码错误' });
+    }
+    
+    // 查询用户
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, phone, nickname, member_level, user_rank')
+      .eq('phone', phone)
+      .eq('member_level', 'L4') // 只有L4会员可以登录后台
+      .single();
+    
+    if (error || !user) {
+      return res.json({ success: false, error: '该账号不是管理员' });
+    }
+    
+    // 生成简单token
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        phone: user.phone,
+        nickname: user.nickname,
+        member_level: user.member_level,
+        user_rank: user.user_rank,
+        token
+      }
+    });
+  } catch (err: any) {
+    console.error('[Admin Login Error]', err);
+    res.json({ success: false, error: '登录失败' });
+  }
 });
 
 // 路由

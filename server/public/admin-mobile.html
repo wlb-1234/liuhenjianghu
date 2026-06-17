@@ -468,6 +468,21 @@
   </style>
 </head>
 <body>
+  <!-- 登录页面 -->
+  <div id="loginPage" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#8B4513 0%,#A0522D 100%);display:flex;align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:16px;padding:40px 30px;width:90%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size:56px;margin-bottom:16px;">🏛️</div>
+      <h2 style="color:#2D1F14;margin-bottom:24px;font-size:22px;">流痕江湖管理后台</h2>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11" required style="width:100%;padding:14px 16px;border:1px solid #E5DDD3;border-radius:10px;font-size:16px;margin-bottom:12px;box-sizing:border-box;">
+        <input type="password" id="loginPassword" placeholder="请输入密码" required style="width:100%;padding:14px 16px;border:1px solid #E5DDD3;border-radius:10px;font-size:16px;margin-bottom:16px;box-sizing:border-box;">
+        <button type="submit" id="loginBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#8B4513 0%,#A0522D 100%);color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;">登 录</button>
+        <div id="loginError" style="color:#EF4444;font-size:14px;margin-top:12px;display:none;"></div>
+      </form>
+      <div style="color:#6B5B4F;font-size:12px;margin-top:20px;">仅限管理员访问</div>
+    </div>
+  </div>
+  
   <!-- Header -->
   <div class="header">
     <h1>流痕江湖 · 管理后台</h1>
@@ -696,7 +711,100 @@
   
   <script>
     const API_BASE = '/api/v1';
+    const SESSION_KEY = 'admin_session_mobile';
     let currentTab = 'dashboard';
+    
+    // ========== 登录相关 ==========
+    function checkLogin() {
+      const session = localStorage.getItem(SESSION_KEY);
+      if (session) {
+        try {
+          const user = JSON.parse(session);
+          showAdminPage();
+          return true;
+        } catch (e) {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      }
+      showLoginPage();
+      return false;
+    }
+    
+    function showLoginPage() {
+      document.getElementById('loginPage').style.display = 'flex';
+      document.querySelector('.header').style.display = 'none';
+      document.querySelector('.tabs').style.display = 'none';
+      document.querySelector('.content').style.display = 'none';
+      document.querySelector('.nav').style.display = 'none';
+    }
+    
+    function showAdminPage() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.querySelector('.header').style.display = 'block';
+      document.querySelector('.tabs').style.display = 'flex';
+      document.querySelector('.content').style.display = 'block';
+      document.querySelector('.nav').style.display = 'flex';
+    }
+    
+    async function handleLogin(event) {
+      event.preventDefault();
+      const phone = document.getElementById('loginPhone').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+      
+      if (!phone || !password) {
+        errorEl.textContent = '请输入手机号和密码';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      btn.textContent = '登录中...';
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+      
+      try {
+        const res = await fetch(`${API_BASE}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, password })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success && data.data) {
+          localStorage.setItem(SESSION_KEY, JSON.stringify(data.data));
+          showAdminPage();
+          loadData('dashboard');
+        } else {
+          errorEl.textContent = data.error || '手机号或密码错误';
+          errorEl.style.display = 'block';
+        }
+      } catch (e) {
+        errorEl.textContent = '网络错误，请稍后重试';
+        errorEl.style.display = 'block';
+      } finally {
+        btn.textContent = '登 录';
+        btn.disabled = false;
+      }
+    }
+    
+    function logout() {
+      if (confirm('确定退出登录?')) {
+        localStorage.removeItem(SESSION_KEY);
+        showLoginPage();
+      }
+    }
+    
+    function getSession() {
+      const session = localStorage.getItem(SESSION_KEY);
+      return session ? JSON.parse(session) : null;
+    }
+    
+    // 检查登录状态
+    if (!checkLogin()) {
+      // 不加载数据
+    }
     
     // Update time
     function updateTime() {
