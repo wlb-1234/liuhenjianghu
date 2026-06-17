@@ -6,7 +6,7 @@ import { createMetricsMiddleware } from './middleware/prometheus.js';
 import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
-import { supabase } from './config/supabase.js';
+import { getSupabaseClient } from './storage/database/supabase-client.js';
 import crypto from 'crypto';
 import regionsRouter from './routes/regions.js';
 import statsRouter from './routes/stats.js';
@@ -104,6 +104,7 @@ app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
     }
     
     // 查询用户
+    const supabase = getSupabaseClient();
     const { data: user, error } = await supabase
       .from('users')
       .select('id, phone, nickname, member_level, user_rank')
