@@ -332,6 +332,73 @@
       color: var(--text-secondary);
     }
     
+    .rule-list {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    
+    .rule-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .rule-item:last-child {
+      border-bottom: none;
+    }
+    
+    .rule-icon {
+      font-size: 20px;
+      margin-right: 12px;
+    }
+    
+    .rule-value {
+      margin-left: auto;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
+    .store-list {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    
+    .store-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .store-item:last-child {
+      border-bottom: none;
+    }
+    
+    .store-info {
+      flex: 1;
+    }
+    
+    .store-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .store-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .store-price {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
     .loading::after {
       content: '';
       display: inline-block;
@@ -565,6 +632,42 @@
         <div class="loading">加载中...</div>
       </div>
     </div>
+    
+    <!-- Points Section -->
+    <div id="points" class="section">
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <div class="stat-label">总积分</div>
+          <div class="stat-value" id="totalPoints">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">今日发放</div>
+          <div class="stat-value" id="todayPoints">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总兑换</div>
+          <div class="stat-value" id="totalRedeemed">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">活跃用户</div>
+          <div class="stat-value" id="activePointUsers">-</div>
+        </div>
+      </div>
+      
+      <div class="section-title">积分商城配置</div>
+      <div id="pointsStore" class="store-list">
+        <div class="loading">加载中...</div>
+      </div>
+      
+      <div class="section-title">积分规则</div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="rule-icon">📝</span> 每日签到 <span class="rule-value">+5分</span></div>
+        <div class="rule-item"><span class="rule-icon">🔥</span> 连续签到7天 <span class="rule-value">+50分</span></div>
+        <div class="rule-item"><span class="rule-icon">👍</span> 收到点赞 <span class="rule-value">+1分</span></div>
+        <div class="rule-item"><span class="rule-icon">📤</span> 内容被分享 <span class="rule-value">+3分</span></div>
+        <div class="rule-item"><span class="rule-icon">👤</span> 被关注 <span class="rule-value">+1分</span></div>
+      </div>
+    </div>
   </div>
   
   <!-- Bottom Navigation -->
@@ -584,6 +687,10 @@
     <div class="nav-item" onclick="switchTab('revenue')">
       <span class="nav-icon">💰</span>
       收益
+    </div>
+    <div class="nav-item" onclick="switchTab('points')">
+      <span class="nav-icon">⭐</span>
+      积分
     </div>
   </div>
   
@@ -664,6 +771,10 @@
           break;
         case 'members':
           await loadMembers();
+          await loadPoints();
+          break;
+        case 'points':
+          await loadPoints();
           break;
         case 'content':
           await loadContent();
@@ -747,6 +858,47 @@
       }
     }
     
+    // Points data
+    async function loadPoints() {
+      try {
+        const res = await fetch(`${API_BASE}/points/store`);
+        const data = await res.json();
+        
+        // Points summary
+        document.getElementById('totalPoints').textContent = data.totalPoints?.toLocaleString() || '0';
+        document.getElementById('monthlyPoints').textContent = data.monthlyChange?.toLocaleString() || '0';
+        
+        // Rules
+        const rulesList = document.getElementById('pointsRulesList');
+        if (data.rules) {
+          rulesList.innerHTML = data.rules.map(r => `
+            <div class="rule-item">
+              <span class="rule-icon">${r.icon}</span>
+              <span>${r.action}</span>
+              <span class="rule-value">${r.points > 0 ? '+' : ''}${r.points}分</span>
+            </div>
+          `).join('');
+        }
+        
+        // Store items
+        const storeList = document.getElementById('pointsStoreList');
+        if (data.items) {
+          storeList.innerHTML = data.items.map(item => `
+            <div class="store-item">
+              <div class="store-info">
+                <div class="store-name">${item.name}</div>
+                <div class="store-desc">${item.description}</div>
+              </div>
+              <div class="store-price">${item.price}积分</div>
+            </div>
+          `).join('');
+        }
+        
+      } catch (e) {
+        console.error('Failed to load points data:', e);
+      }
+    }
+    
     // Content data
     async function loadContent() {
       try {
@@ -818,6 +970,37 @@
         
       } catch (e) {
         document.getElementById('transactionList').innerHTML = '<div class="error-msg">加载失败</div>';
+      }
+    }
+    
+    // ========== 积分管理 ==========
+    async function loadPoints() {
+      try {
+        const res = await fetch(`${API_BASE}/points/store`);
+        const data = await res.json();
+        
+        // 统计
+        document.getElementById('totalPoints').textContent = (data.stats?.totalPoints || 0).toLocaleString();
+        document.getElementById('todayPoints').textContent = (data.stats?.todayPoints || 0).toLocaleString();
+        document.getElementById('exchangeCount').textContent = data.stats?.exchangeCount || 0;
+        document.getElementById('activeUsers').textContent = data.stats?.activeUsers || 0;
+        
+        // 兑换商品列表
+        const items = data.items || [];
+        document.getElementById('pointsItemList').innerHTML = items.map(item => `
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-title">${item.name}</div>
+              <div class="list-item-sub">库存: ${item.stock} | 已兑换: ${item.exchanged}</div>
+            </div>
+            <div class="list-item-right">
+              <span class="badge badge-basic">${item.price}积分</span>
+            </div>
+          </div>
+        `).join('') || '<div class="error-msg">暂无兑换商品</div>';
+        
+      } catch (e) {
+        document.getElementById('pointsItemList').innerHTML = '<div class="error-msg">加载失败</div>';
       }
     }
     

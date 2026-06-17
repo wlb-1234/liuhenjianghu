@@ -41,6 +41,7 @@ import notificationsRouter from './routes/notifications.js';
 import ordersRouter from './routes/orders.js';
 import dailyTasksRouter from './routes/dailyTasks.js';
 import shareRouter from './routes/share.js';
+import pointsRouter from './routes/points.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -121,6 +122,7 @@ app.use('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
+app.use('/api/v1/points', pointsRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 

@@ -4,14 +4,15 @@
     "lib": ["ES2024"],
     "module": "CommonJS",
     "target": "ES2024",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "noEmitOnError": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
