@@ -1418,3 +1418,37 @@ server/src/routes/members.ts
   - 内容管理（查看、删除内容）
   - 收益报表（日/周/月收益）
 - **特点**：响应式设计，专为手机屏幕优化
+
+---
+
+### 新增安全与管理功能（2026-06-17）
+
+#### 1. 内容举报
+- **路由**：`server/src/routes/reports.ts`
+- **功能**：用户可举报违规内容
+- **API**：
+  - `POST /api/v1/reports` - 提交举报
+  - `GET /api/v1/reports` - 举报列表
+  - `PUT /api/v1/reports/:id/handle` - 处理举报
+
+#### 2. 操作日志
+- **路由**：`server/src/routes/operationLogs.ts`
+- **功能**：记录管理员所有操作
+- **API**：
+  - `GET /api/v1/operation-logs` - 操作日志列表
+  - `GET /api/v1/operation-logs/stats` - 操作统计
+
+#### 3. API限流
+- **路由**：`server/src/routes/rateLimit.ts`
+- **功能**：防止恶意刷接口
+- **API**：
+  - `GET /api/v1/rate-limit/status` - 限流状态
+  - `GET /api/v1/rate-limit/check` - 检查限流
+
+#### 4. 黑名单管理
+- **路由**：`server/src/routes/blacklist.ts`
+- **功能**：屏蔽用户
+- **API**：
+  - `GET /api/v1/blacklist` - 黑名单列表
+  - `POST /api/v1/blacklist` - 添加黑名单
+  - `DELETE /api/v1/blacklist/:targetId` - 移除黑名单
