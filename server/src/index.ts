@@ -33,6 +33,10 @@ import i18nRouter from './routes/i18n.js';
 import themeRouter from './routes/theme.js';
 import revenueRouter from './routes/revenue.js';
 import membersRouter from './routes/members.js';
+import rateLimitRouter from './routes/rateLimit.js';
+import reportsRouter from './routes/reports.js';
+import operationLogsRouter from './routes/operationLogs.js';
+import blacklistRouter from './routes/blacklist.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -102,9 +106,15 @@ app.use('/api/v1/social', socialRouter);
 app.use('/api/v1/admin', contentModerationRouter);
 app.use('/api/v1/scheduled', scheduledPostRouter);
 app.use('/api/v1/i18n', i18nRouter);
+app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/theme', themeRouter);
 app.use('/api/v1/revenue', revenueRouter);
 app.use('/api/v1/members', membersRouter);
+app.use('/api/v1/operation-logs', operationLogsRouter);
+app.use('/api/v1/rate-limit', rateLimitRouter);
+app.use('/api/v1/blacklist', blacklistRouter);
+app.use('/api/v1/reports', reportsRouter);
+app.use('/api/v1/admin/logs', operationLogsRouter);
 
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
