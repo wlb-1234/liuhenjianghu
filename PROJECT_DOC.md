@@ -1452,3 +1452,44 @@ server/src/routes/members.ts
   - `GET /api/v1/blacklist` - 黑名单列表
   - `POST /api/v1/blacklist` - 添加黑名单
   - `DELETE /api/v1/blacklist/:targetId` - 移除黑名单
+
+---
+
+### 新增用户功能（2026-06-17 第二批）
+
+#### 1. 通知系统
+- **路由**：`server/src/routes/notifications.ts`
+- **功能**：用户消息通知（评论、点赞、会员到期等）
+- **API**：
+  - `GET /api/v1/notifications` - 通知列表
+  - `PUT /api/v1/notifications/:id/read` - 标记已读
+  - `POST /api/v1/notifications/send` - 发送通知
+
+#### 2. 订单查询
+- **路由**：`server/src/routes/orders.ts`
+- **功能**：用户查看购买记录
+- **API**：
+  - `GET /api/v1/orders` - 订单列表
+  - `GET /api/v1/orders/:id` - 订单详情
+
+#### 3. 每日任务/签到
+- **路由**：`server/src/routes/dailyTasks.ts`
+- **功能**：签到奖励，提升DAU
+- **API**：
+  - `GET /api/v1/tasks/tasks` - 任务列表
+  - `POST /api/v1/tasks/checkin` - 签到
+
+#### 4. 内容分享
+- **路由**：`server/src/routes/share.ts`
+- **功能**：生成分享链接和海报
+- **API**：
+  - `POST /api/v1/share/generate` - 生成分享
+  - `GET /api/v1/share/stats` - 分享统计
+
+#### 5. 用户等级/积分
+- **路由**：`server/src/routes/userLevels.ts`
+- **功能**：用户等级系统，增加粘性
+- **API**：
+  - `GET /api/v1/user-levels` - 等级列表
+  - `GET /api/v1/user-levels/:userId` - 用户等级
+  - `POST /api/v1/user-levels/:userId/upgrade` - 升级
