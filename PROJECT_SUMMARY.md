@@ -5,6 +5,85 @@
 
 ---
 
+## 十一、数据库表结构
+
+> 数据库：Supabase PostgreSQL
+> SQL文件位置：`server/sql/`
+
+### 11.1 核心数据表
+
+| 表名 | 说明 | 主要字段 |
+|------|------|----------|
+| users | 用户表 | id, phone, nickname, avatar, member_level, points_balance, user_rank |
+| contents | 内容/留言 | id, user_id, content, images, region_code, is_pinned, is_featured |
+| comments | 评论表 | id, content_id, user_id, parent_id, content |
+| likes | 点赞表 | id, user_id, content_id, comment_id |
+| follows | 关注表 | id, follower_id, following_id |
+| notifications | 通知表 | id, user_id, type, title, content, is_read |
+| payment_orders | 支付订单 | id, order_no, user_id, amount, status, payment_method |
+
+### 11.2 会员与积分表
+
+| 表名 | 说明 | 主要字段 |
+|------|------|----------|
+| member_levels | 会员等级配置 | level_code, level_name, price, daily_limit, retention_days |
+| member_subscriptions | 会员订阅记录 | id, user_id, level_code, start_at, expire_at |
+| user_points | 用户积分汇总 | user_id, balance, total_earned, total_spent |
+| points_history | 积分变动记录 | user_id, type, action, points, balance_before, balance_after |
+| points_shop | 积分商城 | name, points_cost, type, value_json, stock |
+| daily_signs | 每日签到 | user_id, sign_date, points_earned, consecutive_days |
+
+### 11.3 系统配置表
+
+| 表名 | 说明 | 主要字段 |
+|------|------|----------|
+| api_keys | API密钥 | api_key, permissions, is_active, usage_count |
+| ip_whitelist | IP白名单 | ip_address, description, is_active |
+| api_logs | API调用日志 | endpoint, method, response_status, response_time |
+| operation_logs | 操作日志 | operator_id, action, target_type, details |
+| reports | 内容举报 | content_id, reason, status, handled_by |
+| blacklist | 黑名单 | target_id, blocked_by, reason |
+| search_keywords | 搜索热词 | keyword, search_count, is_hot |
+| webhook_configs | Webhook配置 | name, url, events, is_active |
+| cache_configs | 缓存配置 | key_name, value, ttl |
+| scheduled_posts | 预约发布 | user_id, content, scheduled_at, status |
+| user_levels | 用户等级 | level_code, level_name, min_points, max_points |
+
+### 11.4 建表SQL
+
+```bash
+# 表结构
+server/sql/001_schema.sql
+
+# 初始化数据
+server/sql/002_seed_data.sql
+```
+
+### 11.5 初始账号
+
+| 账号 | 密码 | 说明 |
+|------|------|------|
+| 15600000000 | admin123 | 管理员账号（全国级会员） |
+| 13800138000~004 | test123 | 测试账号（免费用户） |
+
+---
+
+## 十二、后续开发建议
+
+### 12.1 高优先级
+1. **支付对接**：YunGouOS 审核通过后配置商户号
+2. **前端页面**：用户注册/登录、内容发布、评论点赞
+3. **短信服务**：接入短信验证码登录
+
+### 12.2 中优先级
+1. **APP打包**：使用 EAS Build 打包原生应用
+2. **CDN加速**：配置图片CDN提升加载速度
+3. **实时推送**：WebSocket 实现消息推送
+
+### 12.3 低优先级
+1. **数据备份**：配置自动备份策略
+2. **监控报警**：完善告警机制
+3. **发票功能**：电子发票申请
 ## 一、项目概述
 
 ### 1.1 项目信息
