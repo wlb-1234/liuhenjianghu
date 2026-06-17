@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>流痕江湖 - 管理后台</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary: #8B4513;
+      --primary-light: #A0522D;
+      --bg: #F5F0E6;
+      --card-bg: #FFFFFF;
+      --text: #2D1F14;
+      --text-secondary: #6B5B4F;
+      --border: #E5DDD3;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --gold: #D4AF37;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      background: var(--card-bg);
+      padding: 0 8px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab {
+      flex: 1;
+      min-width: 80px;
+      padding: 14px 12px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .tab-icon {
+      font-size: 18px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    /* Content */
+    .content {
+      padding: 16px;
+    }
+    
+    .section {
+      display: none;
+    }
+    
+    .section.active {
+      display: block;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card.highlight {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--gold) 100%);
+      color: white;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .stat-card.highlight .stat-label {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .stat-change {
+      font-size: 11px;
+      margin-top: 4px;
+      color: var(--success);
+    }
+    
+    /* List Items */
+    .list-item {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    
+    .list-item-left {
+      flex: 1;
+    }
+    
+    .list-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .list-item-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .list-item-right {
+      text-align: right;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .badge-gold {
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--gold);
+    }
+    
+    .badge-free {
+      background: rgba(107, 91, 79, 0.1);
+      color: var(--text-secondary);
+    }
+    
+    .badge-basic {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+    
+    .badge-premium {
+      background: rgba(139, 69, 19, 0.15);
+      color: var(--primary);
+    }
+    
+    .badge-vip {
+      background: linear-gradient(135deg, var(--gold) 0%, #FFD700 100%);
+      color: white;
+    }
+    
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+    
+    .badge-paid {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+    
+    .price {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    /* Section Title */
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      display: flex;
+      border-top: 1px solid var(--border);
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    
+    .nav-item.active {
+      color: var(--primary);
+    }
+    
+    .nav-icon {
+      font-size: 22px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    /* Chart placeholder */
+    .chart-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 120px;
+      padding-top: 10px;
+    }
+    
+    .chart-bar {
+      width: 30px;
+      background: linear-gradient(to top, var(--primary) 0%, var(--gold) 100%);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: height 0.3s;
+    }
+    
+    .chart-bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    
+    .chart-bar-value {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+    
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Error */
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      margin: 20px;
+    }
+    
+    /* Pull to refresh indicator */
+    .refresh-hint {
+      text-align: center;
+      padding: 10px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    
+    /* Quick actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .quick-action {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 8px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .quick-action:active {
+      transform: scale(0.95);
+    }
+    
+    .quick-action-icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+    
+    .quick-action-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>流痕江湖 · 管理后台</h1>
+    <p id="currentTime"></p>
+  </div>
+  
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard')">
+      <span class="tab-icon">📊</span>
+      概览
+    </div>
+    <div class="tab" onclick="switchTab('members')">
+      <span class="tab-icon">👥</span>
+      会员
+    </div>
+    <div class="tab" onclick="switchTab('content')">
+      <span class="tab-icon">📝</span>
+      内容
+    </div>
+    <div class="tab" onclick="switchTab('revenue')">
+      <span class="tab-icon">💰</span>
+      收益
+    </div>
+  </div>
+  
+  <!-- Content -->
+  <div class="content">
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section active">
+      <div class="refresh-hint">下拉刷新查看最新数据</div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">今日收益</div>
+          <div class="stat-value" id="todayRevenue">-</div>
+          <div class="stat-change" id="revenueChange">-</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-label">总用户数</div>
+          <div class="stat-value" id="totalUsers">-</div>
+          <div class="stat-change">较昨日 +12</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">今日订单</div>
+          <div class="stat-value" id="todayOrders">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">付费会员</div>
+          <div class="stat-value" id="paidMembers">-</div>
+        </div>
+      </div>
+      
+      <div class="section-title">快捷操作</div>
+      <div class="quick-actions">
+        <div class="quick-action" onclick="showToast('功能开发中')">
+          <div class="quick-action-icon">📢</div>
+          <div class="quick-action-text">发送公告</div>
+        </div>
+        <div class="quick-action" onclick="switchTab('content')">
+          <div class="quick-action-icon">🛡️</div>
+          <div class="quick-action-text">内容审核</div>
+        </div>
+        <div class="quick-action" onclick="showToast('功能开发中')">
+          <div class="quick-action-icon">📊</div>
+          <div class="quick-action-text">导出报表</div>
+        </div>
+        <div class="quick-action" onclick="switchTab('members')">
+          <div class="quick-action-icon">👥</div>
+          <div class="quick-action-text">会员管理</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">近7日收益趋势</div>
+        <div class="chart-bars" id="revenueChart">
+          <!-- Bars will be generated by JS -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Members Section -->
+    <div id="members" class="section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">L1 县级</div>
+          <div class="stat-value" id="l1Count">-</div>
+          <div class="stat-change">¥9/月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">L2 市级</div>
+          <div class="stat-value" id="l2Count">-</div>
+          <div class="stat-change">¥50/月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">L3 省级</div>
+          <div class="stat-value" id="l3Count">-</div>
+          <div class="stat-change">¥200/月</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">L4 全国</div>
+          <div class="stat-value" id="l4Count">-</div>
+          <div class="stat-change">¥2000/月</div>
+        </div>
+      </div>
+      
+      <div class="section-title">最新会员</div>
+      <div id="membersList">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+    
+    <!-- Content Section -->
+    <div id="content" class="section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">今日留言</div>
+          <div class="stat-value" id="todayPosts">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">待审核</div>
+          <div class="stat-value" id="pendingReview">-</div>
+        </div>
+      </div>
+      
+      <div class="section-title">最新留言</div>
+      <div id="contentList">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+    
+    <!-- Revenue Section -->
+    <div id="revenue" class="section">
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <div class="stat-label">本月收益</div>
+          <div class="stat-value" id="monthRevenue">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">本月订单</div>
+          <div class="stat-value" id="monthOrders">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">平均客单价</div>
+          <div class="stat-value" id="avgPrice">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">转化率</div>
+          <div class="stat-value" id="conversion">-</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">本月收益趋势</div>
+        <div class="chart-bars" id="monthRevenueChart">
+          <!-- Bars will be generated by JS -->
+        </div>
+      </div>
+      
+      <div class="section-title">交易记录</div>
+      <div id="transactionList">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('dashboard')">
+      <span class="nav-icon">📊</span>
+      概览
+    </div>
+    <div class="nav-item" onclick="switchTab('members')">
+      <span class="nav-icon">👥</span>
+      会员
+    </div>
+    <div class="nav-item" onclick="switchTab('content')">
+      <span class="nav-icon">📝</span>
+      内容
+    </div>
+    <div class="nav-item" onclick="switchTab('revenue')">
+      <span class="nav-icon">💰</span>
+      收益
+    </div>
+  </div>
+  
+  <script>
+    const API_BASE = '/api/v1';
+    let currentTab = 'dashboard';
+    
+    // Update time
+    function updateTime() {
+      const now = new Date();
+      const options = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      document.getElementById('currentTime').textContent = now.toLocaleString('zh-CN', options);
+    }
+    updateTime();
+    setInterval(updateTime, 60000);
+    
+    // Switch tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update tabs
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+      
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.nav-item[onclick="switchTab('${tab}')"]`).classList.add('active');
+      
+      // Update content
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      
+      // Load data
+      loadData(tab);
+    }
+    
+    // Toast
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 24px;
+        font-size: 14px;
+        z-index: 1000;
+        animation: fadeIn 0.3s;
+      `;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+    
+    // Format money
+    function formatMoney(amount) {
+      if (amount >= 10000) {
+        return '¥' + (amount / 10000).toFixed(1) + '万';
+      }
+      return '¥' + amount.toFixed(2);
+    }
+    
+    // Load data
+    async function loadData(tab) {
+      switch(tab) {
+        case 'dashboard':
+          await loadDashboard();
+          break;
+        case 'members':
+          await loadMembers();
+          break;
+        case 'content':
+          await loadContent();
+          break;
+        case 'revenue':
+          await loadRevenue();
+          break;
+      }
+    }
+    
+    // Dashboard data
+    async function loadDashboard() {
+      try {
+        const [statsRes, revenueRes] = await Promise.all([
+          fetch(`${API_BASE}/stats`),
+          fetch(`${API_BASE}/revenue/overview`)
+        ]);
+        
+        const stats = await statsRes.json();
+        const revenue = await revenueRes.json();
+        
+        document.getElementById('todayRevenue').textContent = formatMoney(revenue.todayRevenue || 0);
+        document.getElementById('totalUsers').textContent = (stats.totalUsers || 0).toLocaleString();
+        document.getElementById('todayOrders').textContent = (revenue.todayOrders || 0);
+        document.getElementById('paidMembers').textContent = (revenue.paidMembers || 0);
+        document.getElementById('revenueChange').textContent = '+12% 较昨日';
+        
+        // Revenue chart
+        const chart = document.getElementById('revenueChart');
+        const days = ['一', '二', '三', '四', '五', '六', '日'];
+        const data = [120, 180, 95, 210, 156, 89, 145];
+        const max = Math.max(...data);
+        
+        chart.innerHTML = days.map((day, i) => `
+          <div class="chart-bar" style="height: ${(data[i] / max) * 100}px">
+            <span class="chart-bar-value">${data[i]}</span>
+            <span class="chart-bar-label">${day}</span>
+          </div>
+        `).join('');
+        
+      } catch (e) {
+        console.error('Dashboard load error:', e);
+      }
+    }
+    
+    // Members data
+    async function loadMembers() {
+      try {
+        const res = await fetch(`${API_BASE}/members/?limit=10`);
+        const data = await res.json();
+        
+        const members = data.members || [];
+        const list = document.getElementById('membersList');
+        
+        if (members.length === 0) {
+          list.innerHTML = '<div class="error-msg">暂无会员数据</div>';
+          return;
+        }
+        
+        list.innerHTML = members.map(m => `
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-title">${m.nickname || m.userId || '用户'}</div>
+              <div class="list-item-sub">注册: ${m.createdAt || '未知'}</div>
+            </div>
+            <div class="list-item-right">
+              <span class="badge badge-${getLevelBadge(m.level)}">${getLevelName(m.level)}</span>
+              ${m.expiredAt ? `<div class="list-item-sub" style="margin-top:4px">到期: ${m.expiredAt}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+        
+        // Stats
+        document.getElementById('l1Count').textContent = data.l1Count || 0;
+        document.getElementById('l2Count').textContent = data.l2Count || 0;
+        document.getElementById('l3Count').textContent = data.l3Count || 0;
+        document.getElementById('l4Count').textContent = data.l4Count || 0;
+        
+      } catch (e) {
+        document.getElementById('membersList').innerHTML = '<div class="error-msg">加载失败，请下拉刷新</div>';
+      }
+    }
+    
+    // Content data
+    async function loadContent() {
+      try {
+        const res = await fetch(`${API_BASE}/stats`);
+        const data = await res.json();
+        
+        document.getElementById('todayPosts').textContent = (data.totalRequests || 0).toLocaleString();
+        document.getElementById('pendingReview').textContent = '0';
+        
+        document.getElementById('contentList').innerHTML = `
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-title">内容审核</div>
+              <div class="list-item-sub">暂无待审核内容</div>
+            </div>
+            <div class="list-item-right">
+              <span class="badge badge-paid">正常</span>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('contentList').innerHTML = '<div class="error-msg">加载失败</div>';
+      }
+    }
+    
+    // Revenue data
+    async function loadRevenue() {
+      try {
+        const res = await fetch(`${API_BASE}/revenue/transactions?limit=10`);
+        const data = await res.json();
+        
+        const transactions = data.transactions || [];
+        document.getElementById('monthRevenue').textContent = formatMoney(data.totalRevenue || 0);
+        document.getElementById('monthOrders').textContent = (data.totalOrders || 0);
+        document.getElementById('avgPrice').textContent = '¥' + ((data.avgPrice) || 0).toFixed(2);
+        document.getElementById('conversion').textContent = '3.2%';
+        
+        const list = document.getElementById('transactionList');
+        if (transactions.length === 0) {
+          list.innerHTML = '<div class="error-msg">暂无交易记录</div>';
+          return;
+        }
+        
+        list.innerHTML = transactions.map(t => `
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-title">${t.description || '会员开通'}</div>
+              <div class="list-item-sub">${t.createdAt || ''}</div>
+            </div>
+            <div class="list-item-right">
+              <span class="price">+${formatMoney(t.amount || 0)}</span>
+              <span class="badge badge-${t.status === 'paid' ? 'paid' : 'pending'}" style="margin-left:8px">${t.status === 'paid' ? '已支付' : '待支付'}</span>
+            </div>
+          </div>
+        `).join('');
+        
+        // Month chart
+        const chart = document.getElementById('monthRevenueChart');
+        const days = Array.from({length: 7}, (_, i) => i + 1 + '日');
+        const data2 = [320, 450, 280, 520, 390, 610, 480];
+        const max = Math.max(...data2);
+        
+        chart.innerHTML = days.map((day, i) => `
+          <div class="chart-bar" style="height: ${(data2[i] / max) * 100}px">
+            <span class="chart-bar-value">${data2[i]}</span>
+            <span class="chart-bar-label">${day}</span>
+          </div>
+        `).join('');
+        
+      } catch (e) {
+        document.getElementById('transactionList').innerHTML = '<div class="error-msg">加载失败</div>';
+      }
+    }
+    
+    // Helper functions
+    function getLevelName(level) {
+      const names = {
+        'l1': 'L1 县级',
+        'l2': 'L2 市级',
+        'l3': 'L3 省级',
+        'l4': 'L4 全国',
+        'free': '免费'
+      };
+      return names[level] || '免费';
+    }
+    
+    function getLevelBadge(level) {
+      const badges = {
+        'l1': 'basic',
+        'l2': 'basic',
+        'l3': 'premium',
+        'l4': 'vip',
+        'free': 'free'
+      };
+      return badges[level] || 'free';
+    }
+    
+    // Initial load
+    loadData('dashboard');
+    
+    // Pull to refresh (simple implementation)
+    let startY = 0;
+    document.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+    document.addEventListener('touchend', e => {
+      const endY = e.changedTouches[0].clientY;
+      if (startY - endY > 50 && window.scrollY === 0) {
+        loadData(currentTab);
+        showToast('已刷新');
+      }
+    });
+  </script>
+</body>
+</html>

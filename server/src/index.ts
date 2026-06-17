@@ -62,6 +62,11 @@ app.get('/admin', (req: Request, res: Response) => {
   res.sendFile(path.join(publicDir, 'admin.html'));
 });
 
+// 手机管理后台
+app.get('/admin-mobile', (req: Request, res: Response) => {
+  res.sendFile(path.join(publicDir, 'admin-mobile.html'));
+});
+
 // 健康检查
 app.get('/api/v1/health', (req: Request, res: Response) => {
   res.json({ 
