@@ -37,6 +37,10 @@ import rateLimitRouter from './routes/rateLimit.js';
 import reportsRouter from './routes/reports.js';
 import operationLogsRouter from './routes/operationLogs.js';
 import blacklistRouter from './routes/blacklist.js';
+import notificationsRouter from './routes/notifications.js';
+import ordersRouter from './routes/orders.js';
+import dailyTasksRouter from './routes/dailyTasks.js';
+import shareRouter from './routes/share.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -113,6 +117,10 @@ app.use('/api/v1/members', membersRouter);
 app.use('/api/v1/operation-logs', operationLogsRouter);
 app.use('/api/v1/rate-limit', rateLimitRouter);
 app.use('/api/v1/blacklist', blacklistRouter);
+app.use('/api/v1/notifications', notificationsRouter);
+app.use('/api/v1/orders', ordersRouter);
+app.use('/api/v1/tasks', dailyTasksRouter);
+app.use('/api/v1/share', shareRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 
