@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>流痕江湖 - 管理后台</title>
+    <script>
+        // 紧急调试：如果页面加载异常，3秒后强制显示登录页
+        window.debugMode = true;
+        window.forceShowLogin = function() {
+            var loginPage = document.getElementById('loginPage');
+            var adminPage = document.getElementById('adminPage');
+            if (loginPage) loginPage.style.display = 'flex';
+            if (adminPage) adminPage.style.display = 'none';
+            console.log('[DEBUG] 强制显示登录页');
+        };
+        setTimeout(function() {
+            if (document.getElementById('loginPage').style.display === 'none' && 
+                document.getElementById('adminPage').style.display === 'none') {
+                window.forceShowLogin();
+            }
+        }, 3000);
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; }
@@ -648,18 +665,31 @@
         
         // 初始化
         function initAdmin() {
-            loadDashboard();
-            loadApiKeys();
-            loadWebhooks();
-            loadWhitelist();
-            
-            // 定时刷新
-            setInterval(loadDashboard, 30000);
+            try {
+                loadDashboard();
+                loadApiKeys();
+                loadWebhooks();
+                loadWhitelist();
+                // 定时刷新
+                setInterval(loadDashboard, 30000);
+                console.log('[ADMIN] 后台初始化完成');
+            } catch(e) {
+                console.error('[ADMIN] 初始化错误:', e);
+            }
         }
         
         // 页面加载时检查登录
-        if (checkLogin()) {
-            initAdmin();
+        try {
+            console.log('[ADMIN] 开始检查登录状态...');
+            if (checkLogin()) {
+                console.log('[ADMIN] 已登录，初始化后台...');
+                initAdmin();
+            } else {
+                console.log('[ADMIN] 未登录，显示登录页');
+            }
+        } catch(e) {
+            console.error('[ADMIN] 检查登录出错:', e);
+            showLoginPage();
         }
     </script>
 </body>

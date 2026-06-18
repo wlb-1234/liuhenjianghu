@@ -6,6 +6,24 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>流痕江湖 - 管理后台</title>
+  <script>
+    // 紧急调试：如果页面加载异常，3秒后强制显示登录页
+    window.debugMode = true;
+    window.forceShowLogin = function() {
+      var loginPage = document.getElementById('loginPage');
+      var adminPage = document.getElementById('adminPage');
+      if (loginPage) loginPage.style.display = 'flex';
+      if (adminPage) adminPage.style.display = 'none';
+      console.log('[DEBUG] 强制显示登录页');
+    };
+    setTimeout(function() {
+      var lp = document.getElementById('loginPage');
+      var ap = document.getElementById('adminPage');
+      if ((!lp || lp.style.display === 'none') && (!ap || ap.style.display === 'none')) {
+        window.forceShowLogin();
+      }
+    }, 3000);
+  </script>
   <style>
     * {
       margin: 0;
@@ -1137,6 +1155,20 @@
     
     // Initial load
     loadData('dashboard');
+    
+    // 页面加载时检查登录
+    try {
+      console.log('[ADMIN-MOBILE] 开始检查登录状态...');
+      if (checkLogin()) {
+        console.log('[ADMIN-MOBILE] 已登录，初始化后台...');
+        initAdmin();
+      } else {
+        console.log('[ADMIN-MOBILE] 未登录，显示登录页');
+      }
+    } catch(e) {
+      console.error('[ADMIN-MOBILE] 检查登录出错:', e);
+      showLoginPage();
+    }
     
     // Pull to refresh (simple implementation)
     let startY = 0;
