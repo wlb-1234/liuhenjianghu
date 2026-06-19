@@ -173,54 +173,55 @@ app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
 // 临时管理员初始化接口（首次部署后调用一次即可）
-app.all('/api/v1/init-admin', async (req: Request, res: Response) => {
+// 使用共享数据库连接，避免 Supabase 路由问题
+app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
   try {
-    const supabase = getSupabaseClient();
+    const { getSharedDb } = await import('./storage/database/shared/index.js');
+    const db = getSharedDb();
     
     // 检查是否已有管理员
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id, phone')
-      .eq('phone', '15613594588')
-      .single();
+    const existingResult = await db.query(
+      "SELECT id, phone FROM users WHERE phone = $1",
+      ['15613594588']
+    );
     
-    if (existing) {
-      return res.json({ success: true, message: '管理员已存在', phone: existing.phone });
+    if (existingResult.rows.length > 0) {
+      return res.json({ success: true, message: '管理员已存在', phone: existingResult.rows[0].phone });
     }
     
     // 创建管理员账号
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        phone: '15613594588',
-        nickname: '管理员',
-        region_code: '110000',
-        region_name: '北京市',
-        member_level: 'L4',
-        member_expire_at: '2030-12-31T23:59:59Z',
-        user_rank: '传说',
-        user_rank_level: 6,
-        total_points: 99999,
-        points_balance: 99999
-      })
-      .select('id, phone')
-      .single();
+    const insertResult = await db.query(`
+      INSERT INTO users (phone, nickname, region_code, region_name, member_level, 
+        member_expire_at, user_rank, user_rank_level, total_points, points_balance)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, phone
+    `, [
+      '15613594588',
+      '管理员',
+      '110000',
+      '北京市',
+      'L4',
+      '2030-12-31 23:59:59+00',
+      '传说',
+      6,
+      99999,
+      99999
+    ]);
     
-    if (error) {
-      console.error('[Init Admin] Error:', error);
-      return res.status(500).json({ success: false, error: error.message });
+    if (insertResult.rows.length === 0) {
+      throw new Error('创建管理员失败');
     }
     
-    // 创建积分记录
-    await supabase.from('user_points').insert({
-      user_id: data.id,
-      balance: 99999,
-      total_earned: 99999,
-      total_spent: 0
-    });
+    const adminId = insertResult.rows[0].id;
     
-    console.log('[Init Admin] 管理员账号创建成功:', data.phone);
-    res.json({ success: true, message: '管理员创建成功', phone: data.phone });
+    // 创建积分记录
+    await db.query(`
+      INSERT INTO user_points (user_id, balance, total_earned, total_spent)
+      VALUES ($1, $2, $3, $4)
+    `, [adminId, 99999, 99999, 0]);
+    
+    console.log('[Init Admin] 管理员账号创建成功: 15613594588');
+    res.json({ success: true, message: '管理员创建成功', phone: '15613594588' });
   } catch (err: any) {
     console.error('[Init Admin] Error:', err);
     res.status(500).json({ success: false, error: err.message });
