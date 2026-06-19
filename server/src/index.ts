@@ -206,19 +206,16 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
     columnsResult.rows.forEach(r => dataTypes[r.column_name] = r.data_type);
     
     // 构建动态插入语句，只包含存在的列
-    const insertColumns = ['phone', 'nickname'];
-    const insertValues = ['15613594588', '管理员'];
-    let paramIndex = 1;
+    const insertColumns = ['phone', 'nickname', 'password'];
+    const insertValues = ['15613594588', '管理员', 'admin123'];
     
     // 如果 member_level 是 integer 类型
     if (columns.includes('member_level')) {
       insertColumns.push('member_level');
       insertValues.push('4'); // 4 = L4 全国级
-      paramIndex++;
     } else if (columns.includes('member_level') && dataTypes['member_level'] === 'character varying') {
       insertColumns.push('member_level');
       insertValues.push('L4');
-      paramIndex++;
     }
     
     const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
