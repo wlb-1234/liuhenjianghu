@@ -193,37 +193,22 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
       return res.json({ success: true, message: '管理员已存在', phone: existingResult.rows[0].phone });
     }
     
-    // 创建管理员账号
+    // 创建管理员账号（只使用必要字段）
     const insertResult = await pool.query(`
-      INSERT INTO users (phone, nickname, region_code, region_name, member_level, 
-        member_expire_at, user_rank, user_rank_level, total_points, points_balance)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO users (phone, nickname, member_level, member_expire_at)
+      VALUES ($1, $2, $3, $4)
       RETURNING id, phone
     `, [
       '15613594588',
       '管理员',
-      '110000',
-      '北京市',
       'L4',
-      '2030-12-31 23:59:59+00',
-      '传说',
-      6,
-      99999,
-      99999
+      '2030-12-31 23:59:59+00'
     ]);
     
     if (insertResult.rows.length === 0) {
       await pool.end();
       throw new Error('创建管理员失败');
     }
-    
-    const adminId = insertResult.rows[0].id;
-    
-    // 创建积分记录
-    await pool.query(`
-      INSERT INTO user_points (user_id, balance, total_earned, total_spent)
-      VALUES ($1, $2, $3, $4)
-    `, [adminId, 99999, 99999, 0]);
     
     await pool.end();
     
