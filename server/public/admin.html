@@ -103,6 +103,9 @@
                 <div id="loginError" class="error" style="display:none;"></div>
             </form>
             <div class="footer">仅限管理员访问</div>
+            <div style="text-align:center;margin-top:15px;">
+                <button onclick="localStorage.removeItem('admin_session');location.reload();" style="background:#999;font-size:12px;padding:5px 10px;border:none;border-radius:5px;color:white;cursor:pointer;">清除登录状态</button>
+            </div>
         </div>
     </div>
 
@@ -697,18 +700,46 @@
         }
         
         // 页面加载时检查登录
+        console.log('[ADMIN] 页面加载中...');
         try {
             console.log('[ADMIN] 开始检查登录状态...');
+            // 强制清除可能损坏的旧session
+            const existingSession = localStorage.getItem(SESSION_KEY);
+            console.log('[ADMIN] 当前session:', existingSession);
+            if (existingSession) {
+                try {
+                    JSON.parse(existingSession);
+                    console.log('[ADMIN] Session格式正确');
+                } catch(e) {
+                    console.warn('[ADMIN] Session损坏，清除中...');
+                    localStorage.removeItem(SESSION_KEY);
+                }
+            }
             if (checkLogin()) {
                 console.log('[ADMIN] 已登录，初始化后台...');
                 initAdmin();
             } else {
                 console.log('[ADMIN] 未登录，显示登录页');
+                // 强制确保登录页显示
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('adminPage').style.display = 'none';
             }
         } catch(e) {
-            console.error('[ADMIN] 检查登录出错:', e);
-            showLoginPage();
+            console.error('[ADMIN] 检查登录出错:', e, e.stack);
+            // 强制显示登录页
+            localStorage.removeItem(SESSION_KEY);
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('adminPage').style.display = 'none';
         }
+        
+        // 添加键盘事件：按 Escape 清除session重新登录
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                console.log('[ADMIN] 按下Escape，清除session');
+                localStorage.removeItem(SESSION_KEY);
+                location.reload();
+            }
+        });
     </script>
 </body>
 </html>

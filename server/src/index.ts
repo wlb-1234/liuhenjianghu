@@ -62,8 +62,8 @@ app.use(requestLogger);
 const metricsRouter = createMetricsMiddleware();
 app.use('/metrics', metricsRouter);
 
-// 静态文件目录
-const publicDir = path.join(__dirname, 'public');
+// 静态文件目录（从 src/ 回到 server/ 目录）
+const publicDir = path.join(__dirname, '..', 'public');
 
 // 静态文件（Web管理后台）
 app.use(express.static(publicDir));
