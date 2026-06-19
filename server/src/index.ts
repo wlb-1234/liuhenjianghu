@@ -173,7 +173,7 @@ app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
 // 临时管理员初始化接口（首次部署后调用一次即可）
-app.post('/api/v1/init-admin', async (req: Request, res: Response) => {
+app.all('/api/v1/init-admin', async (req: Request, res: Response) => {
   try {
     const supabase = getSupabaseClient();
     
