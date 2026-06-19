@@ -173,23 +173,28 @@ app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
 // 临时管理员初始化接口（首次部署后调用一次即可）
-// 使用共享数据库连接，避免 Supabase 路由问题
+// 使用原生 pg Pool，避免 Drizzle ORM 问题
 app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
   try {
-    const { db } = await import('./storage/database/shared/index.js');
+    const { Pool } = await import('pg');
+    
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
     
     // 检查是否已有管理员
-    const existingResult = await db.query(
+    const existingResult = await pool.query(
       "SELECT id, phone FROM users WHERE phone = $1",
       ['15613594588']
     );
     
     if (existingResult.rows.length > 0) {
+      await pool.end();
       return res.json({ success: true, message: '管理员已存在', phone: existingResult.rows[0].phone });
     }
     
     // 创建管理员账号
-    const insertResult = await db.query(`
+    const insertResult = await pool.query(`
       INSERT INTO users (phone, nickname, region_code, region_name, member_level, 
         member_expire_at, user_rank, user_rank_level, total_points, points_balance)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -208,21 +213,24 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
     ]);
     
     if (insertResult.rows.length === 0) {
+      await pool.end();
       throw new Error('创建管理员失败');
     }
     
     const adminId = insertResult.rows[0].id;
     
     // 创建积分记录
-    await db.query(`
+    await pool.query(`
       INSERT INTO user_points (user_id, balance, total_earned, total_spent)
       VALUES ($1, $2, $3, $4)
     `, [adminId, 99999, 99999, 0]);
     
+    await pool.end();
+    
     console.log('[Init Admin] 管理员账号创建成功: 15613594588');
     res.json({ success: true, message: '管理员创建成功', phone: '15613594588' });
   } catch (err: any) {
-    console.error('[Init Admin] Error:', err);
+    console.error('[Init Admin] Error:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
