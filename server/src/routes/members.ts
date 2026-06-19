@@ -418,3 +418,20 @@ router.get('/export/list', async (req, res) => {
 });
 
 export default router;
+
+/**
+ * 会员等级配置（别名，支持 /levels）
+ * GET /api/v1/members/levels
+ */
+router.get('/levels', (req, res) => {
+  res.json({
+    success: true,
+    data: [
+      { level: 'L0', name: '免费用户', price: 0, color: '#9CA3AF' },
+      { level: 'L1', name: '基础会员', price: 9.9, color: '#10B981' },
+      { level: 'L2', name: '高级会员', price: 29.9, color: '#3B82F6' },
+      { level: 'L3', name: 'VIP会员', price: 99.9, color: '#8B5CF6' },
+      { level: 'L4', name: '管理员', price: 0, color: '#EF4444' }
+    ]
+  });
+});
