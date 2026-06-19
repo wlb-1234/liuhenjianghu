@@ -176,8 +176,7 @@ app.use('/api/v1/share', shareRouter);
 // 使用共享数据库连接，避免 Supabase 路由问题
 app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
   try {
-    const { getSharedDb } = await import('./storage/database/shared/index.js');
-    const db = getSharedDb();
+    const { db } = await import('./storage/database/shared/index.js');
     
     // 检查是否已有管理员
     const existingResult = await db.query(
