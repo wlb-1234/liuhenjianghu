@@ -172,6 +172,61 @@ app.use('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
+// 临时管理员初始化接口（首次部署后调用一次即可）
+app.post('/api/v1/init-admin', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseClient();
+    
+    // 检查是否已有管理员
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id, phone')
+      .eq('phone', '15613594588')
+      .single();
+    
+    if (existing) {
+      return res.json({ success: true, message: '管理员已存在', phone: existing.phone });
+    }
+    
+    // 创建管理员账号
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        phone: '15613594588',
+        nickname: '管理员',
+        region_code: '110000',
+        region_name: '北京市',
+        member_level: 'L4',
+        member_expire_at: '2030-12-31T23:59:59Z',
+        user_rank: '传说',
+        user_rank_level: 6,
+        total_points: 99999,
+        points_balance: 99999
+      })
+      .select('id, phone')
+      .single();
+    
+    if (error) {
+      console.error('[Init Admin] Error:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+    
+    // 创建积分记录
+    await supabase.from('user_points').insert({
+      user_id: data.id,
+      balance: 99999,
+      total_earned: 99999,
+      total_spent: 0
+    });
+    
+    console.log('[Init Admin] 管理员账号创建成功:', data.phone);
+    res.json({ success: true, message: '管理员创建成功', phone: data.phone });
+  } catch (err: any) {
+    console.error('[Init Admin] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.use('/api/v1/points', pointsRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
