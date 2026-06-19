@@ -103,16 +103,17 @@ app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
       return res.json({ success: false, error: '手机号或密码错误' });
     }
     
-    // 查询用户
+    // 查询用户 - 支持数字4或字符串'L4'
     const supabase = getSupabaseClient();
     const { data: user, error } = await supabase
       .from('users')
       .select('id, phone, nickname, member_level, user_rank')
       .eq('phone', phone)
-      .eq('member_level', 'L4') // 只有L4会员可以登录后台
       .single();
     
-    if (error || !user) {
+    // 检查是否是管理员 (member_level = 4 或 'L4')
+    const isAdmin = user && (user.member_level === 4 || user.member_level === 'L4');
+    if (error || !user || !isAdmin) {
       return res.json({ success: false, error: '该账号不是管理员' });
     }
     
