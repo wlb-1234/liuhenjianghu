@@ -405,14 +405,17 @@
                 });
                 
                 const data = await res.json();
+                console.log('[ADMIN] 登录响应:', data);
                 
                 if (data.success && data.data) {
+                    console.log('[ADMIN] 登录成功，保存session:', data.data);
                     // 存储session
                     localStorage.setItem(SESSION_KEY, JSON.stringify(data.data));
                     showAdminPage(data.data);
                     // 加载数据
                     initAdmin();
                 } else {
+                    console.log('[ADMIN] 登录失败:', data.error);
                     errorEl.textContent = data.error || '手机号或密码错误';
                     errorEl.style.display = 'block';
                 }
