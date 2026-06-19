@@ -3,10 +3,10 @@
 > 📦 本目录包含项目重建所需的所有配置和数据
 > 
 > **维护说明**：
-> - 每次配置变更后请更新对应文件
+> - 每次完成新功能后请说"更新重建数据包"
 > - 重要更新请在 CHANGELOG.md 中记录
 > 
-> **版本**：v1.0.0  
+> **版本**：v1.1.0  
 > **最后更新**：2026-06-19
 
 ---
@@ -22,14 +22,13 @@ recovery_package/
 ├── 02_SEED_DATA.sql       # 种子数据
 ├── 03_REGION_DATA/        # 行政区划原始数据
 │   ├── provinces.json
-│   ├── regions.json
-│   └── stats.json
-├── 04_CODE_PATCHES/      # 代码补丁
-│   ├── admin_login.patch.ts
-│   └── static_path.patch.ts
+│   └── regions.json
+├── 04_CODE_PATCHES/       # 代码补丁
+│   ├── admin_login.patch.md
+│   ├── static_path.patch.md
+│   └── api_aliases.patch.md
 ├── 05_DEPLOY/             # 部署配置
-│   ├── railway.json
-│   └── vercel.json
+│   └── railway.json
 └── 06_TEST_DATA/          # 测试数据
     └── test_users.json
 ```
@@ -45,20 +44,14 @@ cd liuhenjianghu
 ```
 
 ### 步骤 2：配置环境变量
-1. 复制 `00_ENV.md` 到项目根目录
-2. 填写实际的 Supabase 连接信息
-3. 在 Railway/Vercel 仪表板设置环境变量
+1. 参考 `00_ENV.md` 配置
+2. 在 Railway 仪表板设置环境变量
 
 ### 步骤 3：创建数据库
 ```bash
-# 连接 Supabase PostgreSQL
 psql "postgresql://postgres:[密码]@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres"
-
-# 执行表结构
-\i server/sql/001_schema.sql
-
-# 执行种子数据
-\i server/sql/002_seed_data.sql
+\i recovery_package/01_SCHEMA.sql
+\i recovery_package/02_SEED_DATA.sql
 ```
 
 ### 步骤 4：复制原始数据
@@ -66,89 +59,42 @@ psql "postgresql://postgres:[密码]@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/po
 cp -r recovery_package/03_REGION_DATA/* server/src/data/
 ```
 
-### 步骤 5：应用代码补丁
-如果 `server/src/index.ts` 中没有登录测试模式，执行：
-```bash
-# 查看补丁内容
-cat recovery_package/04_CODE_PATCHES/admin_login.patch.ts
-# 手动将代码添加到 server/src/index.ts 的登录路由中
-```
-
-### 步骤 6：部署
+### 步骤 5：部署
 ```bash
 git push origin main
-# Railway 会自动检测并重新部署
 ```
 
 ---
 
-## 文件说明
+## 关键功能
 
-### 00_ENV.md
-环境变量配置，包含：
-- Supabase 连接信息
-- Railway 部署变量
-- API 配置
+### 管理后台登录
+- **地址**: https://liuhenjianghu-production.up.railway.app/admin
+- **账号**: 15613594588
+- **密码**: admin123
 
-### 01_SCHEMA.sql
-数据库表结构定义，包含：
-- users 表
-- api_keys 表
-- ip_whitelist 表
-- member_levels 表
-- user_levels 表
-- points_shop 表
-- posts 表
-- comments 表
-- likes 表
-- collections 表
-- conversations 表
-- messages 表
-
-### 02_SEED_DATA.sql
-初始种子数据，包含：
-- 会员等级配置（free, L1-L4）
-- 用户等级配置（L0-L6）
-- 积分商城商品
-
-### 03_REGION_DATA/
-行政区划原始 JSON 数据文件
-
-### 04_CODE_PATCHES/
-代码补丁，包含需要手动应用的代码片段：
-- admin_login.patch.ts - 管理后台登录测试模式
-- static_path.patch.ts - 静态文件路径修复
-
-### 05_DEPLOY/
-部署配置文件
-
-### 06_TEST_DATA/
-测试用户数据
-
----
-
-## 联系方式
-
-- **GitHub**：https://github.com/wlb-1234/liuhenjianghu
-- **管理后台**：https://liuhenjianghu-production.up.railway.app/admin
-- **Supabase**：https://supabase.com/dashboard
+### API 路由别名
+- `/api/v1/revenue/stats` → `/api/v1/revenue/overview`
+- `/api/v1/members/levels` → `/api/v1/members/config/levels`
 
 ---
 
 ## 维护指南
 
-### 添加新配置
+### 触发更新
+每次完成新功能后，说"更新重建数据包"即可自动同步。
+
+### 手动更新
 1. 编辑对应的配置文件
-2. 在 CHANGELOG.md 中记录变更
+2. 更新 `CHANGELOG.md`
+3. 提交：`git add -A && git commit -m "chore: 更新重建数据包" && git push`
 
-### 添加新表结构
-1. 在 `01_SCHEMA.sql` 末尾添加
-2. 在 CHANGELOG.md 中记录
+---
 
-### 添加新种子数据
-1. 在 `02_SEED_DATA.sql` 末尾添加
-2. 在 CHANGELOG.md 中记录
+## 部署信息
 
-### 更新原始数据
-1. 替换 `03_REGION_DATA/` 下对应的文件
-2. 在 CHANGELOG.md 中记录
+| 项目 | 地址 |
+|------|------|
+| 后端 API | https://liuhenjianghu-production.up.railway.app |
+| 管理后台 | https://liuhenjianghu-production.up.railway.app/admin |
+| Git 仓库 | https://github.com/wlb-1234/liuhenjianghu |

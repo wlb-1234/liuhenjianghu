@@ -1,6 +1,6 @@
 # 环境变量配置
 
-> 本文件记录所有需要的环境变量，实际使用时请从 Railway/Vercel 仪表板获取真实值
+> 本文件记录所有需要的环境变量
 
 ---
 
@@ -27,7 +27,6 @@
 |--------|------|--------|
 | `PORT` | 服务端口 | `9091` |
 | `NODE_ENV` | 运行环境 | `production` |
-| `RAILWAY_STATIC_URL` | Railway 静态 URL | 自动生成 |
 
 ### Railway 健康检查配置
 - **路径**：`/api/v1/health`
@@ -41,7 +40,6 @@
 |--------|------|--------|
 | `API_VERSION` | API 版本 | `v1` |
 | `CACHE_TTL` | 缓存 TTL（秒） | `3600` |
-| `MAX_POSTS_PER_DAY` | 每日最大发帖数 | `10` |
 
 ---
 
@@ -51,77 +49,20 @@
 |--------|------|--------|
 | `EXPO_PUBLIC_BACKEND_BASE_URL` | 后端 API 地址 | `https://liuhenjianghu-production.up.railway.app` |
 
-### 开发环境
-```bash
-# client/.env.development
-EXPO_PUBLIC_BACKEND_BASE_URL=http://localhost:9091
-```
+---
 
-### 生产环境
-```bash
-# client/.env.production
-EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu-production.up.railway.app
-```
+## 五、部署信息
+
+| 项目 | 地址 |
+|------|------|
+| **后端 API** | https://liuhenjianghu-production.up.railway.app |
+| **管理后台** | https://liuhenjianghu-production.up.railway.app/admin |
+| **Git 仓库** | https://github.com/wlb-1234/liuhenjianghu |
+| **Supabase** | https://supabase.com/dashboard/project/hmlqsbhbbclbzfuutrie |
 
 ---
 
-## 五、Redis 配置（可选）
-
-| 变量名 | 说明 | 示例值 |
-|--------|------|--------|
-| `REDIS_URL` | Redis 连接地址 | `redis://localhost:6379` |
-
-> 注意：如未配置 REDIS_URL，系统将使用内存缓存
-
----
-
-## 六、部署平台配置
-
-### Railway
-```toml
-# railway.toml
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-
-[deploy]
-numReplicas = 1
-healthcheckPath = "/api/v1/health"
-healthcheckPort = 9091
-```
-
-### Vercel (客户端)
-```json
-// vercel.json
-{
-  "buildCommand": "expo export:web",
-  "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://liuhenjianghu-production.up.railway.app/api/$1" }
-  ]
-}
-```
-
----
-
-## 七、本地开发环境变量
-
-```bash
-# 创建 .env 文件
-cd /workspace/projects
-
-# 后端
-cp server/.env.example server/.env
-# 编辑 server/.env 填写实际值
-
-# 前端
-cp client/.env.example client/.env
-# 编辑 client/.env 填写实际值
-```
-
----
-
-## 八、安全注意事项
+## 六、安全注意事项
 
 ⚠️ **不要提交以下文件到 Git**
 - `.env`
@@ -129,15 +70,3 @@ cp client/.env.example client/.env
 - `.env.production`
 
 ⚠️ **不要在代码中硬编码敏感信息**
-
----
-
-## 九、配置检查清单
-
-- [ ] DATABASE_URL 已配置
-- [ ] SUPABASE_URL 已配置
-- [ ] SUPABASE_ANON_KEY 已配置
-- [ ] SUPABASE_SERVICE_ROLE_KEY 已配置
-- [ ] PORT 设置为 9091
-- [ ] NODE_ENV 设置为 production
-- [ ] EXPO_PUBLIC_BACKEND_BASE_URL 指向正确的后端地址

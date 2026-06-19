@@ -6,45 +6,24 @@
 
 ---
 
-## 问题现象
+## 当前状态：✅ 已修复
 
-```
-Error: ENOENT: no such file or directory, stat '/workspace/projects/server/src/public/admin.html'
-```
-
-## 原因
-
-编译后的 JavaScript 文件位于 `server/dist/index.js`，但 public 目录在 `server/public/`。
-
-## 修复代码
+在 `server/src/index.ts` 第 66 行：
 
 ```typescript
-// 找到以下代码（约在第 66 行）：
-// const publicDir = path.join(__dirname, 'public');
-
-// 修改为：
+// 静态文件目录（从 src/ 回到 server/ 目录）
 const publicDir = path.join(__dirname, '..', 'public');
 ```
 
 ---
 
-## 应用步骤
-
-1. 打开 `server/src/index.ts` 文件
-2. 搜索 `const publicDir = path.join(__dirname, 'public');`
-3. 修改为 `const publicDir = path.join(__dirname, '..', 'public');`
-4. 保存文件
-5. 重新构建：`pnpm run build`
-6. 提交代码：`git add -A && git commit -m "fix: 修复静态文件路径" && git push`
-
----
-
 ## 路径对照
 
-| 修复前 | 修复后 |
-|--------|--------|
-| `dist/src/public/` | `dist/public/` |
-| ❌ 找不到 | ✅ 正确 |
+| 项目 | 路径 |
+|------|------|
+| 编译后 JS | `dist/src/index.js` |
+| public 目录 | `dist/../public` = `dist/public` 的上一级 |
+| 正确指向 | `server/public/` |
 
 ---
 
@@ -55,4 +34,19 @@ const publicDir = path.join(__dirname, '..', 'public');
 curl http://localhost:9091/admin
 
 # 应该返回包含 "流痕江湖管理后台" 的 HTML
+```
+
+---
+
+## 管理后台路由
+
+```typescript
+// server/src/index.ts
+app.use(express.static(publicDir));           // 静态文件
+app.get('/admin', (req, res) => {              // 管理后台页面
+  res.sendFile(path.join(publicDir, 'admin.html'));
+});
+app.get('/admin-mobile', (req, res) => {      // 移动端后台
+  res.sendFile(path.join(publicDir, 'admin-mobile.html'));
+});
 ```
