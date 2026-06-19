@@ -111,9 +111,14 @@ app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
       .eq('phone', phone)
       .single();
     
+    console.log('[Admin Login] 查询结果:', { user, error, member_level: user?.member_level });
+    
     // 检查是否是管理员 (member_level = 4 或 'L4')
     const isAdmin = user && (user.member_level === 4 || user.member_level === 'L4');
+    console.log('[Admin Login] isAdmin:', isAdmin);
+    
     if (error || !user || !isAdmin) {
+      console.log('[Admin Login] 登录失败: 该账号不是管理员');
       return res.json({ success: false, error: '该账号不是管理员' });
     }
     
