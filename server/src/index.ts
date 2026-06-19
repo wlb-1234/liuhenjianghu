@@ -193,17 +193,41 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
       return res.json({ success: true, message: '管理员已存在', phone: existingResult.rows[0].phone });
     }
     
-    // 创建管理员账号（只使用必要字段）
+    // 先获取 users 表的列信息
+    const columnsResult = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      ORDER BY ordinal_position
+    `);
+    
+    const columns = columnsResult.rows.map(r => r.column_name);
+    const dataTypes = {};
+    columnsResult.rows.forEach(r => dataTypes[r.column_name] = r.data_type);
+    
+    // 构建动态插入语句，只包含存在的列
+    const insertColumns = ['phone', 'nickname'];
+    const insertValues = ['15613594588', '管理员'];
+    let paramIndex = 1;
+    
+    // 如果 member_level 是 integer 类型
+    if (columns.includes('member_level')) {
+      insertColumns.push('member_level');
+      insertValues.push('4'); // 4 = L4 全国级
+      paramIndex++;
+    } else if (columns.includes('member_level') && dataTypes['member_level'] === 'character varying') {
+      insertColumns.push('member_level');
+      insertValues.push('L4');
+      paramIndex++;
+    }
+    
+    const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
+    
     const insertResult = await pool.query(`
-      INSERT INTO users (phone, nickname, member_level, member_expire_at)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO users (${insertColumns.join(', ')})
+      VALUES (${placeholders})
       RETURNING id, phone
-    `, [
-      '15613594588',
-      '管理员',
-      'L4',
-      '2030-12-31 23:59:59+00'
-    ]);
+    `, insertValues);
     
     if (insertResult.rows.length === 0) {
       await pool.end();
