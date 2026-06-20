@@ -1,120 +1,81 @@
-# 流痕江湖 - 重建数据包
+# 重建数据包
 
-> 📦 本目录包含项目重建所需的所有配置和数据
-> 
-> **维护说明**：
-> - 每次完成新功能后请说"更新重建数据包"
-> - 重要更新请在 CHANGELOG.md 中记录
-> 
-> **版本**：v1.2.1  
-> **最后更新**：2026-06-20
+## 版本
+**v1.3.0** (2026-06-20)
 
----
+## 概述
+包含应用完整的数据结构、配置、代码补丁，可快速重建应用。
 
-## 目录结构
+## 文件结构
 
 ```
 recovery_package/
 ├── README.md              # 本文件
-├── CHANGELOG.md           # 变更记录
+├── CHANGELOG.md           # 变更日志
 ├── 00_ENV.md              # 环境变量配置
 ├── 01_SCHEMA.sql          # 数据库表结构
-├── 02_SEED_DATA.sql       # 种子数据
-├── 03_REGION_DATA/        # 行政区划原始数据
-│   ├── provinces.json
-│   └── regions.json
-├── 04_CODE_PATCHES/       # 代码补丁
-│   ├── admin_login.patch.md
-│   ├── static_path.patch.md
-│   ├── api_aliases.patch.md
-│   └── wechat_payment.patch.md
-├── 05_DEPLOY/             # 部署配置
-│   └── railway.json
-└── 06_TEST_DATA/          # 测试数据
-    └── test_users.json
+├── 02_SEED_DATA.sql       # 初始数据
+└── 04_CODE_PATCHES/       # 代码补丁
+    ├── static_path.patch.md       # 静态文件服务
+    ├── admin_login.patch.md       # 管理后台登录
+    ├── api_aliases.patch.md       # API 路由别名
+    ├── wechat_payment.patch.md    # 微信支付功能
+    ├── order_balance.patch.md     # 订单与余额功能
+    └── admin_management.patch.md  # 管理后台功能
 ```
 
----
+## 重建步骤
 
-## 快速重建步骤
+### 1. 环境配置
+复制 `00_ENV.md` 中的环境变量到 `server/.env`
 
-### 步骤 1：克隆代码
+### 2. 数据库初始化
 ```bash
-git clone https://github.com/wlb-1234/liuhenjianghu
-cd liuhenjianghu
+# 创建表
+psql $DATABASE_URL < 01_SCHEMA.sql
+
+# 初始化数据
+psql $DATABASE_URL < 02_SEED_DATA.sql
 ```
 
-### 步骤 2：配置环境变量
-1. 参考 `00_ENV.md` 配置
-2. 在 Railway 仪表板设置环境变量
+### 3. 应用补丁
+按顺序应用 `04_CODE_PATCHES/` 中的补丁
 
-### 步骤 3：创建数据库
+### 4. 启动服务
 ```bash
-# 沙箱环境使用直连 IPv4 地址
-DATABASE_URL="postgresql://postgres.[密码]@13.114.6.6:5432/postgres?sslmode=disable"
-
-# Railway 环境直接设置 Railway PostgreSQL 连接字符串
-psql "[Railway PostgreSQL 连接字符串]"
-\i recovery_package/01_SCHEMA.sql
-\i recovery_package/02_SEED_DATA.sql
+cd server && pnpm run dev
 ```
 
-### 步骤 4：复制原始数据
-```bash
-cp -r recovery_package/03_REGION_DATA/* server/src/data/
-```
+## 核心配置
 
-### 步骤 5：部署
-```bash
-git push origin main
-```
+### 数据库
+- 使用 Supabase PostgreSQL
+- 直连地址: `13.114.6.6:5432`
+- 连接字符串见 `00_ENV.md`
 
----
+### 管理后台
+- 入口: `http://localhost:8080/admin`
+- 账号: `15613594588`
+- 密码: `admin123`
 
-## 关键功能
+### API 前缀
+- 所有 API 使用 `/api/v1` 前缀
+- 路由别名支持（无需完整路径）
 
-### 管理后台登录
-- **地址**: https://liuhenjianghu-production.up.railway.app/admin
-- **账号**: 15613594588
-- **密码**: admin123
+## 功能清单
 
-### 微信支付功能
-- **商户号**: 1114226626 (已入驻)
-- **AppID**: 待配置（移动应用审核中）
-- **API密钥**: 待从微信支付商户平台获取
-- **回调地址**: https://liuhenjianghu-production.up.railway.app/api/v1/payment/notify
-
-### API 路由别名
-- `/api/v1/revenue/stats` → `/api/v1/revenue/overview`
-- `/api/v1/members/levels` → `/api/v1/members/config/levels`
-
-### 支付相关接口
-| 接口 | 方法 | 说明 |
+| 功能 | 状态 | 说明 |
 |------|------|------|
-| `/api/v1/payment/config` | GET | 获取支付配置 |
-| `/api/v1/payment/create` | POST | 创建支付订单 |
-| `/api/v1/payment/notify` | POST | 支付回调 |
-| `/api/v1/payment/orders` | GET | 订单列表 |
-| `/api/v1/payment/balances` | GET | 用户余额 |
+| 用户认证 | ✅ | 邮箱/手机登录 |
+| 文章系统 | ✅ | 分类、内容管理 |
+| 会员系统 | ✅ | VIP 升级 |
+| 微信支付 | ✅ | 待 AppID 配置 |
+| 订单管理 | ✅ | 用户订单历史 |
+| 余额系统 | ✅ | 余额充值消费 |
+| 管理后台 | ✅ | 用户/支付/内容管理 |
 
----
+## 注意事项
 
-## 维护指南
-
-### 触发更新
-每次完成新功能后，说"更新重建数据包"即可自动同步。
-
-### 手动更新
-1. 编辑对应的配置文件
-2. 更新 `CHANGELOG.md`
-3. 提交：`git add -A && git commit -m "chore: 更新重建数据包" && git push`
-
----
-
-## 部署信息
-
-| 项目 | 地址 |
-|------|------|
-| 后端 API | https://liuhenjianghu-production.up.railway.app |
-| 管理后台 | https://liuhenjianghu-production.up.railway.app/admin |
-| Git 仓库 | https://github.com/wlb-1234/liuhenjianghu |
+1. **数据库连接**: 必须使用 IPv4 直连 `13.114.6.6`，不要用域名
+2. **微信支付**: 需要配置商户号、AppID、API密钥
+3. **管理后台**: 首次使用需要初始化管理员账号

@@ -47,7 +47,7 @@ if (password === 'admin123' && phone === '15613594588') {
 
 ```bash
 # 测试登录
-curl -X POST https://liuhenjianghu-production.up.railway.app/api/v1/admin/login \
+curl -X POST http://localhost:8080/api/v1/admin/login \
   -H "Content-Type: application/json" \
   -d '{"phone":"15613594588","password":"admin123"}'
 
@@ -59,6 +59,6 @@ curl -X POST https://liuhenjianghu-production.up.railway.app/api/v1/admin/login 
 
 ## 管理后台地址
 
-- URL: https://liuhenjianghu-production.up.railway.app/admin
+- 本地: http://localhost:8080/admin
 - 路由文件: server/public/admin.html
 - 静态资源路径: server/public/

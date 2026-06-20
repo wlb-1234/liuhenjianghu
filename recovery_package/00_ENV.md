@@ -6,7 +6,7 @@
 
 ## 一、数据库配置（Supabase）
 
-> ⚠️ **重要**：沙箱环境必须使用直连 IPv4 地址，勿用域名！
+> ⚠️ **重要**：必须使用直连 IPv4 地址，勿用域名！
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
@@ -19,16 +19,9 @@
 4. 使用直连 IP：`13.114.6.6:5432`
 5. 密码是你的 Supabase PostgreSQL 密码
 
-### 沙箱环境
+### 配置示例
 ```bash
-# 必须使用这个格式（IPv4 直连）
-DATABASE_URL="postgresql://postgres.[密码]@13.114.6.6:5432/postgres?sslmode=disable"
-```
-
-### Railway 环境
-```bash
-# Railway PostgreSQL 会自动设置
-DATABASE_URL="postgresql://postgres:password@containers.usRailway-1.Railway-internal.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.你的密码@13.114.6.6:5432/postgres?sslmode=disable"
 ```
 
 ---
@@ -43,11 +36,20 @@ DATABASE_URL="postgresql://postgres:password@containers.usRailway-1.Railway-inte
 
 ---
 
-## 三、Railway 部署变量
+## 三、服务配置
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
-| `PORT` | 服务端口 | `9091` |
-| `NODE_ENV` | 运行环境 | `production` |
+| `PORT` | 服务端口 | `8080` |
+| `NODE_ENV` | 运行环境 | `development` |
 
 ---
+
+## 四、微信支付配置
+
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `WX_MCHID` | 商户号 | `1114226626` |
+| `WX_API_KEY` | API密钥 | （从商户平台获取） |
+| `WX_APPID` | 移动应用AppID | （审核通过后获取） |
+| `WX_NOTIFY_URL` | 回调地址 | `https://你的域名/api/v1/payment/notify` |
