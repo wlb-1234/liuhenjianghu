@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } fr
 import { Screen } from '@/components/Screen';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-const API_BASE = process.env.API_BASE;
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
+
+interface Notification {
   id: number;
   title: string;
   content: string;
