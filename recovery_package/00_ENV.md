@@ -4,69 +4,50 @@
 
 ---
 
-## 一、Supabase 配置
+## 一、数据库配置（Supabase）
+
+> ⚠️ **重要**：沙箱环境必须使用直连 IPv4 地址，勿用域名！
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
-| `DATABASE_URL` | PostgreSQL 连接地址 | `postgresql://postgres:xxx@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres` |
-| `SUPABASE_URL` | Supabase 项目地址 | `https://hmlqsbhbbclbzfuutrie.supabase.co` |
-| `SUPABASE_ANON_KEY` | Supabase 匿名密钥 | `eyJhbGc...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 服务密钥 | `eyJhbGc...` |
+| `DATABASE_URL` | PostgreSQL 直连地址（IPv4） | `postgresql://postgres:密码@13.114.6.6:5432/postgres?sslmode=disable` |
 
 ### 获取方式
 1. 登录 https://supabase.com/dashboard
 2. 进入项目 → Settings → Database
-3. 查看 Connection string
-4. Settings → API 查看 ANON_KEY 和 SERVICE_ROLE_KEY
+3. **不要**用 Connection string 中的域名
+4. 使用直连 IP：`13.114.6.6:5432`
+5. 密码是你的 Supabase PostgreSQL 密码
+
+### 沙箱环境
+```bash
+# 必须使用这个格式（IPv4 直连）
+DATABASE_URL="postgresql://postgres.[密码]@13.114.6.6:5432/postgres?sslmode=disable"
+```
+
+### Railway 环境
+```bash
+# Railway PostgreSQL 会自动设置
+DATABASE_URL="postgresql://postgres:password@containers.usRailway-1.Railway-internal.com:5432/postgres"
+```
 
 ---
 
-## 二、Railway 部署变量
+## 二、Supabase 其他配置
+
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `SUPABASE_URL` | Supabase 项目地址 | `https://hmlqsbhbbclbzfuutrie.supabase.co` |
+| `SUPABASE_ANON_KEY` | Supabase 匿名密钥 | `eyJhbGc...` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 服务密钥 | `eyJhbGc...` |
+
+---
+
+## 三、Railway 部署变量
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
 | `PORT` | 服务端口 | `9091` |
 | `NODE_ENV` | 运行环境 | `production` |
 
-### Railway 健康检查配置
-- **路径**：`/api/v1/health`
-- **端口**：`9091`
-
 ---
-
-## 三、后端配置
-
-| 变量名 | 说明 | 示例值 |
-|--------|------|--------|
-| `API_VERSION` | API 版本 | `v1` |
-| `CACHE_TTL` | 缓存 TTL（秒） | `3600` |
-
----
-
-## 四、客户端配置
-
-| 变量名 | 说明 | 示例值 |
-|--------|------|--------|
-| `EXPO_PUBLIC_BACKEND_BASE_URL` | 后端 API 地址 | `https://liuhenjianghu-production.up.railway.app` |
-
----
-
-## 五、部署信息
-
-| 项目 | 地址 |
-|------|------|
-| **后端 API** | https://liuhenjianghu-production.up.railway.app |
-| **管理后台** | https://liuhenjianghu-production.up.railway.app/admin |
-| **Git 仓库** | https://github.com/wlb-1234/liuhenjianghu |
-| **Supabase** | https://supabase.com/dashboard/project/hmlqsbhbbclbzfuutrie |
-
----
-
-## 六、安全注意事项
-
-⚠️ **不要提交以下文件到 Git**
-- `.env`
-- `.env.local`
-- `.env.production`
-
-⚠️ **不要在代码中硬编码敏感信息**
