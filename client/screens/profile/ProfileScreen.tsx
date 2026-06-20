@@ -124,6 +124,23 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* 余额卡片 */}
+        <TouchableOpacity style={styles.balanceCard} onPress={() => router.push('/orders')}>
+          <View style={styles.balanceContent}>
+            <View>
+              <Text style={styles.balanceLabel}>我的余额</Text>
+              <View style={styles.balanceRow}>
+                <Text style={styles.balanceAmount}>0.00</Text>
+                <Text style={styles.balanceUnit}>元</Text>
+              </View>
+            </View>
+            <View style={styles.balanceRight}>
+              <Text style={styles.balanceHint}>查看明细</Text>
+              <Text style={styles.balanceArrow}>›</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
         {/* 会员等级说明 */}
         <View style={styles.levelSection}>
           <Text style={styles.sectionTitle}>江湖会员等级</Text>
@@ -189,6 +206,11 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
 
         {/* 操作菜单 */}
         <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/orders')}>
+            <Text style={styles.menuIcon}>订</Text>
+            <Text style={styles.menuText}>我的订单</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>评</Text>
             <Text style={styles.menuText}>我的留言</Text>
@@ -332,6 +354,52 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     marginTop: 12,
+  },
+  balanceCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#F5F0E6',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8DCC8',
+  },
+  balanceContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#8B7355',
+    marginBottom: 4,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#8B4513',
+  },
+  balanceUnit: {
+    fontSize: 14,
+    color: '#8B4513',
+    marginLeft: 4,
+  },
+  balanceRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  balanceHint: {
+    fontSize: 14,
+    color: '#A89F91',
+  },
+  balanceArrow: {
+    fontSize: 20,
+    color: '#A89F91',
+    marginLeft: 4,
   },
   levelSection: {
     padding: 16,

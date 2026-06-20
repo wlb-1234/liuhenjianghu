@@ -8,9 +8,11 @@ import { useSafeRouter, usePathname } from '@/hooks/useSafeRouter';
 const menuItems = [
   { name: '仪表盘', path: '/admin/dashboard', icon: 'grid' },
   { name: '用户', path: '/admin/users', icon: 'people' },
+  { name: '内容', path: '/admin/content', icon: 'document-text' },
   { name: '审核', path: '/admin/moderation', icon: 'shield-checkmark' },
   { name: '举报', path: '/admin/reports', icon: 'flag' },
   { name: '会员', path: '/admin/members', icon: 'diamond' },
+  { name: '支付', path: '/admin/payment', icon: 'wallet' },
 ];
 
 export default function AdminLayout() {
