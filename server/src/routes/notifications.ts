@@ -1,192 +1,226 @@
-import express from 'express';
-import { getPool } from '../config/database.js';
+import { Router } from 'express';
+import { query } from '../config/database.js';
 
-const router = express.Router();
+const router = Router();
 
-// 获取通知列表
+/**
+ * 获取当前用户消息列表
+ * GET /api/v1/notifications
+ * Query: page, limit, type (optional)
+ */
 router.get('/', async (req, res) => {
   try {
-    const pool = getPool();
-    const { userId, type, page = 1, pageSize = 20 } = req.query;
-    const offset = (Number(page) - 1) * Number(pageSize);
+    const { page = 1, limit = 20, type } = req.query;
+    const userId = req.headers['x-user-id'];
+    const offset = (Number(page) - 1) * Number(limit);
     
-    let whereClause = '1=1';
-    const params: any[] = [];
-    
-    if (userId) {
-      whereClause += ' AND user_id = $' + (params.length + 1);
-      params.push(userId);
-    }
+    let whereClause = "(user_id IS NULL OR user_id = $1)";
+    let params = [userId];
     
     if (type) {
-      whereClause += ' AND type = $' + (params.length + 1);
+      whereClause += ` AND type = $${params.length + 1}`;
       params.push(type);
     }
     
-    // 查询通知
-    const result = await pool.query(`
-      SELECT id, user_id, type, title, content, related_id, is_read, created_at
-      FROM notifications
-      WHERE ${whereClause}
-      ORDER BY created_at DESC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-    `, [...params, Number(pageSize), offset]);
+    const countResult = await query(
+      `SELECT COUNT(*) FROM notifications WHERE ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count);
     
-    // 统计总数
-    const countResult = await pool.query(`
-      SELECT COUNT(*) as total FROM notifications WHERE ${whereClause}
-    `, params);
-    
-    // 统计未读数
-    const unreadResult = await pool.query(`
-      SELECT COUNT(*) as unread FROM notifications WHERE user_id = $1 AND is_read = false
-    `, userId ? [userId] : []);
+    params.push(Number(limit), offset);
+    const result = await query(
+      `SELECT id, title, content, type, is_read, related_id, created_at
+       FROM notifications 
+       WHERE ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
     
     res.json({
-      code: 200,
-      message: 'success',
+      success: true,
       data: {
         list: result.rows,
-        total: parseInt(countResult.rows[0].total),
-        unreadCount: parseInt(unreadResult.rows[0]?.unread || 0),
+        total,
         page: Number(page),
-        pageSize: Number(pageSize)
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit))
       }
     });
   } catch (error) {
-    console.error('[Notification] Query error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('获取消息列表失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 获取未读通知数
+/**
+ * 获取未读消息数量
+ * GET /api/v1/notifications/unread-count
+ */
 router.get('/unread-count', async (req, res) => {
   try {
-    const pool = getPool();
-    const { userId } = req.query;
+    const userId = req.headers['x-user-id'];
+    const result = await query(
+      `SELECT COUNT(*) FROM notifications 
+       WHERE (user_id IS NULL OR user_id = $1) AND is_read = FALSE`,
+      [userId]
+    );
     
-    if (!userId) {
-      res.json({ code: 200, data: { count: 0 } });
-      return;
-    }
-    
-    const result = await pool.query(`
-      SELECT COUNT(*) as count FROM notifications 
-      WHERE user_id = $1 AND is_read = false
-    `, [userId]);
-    
-    res.json({ code: 200, data: { count: parseInt(result.rows[0].count) } });
+    res.json({
+      success: true,
+      data: { count: parseInt(result.rows[0].count) }
+    });
   } catch (error) {
-    console.error('[Notification] Unread count error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('获取未读数量失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 标记已读
-router.put('/:id/read', async (req, res) => {
+/**
+ * 标记消息已读
+ * POST /api/v1/notifications/:id/read
+ */
+router.post('/:id/read', async (req, res) => {
   try {
-    const pool = getPool();
     const { id } = req.params;
+    const userId = req.headers['x-user-id'];
     
-    await pool.query(`
-      UPDATE notifications SET is_read = true, read_at = NOW()
-      WHERE id = $1
-    `, [id]);
+    await query(
+      `UPDATE notifications SET is_read = TRUE WHERE id = $1 AND (user_id IS NULL OR user_id = $2)`,
+      [id, userId]
+    );
     
-    res.json({ code: 200, message: '标记已读成功' });
+    res.json({ success: true, message: '已标记已读' });
   } catch (error) {
-    console.error('[Notification] Mark read error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('标记已读失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 标记全部已读
-router.put('/read-all', async (req, res) => {
+/**
+ * 标记全部已读
+ * POST /api/v1/notifications/read-all
+ */
+router.post('/read-all', async (req, res) => {
   try {
-    const pool = getPool();
-    const { userId } = req.body;
+    const userId = req.headers['x-user-id'];
     
-    if (!userId) {
-      res.status(400).json({ code: 400, message: '缺少用户ID' });
-      return;
-    }
+    await query(
+      `UPDATE notifications SET is_read = TRUE WHERE (user_id IS NULL OR user_id = $1) AND is_read = FALSE`,
+      [userId]
+    );
     
-    await pool.query(`
-      UPDATE notifications SET is_read = true, read_at = NOW()
-      WHERE user_id = $1 AND is_read = false
-    `, [userId]);
-    
-    res.json({ code: 200, message: '全部已读成功' });
+    res.json({ success: true, message: '全部已标记已读' });
   } catch (error) {
-    console.error('[Notification] Mark all read error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('标记全部已读失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 删除通知
+/**
+ * 删除消息
+ * DELETE /api/v1/notifications/:id
+ */
 router.delete('/:id', async (req, res) => {
   try {
-    const pool = getPool();
     const { id } = req.params;
+    const userId = req.headers['x-user-id'];
     
-    await pool.query('DELETE FROM notifications WHERE id = $1', [id]);
+    await query(
+      `DELETE FROM notifications WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
     
-    res.json({ code: 200, message: '删除成功' });
+    res.json({ success: true, message: '删除成功' });
   } catch (error) {
-    console.error('[Notification] Delete error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('删除消息失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 发送通知（内部调用）
+/**
+ * 发送系统公告（管理接口）
+ * POST /api/v1/notifications/broadcast
+ */
+router.post('/broadcast', async (req, res) => {
+  try {
+    const { title, content, type = 'system' } = req.body;
+    
+    if (!title || !content) {
+      return res.status(400).json({ success: false, message: '标题和内容不能为空' });
+    }
+    
+    await query(
+      `INSERT INTO notifications (user_id, title, content, type) VALUES (NULL, $1, $2, $3)`,
+      [title, content, type]
+    );
+    
+    res.json({ success: true, message: '公告已发布' });
+  } catch (error) {
+    console.error('发布公告失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+/**
+ * 发送订单通知给用户
+ * POST /api/v1/notifications/send
+ */
 router.post('/send', async (req, res) => {
   try {
-    const pool = getPool();
-    const { userId, type, title, content, relatedId } = req.body;
+    const { userId, title, content, type = 'order', relatedId } = req.body;
     
-    if (!userId || !type || !title) {
-      res.status(400).json({ code: 400, message: '缺少必要参数' });
-      return;
+    if (!userId || !title || !content) {
+      return res.status(400).json({ success: false, message: '参数不完整' });
     }
     
-    const result = await pool.query(`
-      INSERT INTO notifications (user_id, type, title, content, related_id)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `, [userId, type, title, content || '', relatedId || null]);
+    await query(
+      `INSERT INTO notifications (user_id, title, content, type, related_id) VALUES ($1, $2, $3, $4, $5)`,
+      [userId, title, content, type, relatedId]
+    );
     
-    res.json({ code: 200, message: '发送成功', data: result.rows[0] });
+    res.json({ success: true, message: '通知已发送' });
   } catch (error) {
-    console.error('[Notification] Send error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('发送通知失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 通知类型统计
-router.get('/stats/types', async (req, res) => {
+/**
+ * 获取所有公告列表（管理后台）
+ * GET /api/v1/notifications/admin/list
+ */
+router.get('/admin/list', async (req, res) => {
   try {
-    const pool = getPool();
-    const { userId } = req.query;
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
     
-    let whereClause = '';
-    const params: any[] = [];
+    const countResult = await query(`SELECT COUNT(*) FROM notifications WHERE user_id IS NULL`);
+    const total = parseInt(countResult.rows[0].count);
     
-    if (userId) {
-      whereClause = 'WHERE user_id = $1';
-      params.push(userId);
-    }
+    const result = await query(
+      `SELECT id, title, content, type, created_at
+       FROM notifications 
+       WHERE user_id IS NULL
+       ORDER BY created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [Number(limit), offset]
+    );
     
-    const result = await pool.query(`
-      SELECT type, COUNT(*) as count 
-      FROM notifications 
-      ${whereClause}
-      GROUP BY type
-    `, params);
-    
-    res.json({ code: 200, data: result.rows });
+    res.json({
+      success: true,
+      data: {
+        list: result.rows,
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit))
+      }
+    });
   } catch (error) {
-    console.error('[Notification] Stats error:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    console.error('获取公告列表失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 

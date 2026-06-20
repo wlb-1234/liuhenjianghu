@@ -47,6 +47,8 @@ import dailyTasksRouter from './routes/dailyTasks.js';
 import shareRouter from './routes/share.js';
 import pointsRouter from './routes/points.js';
 import paymentRouter from './routes/payment.js';
+import favoritesRouter from './routes/favorites.js';
+import statisticsRouter from './routes/statistics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -217,6 +219,7 @@ app.use('/api/v1/operation-logs', operationLogsRouter);
 app.use('/api/v1/rate-limit', rateLimitRouter);
 app.use('/api/v1/blacklist', blacklistRouter);
 app.use('/api/v1/notifications', notificationsRouter);
+app.use('/api/v1/favorites', (await import('./routes/favorites.js')).default);
 app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/tasks', dailyTasksRouter);
 app.use('/api/v1/share', shareRouter);
@@ -291,6 +294,8 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
 
 app.use('/api/v1/points', pointsRouter);
 app.use('/api/v1/payment', paymentRouter);
+app.use('/api/v1/favorites', favoritesRouter);
+app.use('/api/v1/statistics', statisticsRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 

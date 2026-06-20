@@ -206,6 +206,11 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
 
         {/* 操作菜单 */}
         <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/notifications')}>
+            <Text style={styles.menuIcon}>消</Text>
+            <Text style={styles.menuText}>消息通知</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/orders')}>
             <Text style={styles.menuIcon}>订</Text>
             <Text style={styles.menuText}>我的订单</Text>

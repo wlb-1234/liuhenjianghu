@@ -1,97 +1,56 @@
-/**
- * 消息通知页面
- * 用户查看和管理消息通知
- */
-
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  RefreshControl,
-  ActivityIndicator,
-} from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSafeRouter } from '@/hooks/useSafeRouter';
-
-const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu-production.up.railway.app';
-
-interface Notification {
+const API_BASE = process.env.API_BASE;
   id: number;
-  type: string;
   title: string;
   content: string;
+  type: string;
   is_read: boolean;
   created_at: string;
 }
 
-const messageTypeIcons: Record<string, string> = {
-  system: '📢',
-  comment: '💬',
-  like: '❤️',
-  follow: '👤',
-  reply: '↩️',
-  achievement: '🏆',
-  activity: '🎉',
-  check_in: '📅',
-};
-
-const messageTypeLabels: Record<string, string> = {
-  system: '系统通知',
-  comment: '评论',
-  like: '点赞',
-  follow: '关注',
-  reply: '回复',
-  achievement: '成就',
-  activity: '活动',
-  check_in: '签到',
-};
-
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const { session } = useAuth();
-  const router = useSafeRouter();
 
-  const fetchNotifications = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
-    if (!session?.token) return;
-
+  const fetchNotifications = useCallback(async (pageNum = 1, isRefresh = false) => {
+    if (!session?.user) return;
+    
     try {
       const response = await fetch(
-        `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/notifications?page=${pageNum}&limit=20`,
+        `${API_BASE}/api/v1/notifications?page=${pageNum}&limit=20`,
         {
           headers: {
-            'Authorization': `Bearer ${session.token}`,
-          },
+            'x-session': session.access_token || '',
+            'x-user-id': String(session.user.id)
+          }
         }
       );
-
       const data = await response.json();
+      
       if (data.success) {
-        if (refresh) {
-          setNotifications(data.data.notifications);
+        if (isRefresh) {
+          setNotifications(data.data.list);
         } else {
-          setNotifications(prev => [...prev, ...data.data.notifications]);
+          setNotifications(prev => [...prev, ...data.data.list]);
         }
-        setUnreadCount(data.data.unreadCount);
-        setHasMore(data.data.notifications.length === 20);
+        setTotal(data.data.total);
         setPage(pageNum);
       }
     } catch (error) {
-      console.error('获取通知失败:', error);
+      console.error('获取消息失败:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [session?.token]);
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
@@ -99,305 +58,217 @@ export default function NotificationsScreen() {
     }, [fetchNotifications])
   );
 
-  const handleRefresh = () => {
+  const onRefresh = () => {
     setRefreshing(true);
     fetchNotifications(1, true);
   };
 
-  const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      fetchNotifications(page + 1);
-    }
-  };
-
-  const handleMarkAsRead = async (id: number) => {
-    if (!session?.token) return;
-
+  const markAsRead = async (id: number) => {
     try {
       await fetch(
-        `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/notifications/${id}/read`,
+        `${API_BASE}/api/v1/notifications/${id}/read`,
         {
-          method: 'PUT',
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.token}`,
-          },
+            'x-session': session?.access_token || '',
+            'x-user-id': String(session?.user?.id)
+          }
         }
       );
-
       setNotifications(prev =>
-        prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+        prev.map(item =>
+          item.id === id ? { ...item, is_read: true } : item
+        )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('标记已读失败:', error);
     }
   };
 
-  const handleMarkAllRead = async () => {
-    if (!session?.token) return;
-
+  const markAllAsRead = async () => {
     try {
       await fetch(
-        `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/notifications/read-all`,
+        `${API_BASE}/api/v1/notifications/read-all`,
         {
-          method: 'PUT',
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.token}`,
-          },
+            'x-session': session?.access_token || '',
+            'x-user-id': String(session?.user?.id)
+          }
         }
       );
-
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
+      setNotifications(prev => prev.map(item => ({ ...item, is_read: true })));
     } catch (error) {
       console.error('标记全部已读失败:', error);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!session?.token) return;
-
-    try {
-      await fetch(
-        `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/notifications/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.token}`,
-          },
-        }
-      );
-
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    } catch (error) {
-      console.error('删除通知失败:', error);
-    }
+  const getTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      system: '系统',
+      order: '订单',
+      activity: '活动'
+    };
+    return labels[type] || '通知';
   };
 
-  const formatTime = (timeStr: string) => {
-    const date = new Date(timeStr);
+  const getTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      system: '#666',
+      order: '#007AFF',
+      activity: '#FF9500'
+    };
+    return colors[type] || '#666';
+  };
+
+  const formatTime = (time: string) => {
+    const date = new Date(time);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
-    return date.toLocaleDateString();
+    
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+    return `${Math.floor(diff / 86400000)}天前`;
   };
 
   const renderItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity
-      style={[
-        styles.notificationItem,
-        !item.is_read && styles.unreadItem,
-      ]}
-      onPress={() => handleMarkAsRead(item.id)}
-      onLongPress={() => handleDelete(item.id)}
+      style={[styles.item, !item.is_read && styles.unread]}
+      onPress={() => markAsRead(item.id)}
     >
-      <View style={styles.iconContainer}>
-        <Text style={styles.icon}>
-          {messageTypeIcons[item.type] || '📬'}
-        </Text>
-        {!item.is_read && <View style={styles.unreadDot} />}
-      </View>
-      <View style={styles.contentContainer}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, !item.is_read && styles.unreadTitle]}>
-            {item.title}
-          </Text>
-          <Text style={styles.typeTag}>
-            {messageTypeLabels[item.type] || item.type}
-          </Text>
+      <View style={styles.header}>
+        <View style={[styles.badge, { backgroundColor: getTypeColor(item.type) }]}>
+          <Text style={styles.badgeText}>{getTypeLabel(item.type)}</Text>
         </View>
-        <Text style={styles.content} numberOfLines={2}>
-          {item.content}
-        </Text>
         <Text style={styles.time}>{formatTime(item.created_at)}</Text>
       </View>
+      <Text style={[styles.title, !item.is_read && styles.unreadTitle]}>{item.title}</Text>
+      <Text style={styles.content} numberOfLines={2}>{item.content}</Text>
     </TouchableOpacity>
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📭</Text>
-      <Text style={styles.emptyText}>暂无消息通知</Text>
-      <Text style={styles.emptySubtext}>收到评论、点赞等会有通知哦</Text>
-    </View>
-  );
-
-  if (loading && notifications.length === 0) {
-    return (
-      <Screen>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6366F1" />
-        </View>
-      </Screen>
-    );
-  }
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>消息通知</Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={handleMarkAllRead}>
-            <Text style={styles.markAllRead}>全部已读</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.headerBar}>
+          <Text style={styles.headerTitle}>消息通知</Text>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={markAllAsRead}>
+              <Text style={styles.markAllText}>全部已读</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading ? (
+          <View style={styles.loading}>
+            <Text style={styles.loadingText}>加载中...</Text>
+          </View>
+        ) : notifications.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>暂无消息</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            renderItem={renderItem}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
         )}
       </View>
-
-      {unreadCount > 0 && (
-        <View style={styles.unreadBanner}>
-          <Text style={styles.unreadText}>有 {unreadCount} 条未读消息</Text>
-        </View>
-      )}
-
-      <FlatList
-        data={notifications}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={renderEmpty}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.3}
-      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5'
+  },
+  headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#FFF'
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333'
   },
-  markAllRead: {
+  markAllText: {
     fontSize: 14,
-    color: '#6366F1',
+    color: '#007AFF'
   },
-  unreadBanner: {
-    backgroundColor: '#FEF3C7',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  list: {
+    padding: 12
   },
-  unreadText: {
-    fontSize: 13,
-    color: '#D97706',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  notificationItem: {
-    flexDirection: 'row',
+  item: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
     padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    marginBottom: 12
   },
-  unreadItem: {
-    backgroundColor: '#F0F9FF',
+  unread: {
+    backgroundColor: '#F0F7FF'
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    position: 'relative',
-  },
-  icon: {
-    fontSize: 20,
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#EF4444',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  headerRow: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#FFF'
+  },
+  time: {
+    fontSize: 12,
+    color: '#999'
   },
   title: {
-    fontSize: 15,
-    color: '#666',
-    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 6
   },
   unreadTitle: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  typeTag: {
-    fontSize: 11,
-    color: '#999',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
+    fontWeight: '600'
   },
   content: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 20,
-    marginBottom: 4,
+    lineHeight: 20
   },
-  time: {
-    fontSize: 12,
-    color: '#999',
-  },
-  emptyContainer: {
+  loading: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
+    alignItems: 'center'
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+  loadingText: {
+    fontSize: 14,
+    color: '#999'
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   emptyText: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 8,
-  },
-  emptySubtext: {
     fontSize: 14,
-    color: '#999',
-  },
+    color: '#999'
+  }
 });

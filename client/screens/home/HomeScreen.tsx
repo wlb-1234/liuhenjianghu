@@ -331,6 +331,15 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [showNewPostAlert, setShowNewPostAlert] = useState(false);
   const [newPostCount, setNewPostCount] = useState(0);
   const prevPostsCount = useRef(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const categories = [
+    { code: '', name: '全部' },
+    { code: 'social', name: '社交' },
+    { code: 'trade', name: '交易' },
+    { code: 'help', name: '求助' },
+    { code: 'share', name: '分享' },
+    { code: 'other', name: '其他' },
+  ];
 
   const loadPosts = async (refresh = false) => {
     try {
@@ -427,6 +436,23 @@ export default function HomeScreen({ onPostPress }: Props) {
         <Text style={styles.headerSlogan}>人海为江湖，留言皆流痕</Text>
       </View>
 
+      {/* 分类筛选 */}
+      <View style={styles.categoryContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat.code}
+              style={[styles.categoryItem, selectedCategory === cat.code && styles.categoryItemActive]}
+              onPress={() => setSelectedCategory(cat.code)}
+            >
+              <Text style={[styles.categoryText, selectedCategory === cat.code && styles.categoryTextActive]}>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* 滚动公告栏 */}
       <RollingAnnouncement posts={posts} />
     </View>
@@ -515,6 +541,41 @@ const styles = StyleSheet.create({
     color: '#8B7355',
     marginTop: 4,
     letterSpacing: 2,
+  },
+  // 分类标签栏
+  categoryContainer: {
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  categoryScroll: {
+    flexGrow: 0,
+  },
+  categoryItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    marginRight: 8,
+  },
+  categoryItemActive: {
+    backgroundColor: '#C0392B',
+  },
+  categoryTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+  },
+  categoryTabActive: {
+    backgroundColor: '#C0392B',
+  },
+  categoryText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  categoryTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   // 滚动公告栏样式
   announcementContainer: {

@@ -130,6 +130,7 @@
             <button class="nav-btn" onclick="showTab('revenue')">收益统计</button>
             <button class="nav-btn" onclick="showTab('members')">会员管理</button>
             <button class="nav-btn" onclick="showTab('payment')">支付管理</button>
+            <button class="nav-btn" onclick="showTab('statistics')">数据统计</button>
             <button class="nav-btn" onclick="showTab('docs')">API文档</button>
         </nav>
 
@@ -388,6 +389,41 @@
                     <thead><tr><th>用户ID</th><th>手机号</th><th>昵称</th><th>当前等级</th><th>到期时间</th><th>操作</th></tr></thead>
                     <tbody id="membersTable"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- 数据统计 -->
+        <div id="statistics" class="tab-content">
+            <div class="section">
+                <h2>数据概览</h2>
+                <div class="grid" id="statsOverview">
+                    <div class="card">
+                        <h3>总用户数</h3>
+                        <div class="stat-value" id="statUsers">-</div>
+                        <div class="stat-label">注册用户</div>
+                    </div>
+                    <div class="card">
+                        <h3>总帖子数</h3>
+                        <div class="stat-value" id="statPosts">-</div>
+                        <div class="stat-label">内容帖子</div>
+                    </div>
+                    <div class="card">
+                        <h3>总订单数</h3>
+                        <div class="stat-value" id="statOrders">-</div>
+                        <div class="stat-label">支付订单</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>订单统计</h2>
+                <div style="margin-bottom: 16px;">
+                    <select id="statDays" onchange="loadStatistics()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px;">
+                        <option value="7">最近7天</option>
+                        <option value="30">最近30天</option>
+                        <option value="90">最近90天</option>
+                    </select>
+                </div>
+                <div id="statsTable"></div>
             </div>
         </div>
 
@@ -708,6 +744,42 @@
             });
             if (res.success) { alert('调整成功'); loadMembers(); }
             else { alert('调整失败: ' + (res.error || '未知错误')); }
+        }
+        
+        // ========== 数据统计 ==========
+        async function loadStatistics() {
+            const days = document.getElementById('statDays').value;
+            try {
+                const res = await fetchApi(`${API_BASE}/api/v1/statistics?days=${days}`);
+                if (res.success) {
+                    // 更新概览
+                    document.getElementById('statUsers').textContent = res.data.totals.users;
+                    document.getElementById('statPosts').textContent = res.data.totals.posts;
+                    
+                    // 获取订单数
+                    const ordersRes = await fetchApi(`${API_BASE}/api/v1/payment/orders?page=1&limit=1`);
+                    if (ordersRes.success) {
+                        document.getElementById('statOrders').textContent = ordersRes.data.total;
+                    }
+                    
+                    // 渲染统计表格
+                    const table = document.getElementById('statsTable');
+                    if (res.data.daily && res.data.daily.length > 0) {
+                        let html = '<table><thead><tr><th>日期</th><th>类型</th><th>数值</th></tr></thead><tbody>';
+                        res.data.daily.forEach(row => {
+                            html += `<tr>
+                                <td>${row.stat_date}</td>
+                                <td>${row.stat_type}</td>
+                                <td>${row.stat_value}</td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table>';
+                        table.innerHTML = html;
+                    } else {
+                        table.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">暂无统计数据</p>';
+                    }
+                }
+            } catch (e) { console.error('加载统计失败', e); }
         }
         
         // ========== 支付管理 ==========
