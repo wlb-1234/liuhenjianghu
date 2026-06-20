@@ -46,6 +46,31 @@ WX_PUBLIC_APPID=             # 公众号AppID（如有）
 WX_NOTIFY_URL=https://liuhenjianghu-production.up.railway.app/api/v1/payment/notify
 ```
 
+## 关键配置
+
+### 数据库连接（重要）
+沙箱环境使用 Supabase 直连 IPv4 地址：
+```
+DATABASE_URL=postgresql://postgres.hmlqsbhbbclbzfuutrie:[密码]@13.114.6.6:5432/postgres?sslmode=disable
+```
+
+### Railway 环境变量
+部署到 Railway 时，需要设置：
+```
+DATABASE_URL=[Railway PostgreSQL 连接字符串]
+WX_MCHID=1114226626
+WX_API_KEY=[从商户平台获取]
+WX_APPID=[移动应用ID，审核通过后获取]
+```
+
+### 本地 .bashrc 配置
+```bash
+export SUPABASE_URL="https://hmlqsbhbbclbzfuutrie.supabase.co"
+export SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+export SUPABASE_DB_PASSWORD="[数据库密码]"
+export DATABASE_URL="postgresql://postgres.hmlqsbhbbclbzfuutrie:[密码]@13.114.6.6:5432/postgres?sslmode=disable"
+```
+
 ## 待完成
 - [ ] 获取 AppID（移动应用审核中）
 - [ ] 获取 API密钥（从微信支付商户平台）

@@ -6,7 +6,7 @@
 > - 每次完成新功能后请说"更新重建数据包"
 > - 重要更新请在 CHANGELOG.md 中记录
 > 
-> **版本**：v1.2.0  
+> **版本**：v1.2.1  
 > **最后更新**：2026-06-20
 
 ---
@@ -50,7 +50,11 @@ cd liuhenjianghu
 
 ### 步骤 3：创建数据库
 ```bash
-psql "postgresql://postgres:[密码]@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres"
+# 沙箱环境使用直连 IPv4 地址
+DATABASE_URL="postgresql://postgres.[密码]@13.114.6.6:5432/postgres?sslmode=disable"
+
+# Railway 环境直接设置 Railway PostgreSQL 连接字符串
+psql "[Railway PostgreSQL 连接字符串]"
 \i recovery_package/01_SCHEMA.sql
 \i recovery_package/02_SEED_DATA.sql
 ```

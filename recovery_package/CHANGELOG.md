@@ -4,6 +4,18 @@
 
 ---
 
+## v1.2.1 (2026-06-20)
+
+### 修复
+- **数据库连接问题**：将 DATABASE_URL 从域名改为直连 IPv4 地址 `13.114.6.6`
+- 解决沙箱环境 DNS 解析到 IPv6 导致 `ENETUNREACH` 错误
+
+### 配置文件
+- `.env` - DATABASE_URL 使用 `13.114.6.6` 直连 IP
+- `04_CODE_PATCHES/wechat_payment.patch.md` - 添加数据库连接说明
+
+---
+
 ## v1.2.0 (2026-06-20)
 
 ### 新增
