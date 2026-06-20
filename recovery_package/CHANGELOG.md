@@ -4,6 +4,34 @@
 
 ---
 
+## v1.2.0 (2026-06-20)
+
+### 新增
+- 添加微信支付功能补丁 (wechat_payment.patch.md)
+- 新增支付相关接口文档
+
+### 新增文件
+- `server/src/config/wechat.ts` - 微信支付配置
+- `server/src/utils/wechatPay.ts` - 微信支付工具函数
+- `server/src/routes/payment.ts` - 支付路由
+
+### 修改文件
+- `server/src/index.ts` - 添加 dotenv 导入和支付路由注册
+- `server/public/admin.html` - 添加支付管理页面
+
+### 数据库
+- payment_orders 表（支付订单）
+- user_balances 表（用户余额）
+- balance_transactions 表（余额变动记录）
+- payment_configs 表（支付配置）
+
+### 待完成
+- [ ] 获取 AppID（移动应用审核中）
+- [ ] 获取 API密钥（从微信支付商户平台）
+- [ ] 配置微信支付回调地址
+
+---
+
 ## v1.1.0 (2026-06-19)
 
 ### 新增

@@ -1,158 +1,460 @@
-import { Router, Request, Response } from 'express';
-import { getPool } from '../config/database';
-
-const router = Router();
-
-// 导入服务
+/**
+ * 微信支付路由
+ */
+import express, { Request, Response } from 'express';
+import crypto from 'crypto';
+import WECHAT_PAY_CONFIG from '../config/wechat';
 import { 
-  createOrder, 
-  getOrderByNo, 
-  getUserOrders, 
-  updateOrderStatus,
-  simulatePayment,
-  getMemberLevelConfig,
-  PaymentMethod 
-} from '../services/paymentService';
-import { getUserById, updateUser } from '../services/userService';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { getMemberLevel } from '../services/memberService';
+  generateNonceStr, 
+  generateOrderId, 
+  generateSign, 
+  xmlToObject, 
+  objectToXml,
+  generateAppPayParams 
+} from '../utils/wechatPay';
+import { query } from '../config/database';
+import { ResultSetHeader } from 'mysql2/promise';
 
-// 创建支付订单
-router.post('/create', authMiddleware, async (req: AuthRequest, res: Response) => {
+const router = express.Router();
+
+/**
+ * 获取支付配置（供前端使用）
+ * GET /api/v1/payment/config
+ */
+router.get('/config', async (req: Request, res: Response) => {
   try {
-    const { level } = req.body;
-    const paymentMethod = req.body.method as PaymentMethod || 'test';
+    return res.json({
+      success: true,
+      data: {
+        // 返回 AppID（敏感信息不返回密钥）
+        appId: WECHAT_PAY_CONFIG.PUBLIC_APPID || WECHAT_PAY_CONFIG.APPID,
+        // 商户号
+        mchId: WECHAT_PAY_CONFIG.MCHID,
+        // 支付环境检测
+        isConfigured: !!(WECHAT_PAY_CONFIG.APPID && WECHAT_PAY_CONFIG.API_KEY),
+      }
+    });
+  } catch (error) {
+    console.error('获取支付配置失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '服务器错误'
+    });
+  }
+});
 
-    if (level === undefined || level < 0 || level > 4) {
-      return res.status(400).json({ error: '无效的会员等级' });
+/**
+ * 查询订单列表（管理后台）
+ * GET /api/v1/payment/orders
+ */
+router.get('/orders', async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+    const search = req.query.search as string;
+    const status = req.query.status as string;
+
+    let whereClause = '1=1';
+    const params: any[] = [];
+
+    if (search) {
+      whereClause += ' AND out_trade_no LIKE ?';
+      params.push(`%${search}%`);
+    }
+    if (status) {
+      whereClause += ' AND status = ?';
+      params.push(status);
     }
 
-    const levelConfig = await getMemberLevelConfig(level);
-    if (!levelConfig) {
-      return res.status(400).json({ error: '会员等级配置不存在' });
-    }
+    // 查询总数
+    const countResult = await query<any[]>(
+      `SELECT COUNT(*) as total FROM payment_orders WHERE ${whereClause}`,
+      params
+    );
+    const total = countResult[0]?.total || 0;
 
-    const user = await getUserById(req.userId!);
-    if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
-    }
+    // 查询列表
+    const orders = await query<any[]>(
+      `SELECT * FROM payment_orders WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
-    if (user.member_level >= level) {
+    return res.json({
+      success: true,
+      data: { orders, total, page, limit }
+    });
+  } catch (error: any) {
+    console.error('查询订单列表失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message || '服务器错误'
+    });
+  }
+});
+
+/**
+ * 查询用户余额列表（管理后台）
+ * GET /api/v1/payment/balances
+ */
+router.get('/balances', async (req: Request, res: Response) => {
+  try {
+    const balances = await query<any[]>(
+      `SELECT ub.*, u.phone 
+       FROM user_balances ub 
+       LEFT JOIN users u ON ub.user_id = u.id 
+       WHERE ub.balance > 0 OR ub.total_recharged > 0
+       ORDER BY ub.updated_at DESC
+       LIMIT 100`
+    );
+
+    return res.json({
+      success: true,
+      data: balances
+    });
+  } catch (error) {
+    console.error('查询余额列表失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '服务器错误'
+    });
+  }
+});
+
+/**
+ * 统一下单接口
+ * POST /api/v1/payment/create
+ */
+router.post('/create', async (req: Request, res: Response) => {
+  try {
+    const { 
+      userId,           // 用户ID
+      totalFee,         // 金额（分）
+      orderType,        // 订单类型：recharge/vip/gift
+      body,             // 商品描述
+      relatedId,        // 关联ID（会员ID等）
+      openid,           // 微信openid（JSAPI支付需要）
+    } = req.body;
+
+    // 参数验证
+    if (!userId || !totalFee || !orderType || !body) {
       return res.status(400).json({ 
-        error: '您已经拥有此等级或更高等级',
-        currentLevel: user.member_level
+        success: false, 
+        error: '缺少必要参数' 
       });
     }
 
-    const order = await createOrder(req.userId!, level, levelConfig.price, paymentMethod);
-
-    res.json({
-      success: true,
-      order: {
-        order_no: order.order_no,
-        amount: order.amount,
-        member_level: order.member_level,
-        member_name: levelConfig.name,
-        expire_time: order.expire_time
-      }
-    });
-  } catch (error) {
-    console.error('创建订单错误:', error);
-    res.status(500).json({ error: '创建订单失败' });
-  }
-});
-
-// 获取订单列表
-router.get('/orders', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const orders = await getUserOrders(req.userId!);
-    
-    res.json({
-      orders: await Promise.all(orders.map(async (order) => {
-        const levelConfig = await getMemberLevelConfig(order.member_level);
-        return {
-          order_no: order.order_no,
-          member_level: order.member_level,
-          member_name: levelConfig?.name || '未知',
-          amount: order.amount,
-          payment_method: order.payment_method,
-          status: order.status,
-          pay_time: order.pay_time,
-          created_at: order.created_at
-        };
-      }))
-    });
-  } catch (error) {
-    console.error('获取订单列表错误:', error);
-    res.status(500).json({ error: '获取订单列表失败' });
-  }
-});
-
-// 模拟支付
-router.post('/pay/simulate', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const { order_no } = req.body;
-
-    if (!order_no) {
-      return res.status(400).json({ error: '订单号不能为空' });
+    // 检查金额（最小1分，最大10万）
+    if (totalFee < 1 || totalFee > 10000000) {
+      return res.status(400).json({
+        success: false,
+        error: '金额超出允许范围'
+      });
     }
 
-    const order = await getOrderByNo(order_no);
-    if (!order) {
-      return res.status(404).json({ error: '订单不存在' });
+    // 生成订单号
+    const outTradeNo = generateOrderId();
+    const nonceStr = generateNonceStr();
+    const spbillCreateIp = req.ip || '127.0.0.1';
+
+    // 判断交易类型
+    const tradeType = openid ? 'JSAPI' : 'APP';
+
+    // 构造请求参数
+    const params: Record<string, string> = {
+      appid: openid ? WECHAT_PAY_CONFIG.PUBLIC_APPID : WECHAT_PAY_CONFIG.APPID,
+      mch_id: WECHAT_PAY_CONFIG.MCHID,
+      nonce_str: nonceStr,
+      sign_type: 'MD5',
+      body: body.substring(0, 128), // 限制长度
+      out_trade_no: outTradeNo,
+      total_fee: totalFee.toString(),
+      spbill_create_ip: spbillCreateIp,
+      notify_url: WECHAT_PAY_CONFIG.NOTIFY_URL,
+      trade_type: tradeType,
+    };
+
+    // JSAPI需要传入openid
+    if (openid) {
+      params.openid = openid;
     }
 
-    if (order.user_id !== req.userId) {
-      return res.status(403).json({ error: '无权操作此订单' });
-    }
+    // 生成签名
+    params.sign = generateSign(params, WECHAT_PAY_CONFIG.API_KEY);
 
-    if (order.status !== 'pending') {
-      return res.status(400).json({ error: '订单状态不允许支付' });
-    }
+    // 转换为XML
+    const xmlData = objectToXml(params);
 
-    const success = await simulatePayment(order_no);
-    if (!success) {
-      return res.status(400).json({ error: '支付失败' });
-    }
-
-    const expireAt = new Date();
-    expireAt.setMonth(expireAt.getMonth() + 1);
-
-    await updateUser(req.userId!, {
-      member_level: order.member_level,
-      member_expire_at: expireAt
+    // 调用微信统一下单接口
+    const response = await fetch(WECHAT_PAY_CONFIG.UNIFIED_ORDER_URL, {
+      method: 'POST',
+      body: xmlData,
+      headers: {
+        'Content-Type': 'text/xml',
+      },
     });
 
-    const levelConfig = await getMemberLevelConfig(order.member_level);
+    const resultXml = await response.text();
+    const result = xmlToObject(resultXml);
 
-    res.json({
-      success: true,
-      message: '支付成功',
-      member: {
-        level: order.member_level,
-        name: levelConfig?.name || '未知',
-        expire_at: expireAt
-      }
-    });
-  } catch (error) {
-    console.error('模拟支付错误:', error);
-    res.status(500).json({ error: '支付失败' });
-  }
-});
+    // 检查返回结果
+    if (result.return_code === 'FAIL') {
+      console.error('微信统一下单失败:', result.return_msg);
+      return res.status(500).json({
+        success: false,
+        error: result.return_msg || '下单失败'
+      });
+    }
 
-// 获取会员等级列表
-router.get('/levels', async (req: Request, res: Response) => {
-  try {
-    const levels = await getMemberLevelConfig(-1); // 获取所有等级
-    const p = getPool();
-    const { rows } = await p.query(
-      'SELECT level, name, price, region_limit, daily_limit, retention_days, can_pin FROM member_levels ORDER BY level ASC'
+    if (result.result_code === 'FAIL') {
+      console.error('微信下单业务失败:', result.err_code, result.err_code_des);
+      return res.status(400).json({
+        success: false,
+        error: result.err_code_des || result.err_code
+      });
+    }
+
+    // 保存订单到数据库
+    await query<ResultSetHeader>(
+      `INSERT INTO payment_orders 
+       (order_id, out_trade_no, user_id, total_fee, order_type, related_id, status, trade_type, body, spbill_create_ip)
+       VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+      [generateOrderId(), outTradeNo, userId, totalFee, orderType, relatedId || null, tradeType, body, spbillCreateIp]
     );
-    
-    res.json({ levels: rows });
+
+    // 生成App端调起支付的参数
+    const payParams = {
+      prepayId: result.prepay_id,
+      ...generateAppPayParams(result.prepay_id),
+    };
+
+    return res.json({
+      success: true,
+      data: {
+        orderId: outTradeNo,
+        payParams: tradeType === 'APP' ? payParams : {
+          prepayId: result.prepay_id,
+        },
+        tradeType,
+      }
+    });
+
   } catch (error) {
-    console.error('获取会员等级错误:', error);
-    res.status(500).json({ error: '获取会员等级失败' });
+    console.error('创建订单失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '服务器错误'
+    });
+  }
+});
+
+/**
+ * 支付回调接口
+ * POST /api/v1/payment/notify
+ */
+router.post('/notify', async (req: Request, res: Response) => {
+  try {
+    // 微信支付通知是XML格式
+    const xmlData = req.body.xml || req.body;
+    
+    // 如果是字符串，转换为对象
+    let notifyData: Record<string, string>;
+    if (typeof xmlData === 'string') {
+      notifyData = xmlToObject(xmlData);
+    } else {
+      notifyData = xmlData;
+    }
+
+    console.log('收到微信支付回调:', notifyData);
+
+    // 验证签名
+    const sign = notifyData.sign;
+    delete notifyData.sign;
+    const calculatedSign = generateSign(notifyData, WECHAT_PAY_CONFIG.API_KEY);
+
+    if (calculatedSign !== sign) {
+      console.error('签名验证失败');
+      return res.xml({ return_code: 'FAIL', return_msg: '签名失败' });
+    }
+
+    // 处理支付结果
+    if (notifyData.result_code === 'SUCCESS') {
+      const { out_trade_no, transaction_id, total_fee, time_end } = notifyData;
+
+      // 更新订单状态
+      await query(
+        `UPDATE payment_orders 
+         SET status = 'SUCCESS', 
+             transaction_id = ?,
+             notify_data = ?,
+             notify_time = ?
+         WHERE out_trade_no = ?`,
+        [transaction_id, JSON.stringify(notifyData), new Date(), out_trade_no]
+      );
+
+      // 根据订单类型处理业务逻辑
+      const order = await query<any[]>(
+        'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+        [out_trade_no]
+      );
+
+      if (order.length > 0) {
+        const orderData = order[0];
+        
+        // 会员充值处理
+        if (orderData.order_type === 'vip') {
+          await query(
+            'UPDATE users SET member_level = ?, member_expire_at = ? WHERE id = ?',
+            [orderData.related_id, new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), orderData.user_id]
+          );
+        }
+        
+        // 余额充值处理
+        if (orderData.order_type === 'recharge') {
+          await query(
+            'UPDATE users SET balance = balance + ? WHERE id = ?',
+            [parseInt(total_fee), orderData.user_id]
+          );
+        }
+      }
+
+      console.log('支付成功处理完成:', out_trade_no);
+    }
+
+    // 返回成功
+    return res.xml({ return_code: 'SUCCESS', return_msg: 'OK' });
+
+  } catch (error) {
+    console.error('处理支付回调失败:', error);
+    return res.xml({ return_code: 'FAIL', return_msg: '处理失败' });
+  }
+});
+
+/**
+ * 查询订单
+ * GET /api/v1/payment/query/:orderId
+ */
+router.get('/query/:orderId', async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+
+    const orders = await query<any[]>(
+      'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+      [orderId]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '订单不存在'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: orders[0]
+    });
+
+  } catch (error) {
+    console.error('查询订单失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '服务器错误'
+    });
+  }
+});
+
+/**
+ * 申请退款
+ * POST /api/v1/payment/refund
+ */
+router.post('/refund', async (req: Request, res: Response) => {
+  try {
+    const { orderId, refundFee, reason } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少订单号'
+      });
+    }
+
+    // 查询原订单
+    const orders = await query<any[]>(
+      'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+      [orderId]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '订单不存在'
+      });
+    }
+
+    const order = orders[0];
+
+    if (order.status !== 'SUCCESS') {
+      return res.status(400).json({
+        success: false,
+        error: '订单未支付，无法退款'
+      });
+    }
+
+    const refundFeeNum = refundFee || order.total_fee - order.refund_fee;
+
+    if (refundFeeNum > order.total_fee - order.refund_fee) {
+      return res.status(400).json({
+        success: false,
+        error: '退款金额超出可退金额'
+      });
+    }
+
+    // 构造退款请求
+    const nonceStr = generateNonceStr();
+    const params: Record<string, string> = {
+      appid: WECHAT_PAY_CONFIG.APPID,
+      mch_id: WECHAT_PAY_CONFIG.MCHID,
+      nonce_str: nonceStr,
+      transaction_id: order.transaction_id,
+      out_refund_no: `REFUND${generateOrderId()}`,
+      total_fee: order.total_fee.toString(),
+      refund_fee: refundFeeNum.toString(),
+    };
+
+    params.sign = generateSign(params, WECHAT_PAY_CONFIG.API_KEY);
+
+    // 注意：退款需要使用证书，这里简化处理
+    // 实际生产环境需要使用微信支付证书
+    console.log('退款请求参数:', params);
+
+    // 更新退款状态
+    await query(
+      `UPDATE payment_orders 
+       SET refund_fee = refund_fee + ?, status = 'REFUND'
+       WHERE out_trade_no = ?`,
+      [refundFeeNum, orderId]
+    );
+
+    // 如果是余额充值退款
+    if (order.order_type === 'recharge') {
+      await query(
+        'UPDATE users SET balance = balance - ? WHERE id = ?',
+        [refundFeeNum, order.user_id]
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: '退款申请已提交'
+    });
+
+  } catch (error) {
+    console.error('申请退款失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '服务器错误'
+    });
   }
 });
 

@@ -6,8 +6,8 @@
 > - 每次完成新功能后请说"更新重建数据包"
 > - 重要更新请在 CHANGELOG.md 中记录
 > 
-> **版本**：v1.1.0  
-> **最后更新**：2026-06-19
+> **版本**：v1.2.0  
+> **最后更新**：2026-06-20
 
 ---
 
@@ -26,7 +26,8 @@ recovery_package/
 ├── 04_CODE_PATCHES/       # 代码补丁
 │   ├── admin_login.patch.md
 │   ├── static_path.patch.md
-│   └── api_aliases.patch.md
+│   ├── api_aliases.patch.md
+│   └── wechat_payment.patch.md
 ├── 05_DEPLOY/             # 部署配置
 │   └── railway.json
 └── 06_TEST_DATA/          # 测试数据
@@ -73,9 +74,24 @@ git push origin main
 - **账号**: 15613594588
 - **密码**: admin123
 
+### 微信支付功能
+- **商户号**: 1114226626 (已入驻)
+- **AppID**: 待配置（移动应用审核中）
+- **API密钥**: 待从微信支付商户平台获取
+- **回调地址**: https://liuhenjianghu-production.up.railway.app/api/v1/payment/notify
+
 ### API 路由别名
 - `/api/v1/revenue/stats` → `/api/v1/revenue/overview`
 - `/api/v1/members/levels` → `/api/v1/members/config/levels`
+
+### 支付相关接口
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/payment/config` | GET | 获取支付配置 |
+| `/api/v1/payment/create` | POST | 创建支付订单 |
+| `/api/v1/payment/notify` | POST | 支付回调 |
+| `/api/v1/payment/orders` | GET | 订单列表 |
+| `/api/v1/payment/balances` | GET | 用户余额 |
 
 ---
 

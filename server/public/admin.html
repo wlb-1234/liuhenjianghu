@@ -129,6 +129,7 @@
             <button class="nav-btn" onclick="showTab('whitelist')">IP白名单</button>
             <button class="nav-btn" onclick="showTab('revenue')">收益统计</button>
             <button class="nav-btn" onclick="showTab('members')">会员管理</button>
+            <button class="nav-btn" onclick="showTab('payment')">支付管理</button>
             <button class="nav-btn" onclick="showTab('docs')">API文档</button>
         </nav>
 
@@ -309,6 +310,65 @@
             </div>
         </div>
 
+        <!-- 支付管理 -->
+        <div id="payment" class="tab-content">
+            <div class="section">
+                <h2>💰 支付配置状态</h2>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="card">
+                        <h3>🏪 商户号</h3>
+                        <div class="stat-value" id="payMchId" style="font-size: 20px;">-</div>
+                        <div class="stat-label">微信支付商户号</div>
+                    </div>
+                    <div class="card">
+                        <h3>📱 AppID</h3>
+                        <div class="stat-value" id="payAppId" style="font-size: 16px;">-</div>
+                        <div class="stat-label">应用ID</div>
+                    </div>
+                    <div class="card">
+                        <h3>🔑 配置状态</h3>
+                        <div id="payConfigStatus" class="stat-value" style="font-size: 18px;">-</div>
+                        <div class="stat-label">支付通道就绪</div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <p style="color: #666; font-size: 13px;">
+                        * AppID 待移动应用审核通过后配置<br>
+                        * API密钥需从微信支付商户平台获取
+                    </p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📋 支付订单</h2>
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="searchOrderId" placeholder="订单号" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 200px;">
+                    <select id="orderStatusFilter" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                        <option value="">全部状态</option>
+                        <option value="PENDING">待支付</option>
+                        <option value="SUCCESS">已支付</option>
+                        <option value="FAILED">失败</option>
+                        <option value="REFUND">已退款</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="loadPaymentOrders()">查询</button>
+                    <button class="btn" style="background: #6c757d; color: white;" onclick="refreshPaymentOrders()">刷新</button>
+                </div>
+                <table>
+                    <thead><tr><th>订单号</th><th>用户ID</th><th>类型</th><th>金额(分)</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                    <tbody id="paymentOrdersTable"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
+                </table>
+                <div id="paymentPagination" style="margin-top: 16px; display: flex; justify-content: center; gap: 8px;"></div>
+            </div>
+
+            <div class="section">
+                <h2>💳 余额账户</h2>
+                <table>
+                    <thead><tr><th>用户ID</th><th>手机号</th><th>当前余额(分)</th><th>累计充值(分)</th><th>更新时间</th></tr></thead>
+                    <tbody id="balanceTable"><tr><td colspan="5" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- 会员管理 -->
         <div id="members" class="tab-content">
             <div class="section">
@@ -467,6 +527,7 @@
             
             if (tabId === 'revenue') loadRevenue();
             if (tabId === 'members') { loadMemberLevels(); loadMembers(); }
+            if (tabId === 'payment') { loadPaymentConfig(); loadPaymentOrders(); loadBalances(); }
         }
         
         async function fetchApi(url, options = {}) {
@@ -647,6 +708,116 @@
             });
             if (res.success) { alert('调整成功'); loadMembers(); }
             else { alert('调整失败: ' + (res.error || '未知错误')); }
+        }
+        
+        // ========== 支付管理 ==========
+        async function loadPaymentConfig() {
+            try {
+                const res = await fetchApi(`${API_BASE}/api/v1/payment/config`);
+                if (res.success) {
+                    const data = res.data;
+                    document.getElementById('payMchId').textContent = data.mchId || '-';
+                    document.getElementById('payAppId').textContent = data.appId || '待配置';
+                    const statusEl = document.getElementById('payConfigStatus');
+                    if (data.isConfigured) {
+                        statusEl.innerHTML = '<span style="color: #1aa034;">✅ 已就绪</span>';
+                    } else {
+                        statusEl.innerHTML = '<span style="color: #e37400;">⚠️ 待配置</span>';
+                    }
+                }
+            } catch(e) {
+                console.error('[PAYMENT] 加载配置失败:', e);
+            }
+        }
+        
+        async function loadPaymentOrders(page = 1) {
+            const searchId = document.getElementById('searchOrderId').value.trim();
+            const status = document.getElementById('orderStatusFilter').value;
+            
+            let url = `${API_BASE}/api/v1/payment/orders?page=${page}&limit=20`;
+            if (searchId) url += `&search=${encodeURIComponent(searchId)}`;
+            if (status) url += `&status=${status}`;
+            
+            const res = await fetchApi(url);
+            if (res.success) {
+                const orders = res.data?.orders || [];
+                document.getElementById('paymentOrdersTable').innerHTML = orders.length ? orders.map(o => `
+                    <tr>
+                        <td style="font-size: 12px; word-break: break-all;">${o.out_trade_no}</td>
+                        <td>${o.user_id}</td>
+                        <td>${getOrderTypeName(o.order_type)}</td>
+                        <td>¥${(o.total_fee / 100).toFixed(2)}</td>
+                        <td><span class="badge ${getStatusClass(o.status)}">${getStatusName(o.status)}</span></td>
+                        <td style="font-size: 12px;">${new Date(o.created_at).toLocaleString()}</td>
+                        <td>
+                            ${o.status === 'SUCCESS' ? `<button class="btn btn-danger btn-sm" onclick="refundOrder('${o.out_trade_no}')">退款</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('') : '<tr><td colspan="7" class="loading">暂无订单</td></tr>';
+                
+                // 分页
+                const total = res.data?.total || 0;
+                const totalPages = Math.ceil(total / 20);
+                renderPaymentPagination(page, totalPages);
+            }
+        }
+        
+        function renderPaymentPagination(current, total) {
+            const el = document.getElementById('paymentPagination');
+            if (total <= 1) { el.innerHTML = ''; return; }
+            let html = '';
+            for (let i = 1; i <= total; i++) {
+                html += `<button class="btn ${i === current ? 'btn-primary' : ''}" style="padding: 6px 12px;" onclick="loadPaymentOrders(${i})">${i}</button>`;
+            }
+            el.innerHTML = html;
+        }
+        
+        function refreshPaymentOrders() { loadPaymentOrders(); }
+        
+        function getOrderTypeName(type) {
+            const map = { 'recharge': '余额充值', 'vip': '会员升级', 'gift': '礼物' };
+            return map[type] || type;
+        }
+        
+        function getStatusName(status) {
+            const map = { 'PENDING': '待支付', 'SUCCESS': '已支付', 'FAILED': '失败', 'REFUND': '已退款' };
+            return map[status] || status;
+        }
+        
+        function getStatusClass(status) {
+            const map = { 'PENDING': 'badge-warning', 'SUCCESS': 'badge-success', 'FAILED': 'badge-danger', 'REFUND': 'badge-warning' };
+            return map[status] || '';
+        }
+        
+        async function refundOrder(orderId) {
+            if (!confirm('确定要退款该订单吗？')) return;
+            const reason = prompt('请输入退款原因（选填）：') || '';
+            const res = await fetchApi(`${API_BASE}/api/v1/payment/refund`, {
+                method: 'POST',
+                body: JSON.stringify({ orderId, reason })
+            });
+            if (res.success) {
+                alert('退款申请已提交');
+                loadPaymentOrders();
+            } else {
+                alert('退款失败: ' + (res.error || '未知错误'));
+            }
+        }
+        
+        async function loadBalances() {
+            const res = await fetchApi(`${API_BASE}/api/v1/payment/balances`);
+            if (res.success) {
+                const balances = res.data || [];
+                document.getElementById('balanceTable').innerHTML = balances.length ? balances.map(b => `
+                    <tr>
+                        <td>${b.user_id}</td>
+                        <td>${b.phone || '-'}</td>
+                        <td>¥${(b.balance / 100).toFixed(2)}</td>
+                        <td>¥${(b.total_recharged / 100).toFixed(2)}</td>
+                        <td style="font-size: 12px;">${new Date(b.updated_at).toLocaleString()}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" class="loading">暂无数据</td></tr>';
+            }
         }
         
         // IP白名单

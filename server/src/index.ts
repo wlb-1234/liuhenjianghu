@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,6 +8,7 @@ import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
 import { getSupabaseClient } from './storage/database/supabase-client.js';
+import { query } from './config/database.js';
 import crypto from 'crypto';
 import regionsRouter from './routes/regions.js';
 import statsRouter from './routes/stats.js';
@@ -44,6 +46,7 @@ import ordersRouter from './routes/orders.js';
 import dailyTasksRouter from './routes/dailyTasks.js';
 import shareRouter from './routes/share.js';
 import pointsRouter from './routes/points.js';
+import paymentRouter from './routes/payment.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -78,14 +81,37 @@ app.get('/admin-mobile', (req: Request, res: Response) => {
   res.sendFile(path.join(publicDir, 'admin-mobile.html'));
 });
 
+// 测试数据库连接
+app.get('/api/v1/dbtest', async (req: Request, res: Response) => {
+  try {
+    const result = await query('SELECT inet_server_addr() as ip, current_database() as db');
+    console.log('✅ DB Test Success:', result.rows);
+    res.json({ success: true, data: result.rows });
+  } catch(e: any) {
+    console.error('❌ DB Test Error:', e.message);
+    res.json({ success: false, error: e.message });
+  }
+});
+
 // 健康检查
-app.get('/api/v1/health', (req: Request, res: Response) => {
-  res.json({ 
-    status: 'ok', 
-    service: 'China Regions API',
-    version: '3.0.0',
-    timestamp: new Date().toISOString()
-  });
+app.get('/api/v1/health', async (req: Request, res: Response) => {
+  try {
+    const dbTest = await query('SELECT current_database(), inet_server_addr() as server_ip');
+    res.json({ 
+      status: 'ok', 
+      service: 'China Regions API',
+      version: '3.0.0',
+      timestamp: new Date().ISOString,
+      database: dbTest.rows[0]?.current_database,
+      dbServer: dbTest.rows[0]?.server_ip
+    });
+  } catch(e: any) {
+    res.json({ 
+      status: 'error', 
+      error: e.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // 管理员登录
@@ -264,6 +290,7 @@ app.get('/api/v1/init-admin', async (req: Request, res: Response) => {
 });
 
 app.use('/api/v1/points', pointsRouter);
+app.use('/api/v1/payment', paymentRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 
