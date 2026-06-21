@@ -14,7 +14,6 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
 import { useRouter } from '@/hooks/useSafeRouter';
 import { apiService } from '@/services/api';
 import { useAuthStore } from '@/contexts/AuthContext';
@@ -114,13 +113,7 @@ export default function PostDetailScreen({ postId }: PostDetailScreenProps) {
         title: '漂流信 - 来自江湖的你',
       });
     } catch (error: any) {
-      // 如果内置分享失败，使用剪贴板
-      try {
-        await Clipboard.setStringAsync(`${shareContent}\n\n${shareUrl}`);
-        Alert.alert('已复制', '分享链接已复制到剪贴板');
-      } catch {
-        Alert.alert('分享失败', '请稍后重试');
-      }
+      Alert.alert('分享失败', '请稍后重试');
     }
   };
 
