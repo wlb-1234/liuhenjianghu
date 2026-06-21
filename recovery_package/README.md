@@ -1,7 +1,7 @@
 # 重建数据包
 
 ## 版本
-**v1.5.0** (2026-06-20)
+**v1.6.0** (2026-06-21)
 
 ## 概述
 包含应用完整的数据结构、配置、代码补丁，可快速重建应用。
@@ -21,7 +21,9 @@ recovery_package/
     ├── api_aliases.patch.md       # API 路由别名
     ├── wechat_payment.patch.md    # 微信支付功能
     ├── order_balance.patch.md     # 订单与余额功能
-    └── admin_management.patch.md  # 管理后台功能
+    ├── admin_management.patch.md  # 管理后台功能
+    ├── comments.patch.md          # 评论功能
+    └── feedback.patch.md          # 意见反馈功能
 ```
 
 ## 重建步骤
@@ -72,7 +74,9 @@ cd server && pnpm run dev
 | 微信支付 | ✅ | 待 AppID 配置 |
 | 订单管理 | ✅ | 用户订单历史 |
 | 余额系统 | ✅ | 余额充值消费 |
-| 管理后台 | ✅ | 用户/支付/内容管理 |
+| 意见反馈 | ✅ | 用户提交反馈 |
+| 关于我们 | ✅ | APP介绍页面 |
+| 管理后台 | ✅ | 用户/支付/内容/反馈管理 |
 
 ## 注意事项
 

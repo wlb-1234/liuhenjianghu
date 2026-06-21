@@ -487,6 +487,22 @@ CREATE POLICY "user_own_points" ON user_points FOR SELECT TO authenticated USING
 CREATE POLICY "user_own_points_history" ON points_history FOR SELECT TO authenticated USING (auth.uid() = user_id);
 CREATE POLICY "user_own_signs" ON daily_signs FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+-- 19. 意见反馈表
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    type VARCHAR(32) NOT NULL DEFAULT 'suggestion',  -- suggestion/bug/other
+    content TEXT NOT NULL,
+    contact VARCHAR(100),  -- 联系方式
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',  -- pending/processed/rejected
+    reply TEXT,  -- 回复内容
+    replied_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedbacks_status ON feedbacks(status);
+CREATE INDEX IF NOT EXISTS idx_feedbacks_user ON feedbacks(user_id);
+
 -- =============================================
 -- 完成
 -- =============================================

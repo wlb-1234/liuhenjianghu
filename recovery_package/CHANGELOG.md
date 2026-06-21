@@ -1,5 +1,19 @@
 # 变更日志
 
+## v1.6.0 (2026-06-21)
+### 新增功能
+- 意见反馈功能 `/feedback` - 用户提交建议/BUG/其他反馈
+- 关于我们页面 `/about` - APP介绍、版本信息、联系方式
+- 管理后台反馈管理 `/admin/feedbacks` - 查看和回复用户反馈
+
+### 数据库更新
+- 新增 `feedbacks` 表
+
+### 新增补丁
+- `04_CODE_PATCHES/feedback.patch.md` - 意见反馈功能
+
+---
+
 ## v1.5.0 (2026-06-20)
 ### 新增功能
 - App启动屏和图标配置 - Expo Splash Screen 集成
