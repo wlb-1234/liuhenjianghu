@@ -216,6 +216,11 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
             <Text style={styles.menuText}>我的订单</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/favorites')}>
+            <Text style={styles.menuIcon}>藏</Text>
+            <Text style={styles.menuText}>我的收藏</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>评</Text>
             <Text style={styles.menuText}>我的留言</Text>
@@ -224,6 +229,16 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>赞</Text>
             <Text style={styles.menuText}>我的点赞</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/feedback')}>
+            <Text style={styles.menuIcon}>馈</Text>
+            <Text style={styles.menuText}>意见反馈</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/about')}>
+            <Text style={styles.menuIcon}>关</Text>
+            <Text style={styles.menuText}>关于我们</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem} onPress={() => onSettings && onSettings()}>

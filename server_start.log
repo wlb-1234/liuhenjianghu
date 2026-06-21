@@ -1,0 +1,349 @@
+检查根目录 pre_install.py
+执行：python /source/preview/pre_install.py
+lockfile already exists
+检查根目录 post_install.py
+执行：python /source/preview/post_install.py
+==================== 开始启动 ====================
+开始执行服务启动脚本（start_dev.sh）...
+正在检查依赖命令和目录是否存在...
+端口未占用：9091
+端口已占用：5000
+正在关闭进程：17524
+==================== 启动 server 服务 ====================
+正在执行：pnpm run dev (server)
+server 服务已启动，进程 ID：19328
+==================== 启动 Expo 项目 ====================
+开始启动 Expo 服务，端口 5000
+/workspace/projects/client /workspace/projects
+/workspace/projects
+
+> server@2.0.0 dev /workspace/projects/server
+> bash ../.cozeproj/scripts/server_dev_run.sh
+
+==================== Server Dev Run ====================
+Server 目录：/workspace/projects/server
+Server 端口：9091
+日志文件：/app/work/logs/bypass/server.log
+启动 server 服务...
+[CLIENT] Starting project at /workspace/projects/client
+[CLIENT] Starting Metro Bundler
+[CLIENT] warning: Bundler cache is empty, rebuilding (this may take a minute)
+[CLIENT] Waiting on http://localhost:5000
+[CLIENT] Logs for your project will appear below.
+[SERVER] [Webhook] 配置更新: console -> (未设置URL)
+[SERVER] [Webhook] 告警服务已初始化
+[SERVER] 🔍 process.env.DATABASE_URL: 已设置
+[SERVER] 🔍 使用 .env DATABASE_URL 配置: postgresql://postgres.hmlqsbhbbclbzfuutrie:****@13.114.6.6:5432/postgres?sslmode=disable
+[SERVER] 🔍 创建数据库连接池...
+[SERVER] ✅ 数据库连接池已创建
+[SERVER] [Cache] Using memory cache (no Redis URL provided)
+[SERVER] [AlertSystem] Initialized
+[SERVER] [Server] China Regions API v3.0.0 started on port 9091
+[SERVER] [Server] Admin UI: http://localhost:9091/admin
+[SERVER] [Server] API Docs: http://localhost:9091/api-docs
+[SERVER] [Server] Health: http://localhost:9091/api/v1/health
+Expo 环境变量配置：
+EXPO_PUBLIC_BACKEND_BASE_URL=https://baf078a4-cce6-4564-9266-2bd1e1b27e15.dev.coze.site
+EXPO_PACKAGER_PROXY_URL=https://baf078a4-cce6-4564-9266-2bd1e1b27e15.dev.coze.site
+EXPO_PUBLIC_COZE_PROJECT_ID=7640621029118738466
+所有服务已启动。Server PID: 19328, Expo PID: 19329
+检查 Server 服务端口：0.0.0.0:9091
+端口可连接：0.0.0.0:9091
+检查 Expo 服务端口：0.0.0.0:5000
+端口可连接：0.0.0.0:5000
+服务端口检查完成
+检查根目录 post_run.py
+==================== 服务启动完成 ====================
+[SERVER] [200] GET /api/v1/health 475ms - 07ec3df1-9cd3-4faf-b829-0ce87526777b
+[SERVER] 获取反馈列表失败: error: relation "feedbacks" does not exist
+[SERVER]     at /workspace/projects/node_modules/.pnpm/pg-pool@3.11.0_pg@8.17.2/node_modules/pg-pool/index.js:45:11
+[SERVER]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[SERVER]     at async <anonymous> (/workspace/projects/server/src/routes/feedbacks.ts:65:24) {
+[SERVER]   length: 108,
+[SERVER]   severity: 'ERROR',
+[SERVER]   code: '42P01',
+[SERVER]   detail: undefined,
+[SERVER]   hint: undefined,
+[SERVER]   position: '15',
+[SERVER]   internalPosition: undefined,
+[SERVER]   internalQuery: undefined,
+[SERVER]   where: undefined,
+[SERVER]   schema: undefined,
+[SERVER]   table: undefined,
+[SERVER]   column: undefined,
+[SERVER]   dataType: undefined,
+[SERVER]   constraint: undefined,
+[SERVER]   file: 'parse_relation.c',
+[SERVER]   line: '1449',
+[SERVER]   routine: 'parserOpenTable'
+[SERVER] }
+[SERVER] [ALERT] HIGH_ERROR_RATE: 错误率过高: 50.00%
+[SERVER] [500] GET /api/v1/feedbacks/admin/list 99ms - 06ad4d1c-d771-481b-ba68-0ea7bc83a316
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[SERVER] [200] GET /api/v1/health 1084ms - a3694801-c9b4-4a27-98e8-7190bcecfd58
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[SERVER] [200] GET /api/v1/theme 1ms - 9a3de4c5-2c83-44d6-b1a1-dc975623955a
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[CLIENT] [Metro Proxy] Forwarding GET /api/v1/theme
+[SERVER] 8:42:54 PM [tsx] change in ./src/routes/feedbacks.ts Restarting...
+[SERVER] c[Webhook] 配置更新: console -> (未设置URL)
+[SERVER] [Webhook] 告警服务已初始化
+[SERVER] 🔍 process.env.DATABASE_URL: 已设置
+[SERVER] 🔍 使用 .env DATABASE_URL 配置: postgresql://postgres.hmlqsbhbbclbzfuutrie:****@13.114.6.6:5432/postgres?sslmode=disable
+[SERVER] 🔍 创建数据库连接池...
+[SERVER] ✅ 数据库连接池已创建
+[SERVER] [Cache] Using memory cache (no Redis URL provided)
+[SERVER] [AlertSystem] Initialized
+[SERVER] [Server] China Regions API v3.0.0 started on port 9091
+[SERVER] [Server] Admin UI: http://localhost:9091/admin
+[SERVER] [Server] API Docs: http://localhost:9091/api-docs
+[SERVER] [Server] Health: http://localhost:9091/api/v1/health
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables
+[CLIENT] | Uniwind Error - Theme light is missing variable --background
+[CLIENT] | Uniwind Error - Theme light is missing variable --foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --muted
+[CLIENT] | Uniwind Error - Theme light is missing variable --default
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent
+[CLIENT] | Uniwind Error - Theme light is missing variable --accent-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-background
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-placeholder
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-border
+[CLIENT] | Uniwind Error - Theme light is missing variable --success
+[CLIENT] | Uniwind Error - Theme light is missing variable --success-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning
+[CLIENT] | Uniwind Error - Theme light is missing variable --warning-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger
+[CLIENT] | Uniwind Error - Theme light is missing variable --danger-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment
+[CLIENT] | Uniwind Error - Theme light is missing variable --segment-foreground
+[CLIENT] | Uniwind Error - Theme light is missing variable --border
+[CLIENT] | Uniwind Error - Theme light is missing variable --separator
+[CLIENT] | Uniwind Error - Theme light is missing variable --focus
+[CLIENT] | Uniwind Error - Theme light is missing variable --link
+[CLIENT] | Uniwind Error - Theme light is missing variable --cinnabar
+[CLIENT] | Uniwind Error - Theme light is missing variable --ink
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold
+[CLIENT] | Uniwind Error - Theme light is missing variable --paper
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-light
+[CLIENT] | Uniwind Error - Theme light is missing variable --gold-dark
+[CLIENT] | Uniwind Error - Theme light is missing variable --surface-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --overlay-shadow
+[CLIENT] | Uniwind Error - Theme light is missing variable --field-shadow
+[CLIENT] | Uniwind Error - All themes must have the same variables

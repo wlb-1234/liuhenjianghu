@@ -51,6 +51,7 @@ import paymentRouter from './routes/payment.js';
 import favoritesRouter from './routes/favorites.js';
 import statisticsRouter from './routes/statistics.js';
 import commentsRouter from './routes/comments.js';
+import feedbacksRouter from './routes/feedbacks.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -306,6 +307,7 @@ app.use('/api/v1/favorites', favoritesRouter);
 app.use('/api/v1/statistics', statisticsRouter);
 app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/comments', commentsRouter);
+app.use('/api/v1/feedbacks', feedbacksRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 
 // 错误处理

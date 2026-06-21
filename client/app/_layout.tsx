@@ -67,6 +67,8 @@ export default function RootLayout() {
           <Stack.Screen name="balance" options={{ title: "" }} />
           <Stack.Screen name="favorites" options={{ title: "" }} />
           <Stack.Screen name="notifications" options={{ title: "" }} />
+          <Stack.Screen name="feedback" options={{ title: "" }} />
+          <Stack.Screen name="about" options={{ title: "" }} />
           <Stack.Screen name="admin" options={{ title: "" }} />
           <Stack.Screen name="+not-found" options={{ title: "" }} />
         </Stack>
