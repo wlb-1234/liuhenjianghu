@@ -41,6 +41,31 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 }
 
+// 可选认证中间件 - 不强制登录，但会解析用户信息
+export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(); // 没有 token，继续执行
+    }
+    
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId?: number; adminId?: number };
+    
+    if (decoded.userId) {
+      req.userId = decoded.userId;
+    } else if (decoded.adminId) {
+      req.adminId = decoded.adminId;
+      req.userId = decoded.adminId;
+    }
+    
+    next();
+  } catch (error) {
+    next(); // token 无效也继续执行
+  }
+}
+
 export async function authMiddlewareWithUser(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
