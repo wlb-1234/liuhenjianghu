@@ -5,6 +5,30 @@ import { verifyAdmin } from '../middleware/admin';
 
 const router = Router();
 
+// 初始化表结构
+router.get('/init-table', async (req: Request, res: Response) => {
+  try {
+    await getPool().query(`
+      CREATE TABLE IF NOT EXISTS realname_verifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE,
+        real_name VARCHAR(50) NOT NULL,
+        id_card VARCHAR(18) NOT NULL,
+        id_card_front TEXT,
+        id_card_back TEXT,
+        status VARCHAR(32) NOT NULL DEFAULT 'pending',
+        reject_reason TEXT,
+        reviewed_at TIMESTAMP,
+        reviewed_by INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    res.json({ success: true, message: '表创建成功' });
+  } catch (error) {
+    res.status(500).json({ error: '创建表失败' });
+  }
+});
+
 /**
  * 服务端文件：server/src/routes/realname.ts
  * 接口：GET /api/v1/realname/status
