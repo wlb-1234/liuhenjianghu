@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from 'cors';
 import { requestLogger } from './middleware/logger.js';
 import { createMetricsMiddleware } from './middleware/prometheus.js';
 import { initRedis } from './middleware/redisClient.js';
@@ -59,7 +60,13 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 initRedis();
 initAlertSystem();
 
-// 中间件
+// CORS 跨域配置
+const corsOptions = {
+  origin: ['https://liuhenjianghu.com', 'http://liuhenjianghu.com'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);

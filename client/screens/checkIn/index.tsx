@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu-production.up.railway.app';
+const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu.com';
 
 interface CheckInStatus {
   checkedIn: boolean;

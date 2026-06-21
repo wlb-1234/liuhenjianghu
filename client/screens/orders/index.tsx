@@ -13,7 +13,7 @@ import { Screen } from '@/components/Screen';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFocusEffect } from 'expo-router';
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9091';
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu.com';
 
 interface Order {
   id: number;
