@@ -54,15 +54,8 @@ router.get('/my', optionalAuth, async (req, res) => {
 });
 
 // 管理端：获取所有反馈（分页）
-router.get('/admin/list', async (req, res) => {
+router.get('/admin/list', verifyAdmin, async (req, res) => {
   try {
-    // 简化版授权：检查 x-session header（后续可升级为 admin token）
-    const session = req.headers['x-session'];
-    if (!session) {
-      return res.status(401).json({ error: '未授权' });
-    }
-
-    // 直接查询
     const listResult = await query(`SELECT * FROM feedbacks ORDER BY created_at DESC LIMIT 20`);
     const countResult = await query(`SELECT COUNT(*) as total FROM feedbacks`);
 
@@ -81,14 +74,8 @@ router.get('/admin/list', async (req, res) => {
 });
 
 // 管理端：回复反馈
-router.put('/admin/:id/reply', async (req, res) => {
+router.put('/admin/:id/reply', verifyAdmin, async (req, res) => {
   try {
-    // 简化版授权
-    const session = req.headers['x-session'];
-    if (!session) {
-      return res.status(401).json({ error: '未授权' });
-    }
-
     const { id } = req.params;
     const { reply, status } = req.body;
 
