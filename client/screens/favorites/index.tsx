@@ -104,7 +104,7 @@ export default function FavoritesScreen() {
     return (
       <View style={styles.card}>
         <Image 
-          source={{ uri: cover || 'https://via.placeholder.com/120x80' }}
+          source={{ uri: cover || 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=200&h=150&fit=crop' }}
           style={styles.cover}
         />
         <View style={styles.info}>

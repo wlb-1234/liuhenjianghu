@@ -236,6 +236,11 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
             <Text style={styles.menuText}>意见反馈</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/realname')}>
+            <Text style={styles.menuIcon}>实</Text>
+            <Text style={styles.menuText}>实名认证</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/about')}>
             <Text style={styles.menuIcon}>关</Text>
             <Text style={styles.menuText}>关于我们</Text>

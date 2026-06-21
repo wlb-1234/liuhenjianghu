@@ -506,3 +506,21 @@ CREATE INDEX IF NOT EXISTS idx_feedbacks_user ON feedbacks(user_id);
 -- =============================================
 -- 完成
 -- =============================================
+
+-- 实名认证表
+CREATE TABLE IF NOT EXISTS realname_verifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL UNIQUE,
+  real_name VARCHAR(50) NOT NULL,
+  id_card VARCHAR(18) NOT NULL,
+  id_card_front TEXT,
+  id_card_back TEXT,
+  status VARCHAR(32) NOT NULL DEFAULT 'pending',  -- pending/approved/rejected
+  reject_reason TEXT,
+  reviewed_at TIMESTAMP,
+  reviewed_by INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_realname_user ON realname_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_realname_status ON realname_verifications(status);

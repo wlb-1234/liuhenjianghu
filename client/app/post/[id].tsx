@@ -108,7 +108,7 @@ export default function SharedPostScreen() {
         {/* 作者信息 */}
         <View style={styles.authorRow}>
           <Image
-            source={{ uri: post.author.avatar || 'https://via.placeholder.com/40' }}
+            source={{ uri: post.author.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' }}
             style={styles.avatar}
           />
           <View style={styles.authorInfo}>

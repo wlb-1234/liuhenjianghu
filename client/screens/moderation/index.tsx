@@ -151,178 +151,281 @@ export default function ModerationScreen() {
     return labels[type] || type;
   };
 
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      post: '#3B82F6',
-      comment: '#10B981',
-      report: '#EF4444',
-    };
-    return colors[type] || '#6B7280';
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: '#F59E0B',
-      approved: '#10B981',
-      rejected: '#EF4444',
-    };
-    return colors[status] || '#6B7280';
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      pending: '待审核',
-      approved: '已通过',
-      rejected: '已拒绝',
-    };
-    return labels[status] || status;
+  const getPriorityColor = (priority: number) => {
+    if (priority >= 3) return '#FF4D4F';
+    if (priority >= 2) return '#FAAD14';
+    return '#52C41A';
   };
 
   return (
     <Screen>
+      <View style={styles.header}>
+        <Text style={styles.title}>内容审核</Text>
+      </View>
+
+      {/* 统计卡片 */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{stats.pending}</Text>
+          <Text style={styles.statLabel}>待审核</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardGreen]}>
+          <Text style={[styles.statNumber, styles.textWhite]}>{stats.approved_today}</Text>
+          <Text style={[styles.statLabel, styles.textWhite]}>今日通过</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardRed]}>
+          <Text style={[styles.statNumber, styles.textWhite]}>{stats.rejected_today}</Text>
+          <Text style={[styles.statLabel, styles.textWhite]}>今日拒绝</Text>
+        </View>
+      </View>
+
+      {/* 筛选 */}
+      <View style={styles.filterContainer}>
+        {['pending', 'approved', 'rejected'].map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[styles.filterBtn, filter === status && styles.filterBtnActive]}
+            onPress={() => setFilter(status)}
+          >
+            <Text style={[styles.filterText, filter === status && styles.filterTextActive]}>
+              {status === 'pending' ? '待审核' : status === 'approved' ? '已通过' : '已拒绝'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <ScrollView
-        className="flex-1 bg-gray-50"
+        style={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* 统计卡片 */}
-        <View className="p-4">
-          <View className="flex-row gap-3">
-            <View className="flex-1 bg-yellow-50 rounded-2xl p-4 border border-yellow-200">
-              <Text className="text-2xl font-bold text-yellow-600">{stats.pending}</Text>
-              <Text className="text-sm text-yellow-700">待审核</Text>
-            </View>
-            <View className="flex-1 bg-green-50 rounded-2xl p-4 border border-green-200">
-              <Text className="text-2xl font-bold text-green-600">{stats.approved_today}</Text>
-              <Text className="text-sm text-green-700">今日通过</Text>
-            </View>
-            <View className="flex-1 bg-red-50 rounded-2xl p-4 border border-red-200">
-              <Text className="text-2xl font-bold text-red-600">{stats.rejected_today}</Text>
-              <Text className="text-sm text-red-700">今日拒绝</Text>
-            </View>
+        {queue.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>暂无待审核内容</Text>
           </View>
-        </View>
-
-        {/* 筛选标签 */}
-        <View className="px-4 pb-3">
-          <View className="flex-row gap-2">
-            {['pending', 'approved', 'rejected'].map((status) => (
-              <TouchableOpacity
-                key={status}
-                className={`px-4 py-2 rounded-full ${
-                  filter === status ? 'bg-blue-500' : 'bg-gray-200'
-                }`}
-                onPress={() => setFilter(status)}
-              >
-                <Text
-                  className={`text-sm font-medium ${
-                    filter === status ? 'text-white' : 'text-gray-700'
-                  }`}
-                >
-                  {getStatusLabel(status)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 审核列表 */}
-        <View className="px-4 pb-6">
-          {queue.length === 0 ? (
-            <View className="bg-white rounded-2xl p-8 items-center">
-              <Text className="text-gray-400 text-lg">暂无待审核内容</Text>
-            </View>
-          ) : (
-            queue.map((item) => (
-              <View
-                key={item.id}
-                className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-              >
-                {/* 头部 */}
-                <View className="flex-row items-center justify-between mb-3">
-                  <View className="flex-row items-center gap-2">
-                    <View
-                      className="px-2 py-1 rounded-md"
-                      style={{ backgroundColor: getTypeColor(item.type) + '20' }}
-                    >
-                      <Text
-                        className="text-xs font-medium"
-                        style={{ color: getTypeColor(item.type) }}
-                      >
-                        {getTypeLabel(item.type)}
-                      </Text>
-                    </View>
-                    <View
-                      className="px-2 py-1 rounded-md"
-                      style={{ backgroundColor: getStatusColor(item.status) + '20' }}
-                    >
-                      <Text
-                        className="text-xs font-medium"
-                        style={{ color: getStatusColor(item.status) }}
-                      >
-                        {getStatusLabel(item.status)}
-                      </Text>
-                    </View>
-                    {item.priority > 0 && (
-                      <View className="bg-red-100 px-2 py-1 rounded-md">
-                        <Text className="text-xs font-medium text-red-600">高优先级</Text>
-                      </View>
-                    )}
+        ) : (
+          queue.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.tagRow}>
+                  <View style={[styles.typeTag, { backgroundColor: '#E6F7FF' }]}>
+                    <Text style={styles.typeTagText}>{getTypeLabel(item.type)}</Text>
                   </View>
-                  <Text className="text-xs text-gray-400">
-                    #{item.id}
-                  </Text>
-                </View>
-
-                {/* 内容 */}
-                {item.content && (
-                  <Text className="text-gray-800 text-base mb-2 line-clamp-3">
-                    {item.content}
-                  </Text>
-                )}
-
-                {/* 原因 */}
-                {item.reason && (
-                  <View className="bg-red-50 rounded-lg p-2 mb-3">
-                    <Text className="text-xs text-red-600">
-                      <Text className="font-medium">举报原因：</Text>
-                      {item.reason}
+                  <View style={[styles.priorityTag, { backgroundColor: getPriorityColor(item.priority) + '20' }]}>
+                    <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
+                      优先级 {item.priority}
                     </Text>
                   </View>
-                )}
-
-                {/* 时间 */}
-                <Text className="text-xs text-gray-400 mb-3">
-                  提交时间：{new Date(item.created_at).toLocaleString('zh-CN')}
-                </Text>
-
-                {/* 操作按钮 */}
-                {item.status === 'pending' && (
-                  <View className="flex-row gap-3">
-                    <TouchableOpacity
-                      className="flex-1 bg-green-500 rounded-xl py-3 items-center"
-                      onPress={() => handleApprove(item.id)}
-                      disabled={actionLoading === item.id}
-                    >
-                      <Text className="text-white font-medium">
-                        {actionLoading === item.id ? '处理中...' : '通过'}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-red-500 rounded-xl py-3 items-center"
-                      onPress={() => handleReject(item.id)}
-                      disabled={actionLoading === item.id}
-                    >
-                      <Text className="text-white font-medium'>
-                        {actionLoading === item.id ? '处理中...' : '拒绝'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                </View>
               </View>
-            ))
-          )}
-        </View>
+
+              <Text style={styles.contentText} numberOfLines={3}>
+                {item.content}
+              </Text>
+
+              {item.reason && (
+                <View style={styles.reasonContainer}>
+                  <Text style={styles.reasonLabel}>举报原因：</Text>
+                  <Text style={styles.reasonText}>{item.reason}</Text>
+                </View>
+              )}
+
+              <Text style={styles.timeText}>
+                提交时间：{new Date(item.created_at).toLocaleString('zh-CN')}
+              </Text>
+
+              {item.status === 'pending' && (
+                <View style={styles.actionRow}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.approveBtn]}
+                    onPress={() => handleApprove(item.id)}
+                    disabled={actionLoading === item.id}
+                  >
+                    <Text style={styles.approveBtnText}>
+                      {actionLoading === item.id ? '处理中...' : '通过'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.rejectBtn]}
+                    onPress={() => handleReject(item.id)}
+                    disabled={actionLoading === item.id}
+                  >
+                    <Text style={styles.rejectBtnText}>
+                      {actionLoading === item.id ? '处理中...' : '拒绝'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ))
+        )}
       </ScrollView>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: '#fff',
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 4,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+  },
+  statCardGreen: {
+    backgroundColor: '#52C41A',
+  },
+  statCardRed: {
+    backgroundColor: '#FF4D4F',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  textWhite: {
+    color: '#fff',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  filterBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
+  },
+  filterBtnActive: {
+    backgroundColor: '#C9A96E',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  filterTextActive: {
+    color: '#fff',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    padding: 12,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  tagRow: {
+    flexDirection: 'row',
+  },
+  typeTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  typeTagText: {
+    fontSize: 12,
+    color: '#1890FF',
+  },
+  priorityTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  priorityText: {
+    fontSize: 12,
+  },
+  contentText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  reasonContainer: {
+    backgroundColor: '#FFF2F0',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  reasonLabel: {
+    fontSize: 12,
+    color: '#FF4D4F',
+    fontWeight: '500',
+  },
+  reasonText: {
+    fontSize: 14,
+    color: '#FF4D4F',
+    marginTop: 4,
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 12,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  approveBtn: {
+    backgroundColor: '#52C41A',
+  },
+  approveBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  rejectBtn: {
+    backgroundColor: '#FF4D4F',
+  },
+  rejectBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});

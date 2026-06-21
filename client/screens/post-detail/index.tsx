@@ -12,7 +12,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Share,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from '@/hooks/useSafeRouter';
 import { apiService } from '@/services/api';
 import { useAuthStore } from '@/contexts/AuthContext';
@@ -100,6 +102,26 @@ export default function PostDetailScreen({ postId }: PostDetailScreenProps) {
       return;
     }
     router.push(`/chat/${post.user_id}`);
+  };
+
+  const handleShare = async () => {
+    const shareContent = `${post.nickname}的漂流信：${post.content.substring(0, 50)}${post.content.length > 50 ? '...' : ''}`;
+    const shareUrl = `liuhenjianghu.com/post/${post.id}`;
+    
+    try {
+      await Share.share({
+        message: `${shareContent}\n\n🔗 ${shareUrl}`,
+        title: '漂流信 - 来自江湖的你',
+      });
+    } catch (error: any) {
+      // 如果内置分享失败，使用剪贴板
+      try {
+        await Clipboard.setStringAsync(`${shareContent}\n\n${shareUrl}`);
+        Alert.alert('已复制', '分享链接已复制到剪贴板');
+      } catch {
+        Alert.alert('分享失败', '请稍后重试');
+      }
+    }
   };
 
   const getDaysRemaining = (expireAt: string) => {
@@ -210,6 +232,10 @@ export default function PostDetailScreen({ postId }: PostDetailScreenProps) {
                 <Text style={styles.actionIcon}>评</Text>
                 <Text style={styles.actionText}>{post.comment_count} 评论</Text>
               </View>
+              <TouchableOpacity style={styles.actionItem} onPress={handleShare}>
+                <FontAwesome name="share" size={20} color="#C9A96E" />
+                <Text style={styles.actionText}>分享</Text>
+              </TouchableOpacity>
             </View>
           </View>
 

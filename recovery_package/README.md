@@ -1,7 +1,7 @@
 # 重建数据包
 
 ## 版本
-**v1.6.0** (2026-06-21)
+**v1.7.0** (2026-06-21)
 
 ## 概述
 包含应用完整的数据结构、配置、代码补丁，可快速重建应用。
@@ -23,7 +23,7 @@ recovery_package/
     ├── order_balance.patch.md     # 订单与余额功能
     ├── admin_management.patch.md  # 管理后台功能
     ├── comments.patch.md          # 评论功能
-    └── feedback.patch.md          # 意见反馈功能
+    ├── realname_auth.patch.md     # 实名认证功能
 ```
 
 ## 重建步骤

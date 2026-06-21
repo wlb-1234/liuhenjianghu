@@ -214,6 +214,14 @@ export default function AdminDashboardScreen() {
                 <Text className="text-2xl mb-2">📝</Text>
                 <Text className="text-stone-200 font-medium">意见反馈</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 mx-2 bg-stone-800 rounded-xl p-4 border border-stone-700"
+                onPress={() => router.push('/admin/realname')}
+              >
+                <Text className="text-2xl mb-2">📇</Text>
+                <Text className="text-stone-200 font-medium">实名认证</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
