@@ -1,40 +1,28 @@
-FROM node:20-slim
-
-RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g pnpm
+# 前端 Dockerfile
+FROM node:20-alpine
 
 WORKDIR /app
 
-# 先复制package.json和lock文件
-COPY server/package*.json ./
+# 安装 pnpm
+RUN npm install -g pnpm
 
-# 清理旧的node_modules（如果有）
-RUN rm -rf node_modules pnpm-lock.yaml
+# 复制 package.json
+COPY client/package.json client/pnpm-lock.yaml* ./
 
-# 安装依赖（强制重新安装）
-RUN pnpm install --ignore-scripts --force
+# 安装依赖
+RUN pnpm install --ignore-scripts
 
-# 复制server源代码（包括src/data目录）
-COPY server/ ./
+# 复制前端代码
+COPY client/ ./
 
-# 构建项目（会复制data目录到dist/data）
-RUN pnpm run build
+# 设置环境变量
+ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
+ENV NODE_ENV=production
 
-# 调试：确保dist/data目录存在
-RUN ls -la dist/ || echo "dist not found"
-RUN ls -la dist/data/ || echo "dist/data not found"
-RUN cat dist/data/regions.json 2>/dev/null | head -c 500 || echo "regions.json not found in dist/data"
+# 构建
+RUN pnpm run web:build
 
-# 同时检查src/data
-RUN ls -la src/data/ || echo "src/data not found"
-RUN cat src/data/regions.json 2>/dev/null | head -c 500 || echo "regions.json not found in src/data"
-
-# 检查是否还有node-cache
-RUN ls node_modules/ 2>/dev/null | grep -v node-cache || echo "no unwanted packages"
-
+# 启动服务 (npx serve 是最简单的静态文件服务器)
 EXPOSE 8080
 
-ENV PORT=8080
-
-CMD ["pnpm", "start"]
+CMD ["npx", "serve", "dist", "-l", "8080", "-s"]
