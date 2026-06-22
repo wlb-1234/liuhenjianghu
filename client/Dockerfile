@@ -7,13 +7,13 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # 复制 package.json
-COPY client/package.json client/pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* ./
 
 # 安装依赖
 RUN pnpm install --ignore-scripts
 
 # 复制前端代码
-COPY client/ ./
+COPY ./ ./
 
 # 设置环境变量
 ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
