@@ -1,3 +1,4 @@
+# 前端 Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
@@ -5,23 +6,23 @@ WORKDIR /app
 # 安装 pnpm
 RUN npm install -g pnpm
 
-# 复制 package.json 和 pnpm-lock.yaml
-COPY package.json pnpm-lock.yaml* ./
+# 复制 package.json
+COPY client/package.json client/pnpm-lock.yaml* ./
 
 # 安装依赖
 RUN pnpm install --ignore-scripts
 
-# 复制其他文件
-COPY . .
+# 复制前端代码
+COPY client/ ./
 
-# 构建 Expo Web 应用
-RUN npx expo export --web
+# 设置环境变量
+ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
+ENV NODE_ENV=production
 
-# 使用 nginx 提供静态文件
-FROM nginx:alpine
-COPY --from=0 /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 构建
+RUN pnpm run web:build
 
-EXPOSE 80
+# 启动服务 (npx serve 是最简单的静态文件服务器)
+EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npx", "serve", "dist", "-l", "8080", "-s"]
