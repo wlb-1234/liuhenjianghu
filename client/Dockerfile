@@ -20,7 +20,7 @@ ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
 ENV NODE_ENV=production
 
 # 构建
-RUN pnpm run web:build
+RUN pnpm run build
 
 # 启动服务
 EXPOSE 8080
