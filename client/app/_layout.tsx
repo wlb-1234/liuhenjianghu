@@ -18,10 +18,10 @@ LogBox.ignoreLogs([
 ]);
 
 // 保持启动屏直到准备好
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
 
   useEffect(() => {
     // 初始化完成后隐藏启动屏
@@ -31,7 +31,7 @@ export default function RootLayout() {
         await new Promise(resolve => setTimeout(resolve, 100));
       } finally {
         setIsReady(true);
-        await SplashScreen.hideAsync();
+        // await SplashScreen.hideAsync();
       }
     };
 
