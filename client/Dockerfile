@@ -15,8 +15,8 @@ RUN pnpm install --ignore-scripts
 # 复制前端代码
 COPY . .
 
-# 设置环境变量（从构建参数获取）
-ARG EXPO_PUBLIC_BACKEND_BASE_URL
+# 设置环境变量（从构建参数获取，提供默认值）
+ARG EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
 ENV EXPO_PUBLIC_BACKEND_BASE_URL=$EXPO_PUBLIC_BACKEND_BASE_URL
 ENV NODE_ENV=production
 
