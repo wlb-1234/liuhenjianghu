@@ -64,7 +64,14 @@ initAlertSystem();
 
 // CORS 跨域配置
 const corsOptions = {
-  origin: ['https://liuhenjianghu.com', 'http://liuhenjianghu.com'],
+  origin: [
+    'https://liuhenjianghu.com',
+    'http://liuhenjianghu.com',
+    'https://expo-app-production-31ad.up.railway.app',
+    'http://expo-app-production-31ad.up.railway.app',
+    'https://www.liuhenjianghu.com',
+    'http://www.liuhenjianghu.com',
+  ],
   credentials: true,
 };
 app.use(cors(corsOptions));
