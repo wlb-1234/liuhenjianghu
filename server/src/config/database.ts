@@ -13,7 +13,7 @@ function getDatabaseUrl(): string {
   }
   
   console.log('🔍 .env DATABASE_URL 未设置，使用默认值');
-  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App@';
+  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
   const customHost = process.env.DB_HOST || 'db.hmlqsbhbbclbzfuutrie.supabase.co';
   const dbUser = process.env.DB_USER || 'postgres';
   

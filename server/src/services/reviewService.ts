@@ -17,7 +17,7 @@ const pgConfig = {
   port: 5432,
   database: 'postgres',
   user: 'postgres',
-  password: 'Liuhen2026App@',
+  password: 'Liuhen2026App',
   ssl: false,
 };
 

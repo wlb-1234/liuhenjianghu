@@ -11,7 +11,7 @@ const pool = new Pool({
   port: 5432,
   database: 'postgres',
   user: 'postgres',
-  password: 'Liuhen2026App@',
+  password: 'Liuhen2026App',
   ssl: false,
   max: 20,
   idleTimeoutMillis: 30000,
