@@ -387,7 +387,29 @@ Railway 容器默认禁用 Outbound IPv6，无法连接 Supabase 主库（IPv6 o
 1. **Railway 控制台**：Settings → Networking → Enable Outbound IPv6 → ON
 2. **代码配置**：使用 Supabase 直连域名
 
-### Railway 部署数据库配置（2024-06-10 更新）
+### Railway IPv6 配置步骤（2026-06-25 更新）
+
+#### 步骤 1：启用 Outbound IPv6
+1. 登录 Railway 控制台
+2. 进入 **server** 项目（后端）
+3. 点击 **Settings** 标签
+4. 找到 **Networking** 部分
+5. 将 **Enable Outbound IPv6** 开关设为 **ON**
+6. 点击 **Redeploy** 重新部署服务
+
+#### 步骤 2：配置数据库连接
+数据库连接字符串格式：
+```
+postgresql://postgres:<密码>@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres
+```
+
+当前配置：
+- 主机：`db.hmlqsbhbbclbzfuutrie.supabase.co`
+- 端口：`5432`
+- 用户名：`postgres`
+- 数据库：`postgres`
+
+### Railway 部署数据库配置（2026-06-25 更新）
 
 ```typescript
 // server/src/config/database.ts
@@ -406,15 +428,17 @@ function getDatabaseUrl(): string {
 
 ### Railway 环境变量
 
-```env
-SUPABASE_DB_PASSWORD=<你的Supabase数据库密码>
-```
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `DATABASE_URL` | `postgresql://postgres:Liuhen2026App@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres` | 完整数据库连接字符串 |
+| `SUPABASE_DB_PASSWORD` | `Liuhen2026App` | 数据库密码（可选，代码中有默认值） |
 
 ### ⚠️ 重要注意事项
 
 1. **Railway IPv6 配置**
    - Settings → Networking → Enable Outbound IPv6 = ON
    - 启用后需要 Redeploy 服务才能生效
+   - 配置位置：server 项目的 Settings 页面
 
 2. **Railway 静态出口 IP（可选）**
    - 可启用 Static Outbound IPs 获得固定 IP
@@ -424,9 +448,9 @@ SUPABASE_DB_PASSWORD=<你的Supabase数据库密码>
    - 参数占位符：`$1, $2`（不是 `?`）
    - 结果访问：`result.rows[0]`（不是 `result[0]`）
    - `pooler.supabase.com` → 需要用 IP `13.114.6.6`
-   - `db.hmlqsbhbbclbzfuutrie.supabase.co` → 可能解析失败
+   - `db.hmlqsbhbbclbzfuutrie.supabase.co` → 需要启用 IPv6
 
-3. **数据库字段差异**
+4. **数据库字段差异**
    - 主库（通过 exec_sql 访问）和 Railway 读副本字段可能不同
    - 当前代码已适配 Railway 数据库（使用 `password` 而非 `password_hash`，无 `exp` 列）
 
