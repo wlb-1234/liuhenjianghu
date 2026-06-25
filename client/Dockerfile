@@ -15,8 +15,9 @@ RUN pnpm install --ignore-scripts
 # 复制前端代码
 COPY . .
 
-# 设置环境变量
-ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
+# 设置环境变量（从构建参数获取）
+ARG EXPO_PUBLIC_BACKEND_BASE_URL
+ENV EXPO_PUBLIC_BACKEND_BASE_URL=$EXPO_PUBLIC_BACKEND_BASE_URL
 ENV NODE_ENV=production
 
 # 构建
