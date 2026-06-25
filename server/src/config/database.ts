@@ -13,9 +13,9 @@ function getDatabaseUrl(): string {
   }
   
   console.log('🔍 .env DATABASE_URL 未设置，使用默认值');
-  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-  const customHost = process.env.DB_HOST || '13.114.6.6';
-  const dbUser = process.env.DB_USER || 'postgres.hmlqsbhbbclbzfuutrie';
+  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App@';
+  const customHost = process.env.DB_HOST || 'db.hmlqsbhbbclbzfuutrie.supabase.co';
+  const dbUser = process.env.DB_USER || 'postgres';
   
   console.log(`🔍 使用数据库地址: ${customHost}, 用户: ${dbUser}`);
   

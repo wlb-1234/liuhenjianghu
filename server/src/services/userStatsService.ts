@@ -3,11 +3,11 @@ const { Pool } = pg;
 
 // 使用与 auth 相同的数据库连接
 const pool = new Pool({
-  host: '13.114.6.6',
+  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
   port: 5432,
   database: 'postgres',
-  user: 'postgres.hmlqsbhbbclbzfuutrie',
-  password: 'Liuhen2026App',
+  user: 'postgres',
+  password: 'Liuhen2026App@',
   ssl: false,
   max: 10,
   idleTimeoutMillis: 30000,

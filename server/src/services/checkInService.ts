@@ -8,11 +8,11 @@ const { Pool } = pg;
 
 // 创建连接池
 const pool = new Pool({
-  host: '13.114.6.6',
+  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
   port: 5432,
   database: 'postgres',
-  user: 'postgres.hmlqsbhbbclbzfuutrie',
-  password: 'Liuhen2026App',
+  user: 'postgres',
+  password: 'Liuhen2026App@',
   ssl: false,
   max: 20,
   idleTimeoutMillis: 30000,
