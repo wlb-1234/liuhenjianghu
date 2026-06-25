@@ -53,6 +53,7 @@ import statisticsRouter from './routes/statistics.js';
 import commentsRouter from './routes/comments.js';
 import feedbacksRouter from './routes/feedbacks.js';
 import realnameRouter from './routes/realname.js';
+import authRouter from './routes/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -317,6 +318,7 @@ app.use('/api/v1/reports', reportsRouter);
 app.use('/api/v1/comments', commentsRouter);
 app.use('/api/v1/feedbacks', feedbacksRouter);
 app.use('/api/v1/realname', realnameRouter);
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
 
 // 错误处理
