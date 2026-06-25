@@ -25,13 +25,16 @@ RUN pnpm run build
 # 运行阶段 - 使用 nginx
 FROM nginx:alpine
 
-# 复制 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 复制 nginx 配置模板
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # 从构建阶段复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 暴露端口（Railway 使用 PORT 环境变量）
 EXPOSE 80
+
+# nginx 会自动替换 ${PORT} 变量
+ENV PORT=80
 
 CMD ["nginx", "-g", "daemon off;"]
