@@ -1573,3 +1573,68 @@ server/src/routes/members.ts
 |------|------|
 | 充值 | 1元 = 100积分 |
 | 变现 | 1000积分 = 5元（待开通） |
+
+---
+
+## 部署问题排查记录
+
+### 2026-06-26 16:30 - 前端白屏问题修复
+
+#### 问题现象
+- 访问 https://expo-app-production-31ad.up.railway.app/ 显示空白页面
+- 浏览器控制台无报错
+- HTML/JS/CSS 文件都能正常加载
+
+#### 排查过程
+1. **后端 API 检查**：✅ 正常
+   - https://server-production-d2bda.up.railway.app/api/v1/health 返回正常
+   - https://server-production-d2bda.up.railway.app/api/v1/posts 返回数据正常
+
+2. **前端文件检查**：✅ 正常
+   - HTML 文件正常返回
+   - JavaScript 文件正常加载
+   - CSS 文件正常加载
+   - 后端 URL 配置正确
+
+3. **代码检查**：❌ 发现问题
+   - `app/(tabs)/index.tsx` 中调用了未定义的 `onPostPress` 函数
+   - 导致 JavaScript 运行时错误，页面白屏
+
+#### 根本原因
+```tsx
+// 错误代码
+<HomeScreen onPostPress={(post) => onPostPress(post.id)} />
+// onPostPress 函数未定义！
+```
+
+#### 修复方案
+```tsx
+// 修复后
+<HomeScreen onPostPress={(post) => router.push(`/post/${post.id}`)} />
+```
+
+#### 涉及文件
+- `client/app/(tabs)/index.tsx`
+
+#### 系统架构说明
+```
+用户 → 前端（Web/App） → 后端 API → 数据库/存储
+                ↓
+        第三方服务（支付/消息/认证）
+                ↓
+        基础设施（部署/域名/CDN）
+                ↓
+        开发运维（代码/CI/监控）
+```
+
+**交互机制**：
+1. 前端通过 `EXPO_PUBLIC_BACKEND_BASE_URL` 环境变量获取后端地址
+2. 前端使用 `fetch` 调用后端 API
+3. 后端处理请求并返回数据
+4. 前端渲染数据到页面
+
+**影响因素**：
+- 环境变量配置是否正确
+- 网络连通性是否正常
+- 代码是否有运行时错误
+- CORS 配置是否正确
