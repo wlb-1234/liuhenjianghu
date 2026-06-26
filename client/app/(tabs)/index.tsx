@@ -22,11 +22,7 @@ interface Post {
   member_level: number;
 }
 
-interface Props {
-  onPostPress: (postId: number) => void;
-}
-
-export default function HomeTab({ onPostPress }: Props) {
+export default function HomeTab() {
   const { isAuthenticated } = useAuth();
   const router = useSafeRouter();
   const [showPostModal, setShowPostModal] = useState(false);
