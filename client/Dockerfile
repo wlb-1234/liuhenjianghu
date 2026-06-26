@@ -14,9 +14,9 @@ RUN npm install --legacy-peer-deps
 # 复制源代码
 COPY . .
 
-# 设置构建环境变量
+# 设置构建环境变量 - 直接硬编码后端 URL
 ARG EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
-ENV EXPO_PUBLIC_BACKEND_BASE_URL=${EXPO_PUBLIC_BACKEND_BASE_URL}
+ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
 
 # 构建应用
 RUN npm run build
