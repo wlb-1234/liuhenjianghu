@@ -1,4 +1,4 @@
-# 构建阶段
+# 构建阶段 - 2026-06-26 更新
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -6,7 +6,7 @@ WORKDIR /app
 # 复制 package.json
 COPY package.json ./
 
-# 安装依赖（使用 npm）
+# 安装依赖（使用 npm，不使用 pnpm）
 RUN npm install
 
 # 复制所有源代码
@@ -22,7 +22,7 @@ RUN npm run build
 # 运行阶段 - 使用 nginx
 FROM nginx:alpine
 
-# 复制 nginx 配置
+# 复制 nginx 配置（直接复制到 conf.d，不使用 templates）
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 从构建阶段复制构建产物
