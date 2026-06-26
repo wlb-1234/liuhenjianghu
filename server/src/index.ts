@@ -70,6 +70,8 @@ const corsOptions = {
     'http://liuhenjianghu.com',
     'https://expo-app-production-31ad.up.railway.app',
     'http://expo-app-production-31ad.up.railway.app',
+    'https://liuhenjianghu-production.up.railway.app',
+    'http://liuhenjianghu-production.up.railway.app',
     'https://www.liuhenjianghu.com',
     'http://www.liuhenjianghu.com',
   ],
