@@ -1,6 +1,9 @@
-# BUILD_ID: 20260626-1500
-# 全新构建 - 强制清除缓存
-FROM node:20-slim AS builder
+# ==========================================
+# 全新构建配置 - 强制清除 Railway 缓存
+# 构建时间: 2026-06-26 16:30:00
+# ==========================================
+
+FROM node:22-bookworm AS builder
 
 WORKDIR /app
 
@@ -13,15 +16,15 @@ RUN npm install --legacy-peer-deps
 # 复制源代码
 COPY . .
 
-# 设置构建环境变量 - 直接硬编码后端 URL
+# 设置构建环境变量
 ARG EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
 ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
 
 # 构建应用
 RUN npm run build
 
-# 运行阶段
-FROM nginx:1.25-alpine
+# 运行阶段 - 使用不同版本的 nginx
+FROM nginx:1.27-bookworm
 
 # 删除默认配置
 RUN rm -rf /etc/nginx/conf.d/*
