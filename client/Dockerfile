@@ -1,6 +1,5 @@
-# 全新构建 - 2026-06-26
-# 不使用缓存，从头开始构建
-
+# BUILD_ID: 20260626-1500
+# 全新构建 - 强制清除缓存
 FROM node:20-slim AS builder
 
 WORKDIR /app
