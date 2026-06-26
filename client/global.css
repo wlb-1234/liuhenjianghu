@@ -22,7 +22,7 @@
 }
 
 @layer theme {
-  @variant light {
+  :root {
     /* 古风武侠主题配色 - 亮色模式 */
     
     /* Base Colors - 宣纸墨韵 */
