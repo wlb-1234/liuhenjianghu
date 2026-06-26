@@ -84,34 +84,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (phone: string, password: string) => {
-    const { token: newToken, user: newUser } = await api.login(phone, password);
-    
-    setToken(newToken);
-    setUser(newUser);
-    api.setToken(newToken);
-    
-    await AsyncStorage.setItem(TOKEN_KEY, newToken);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    try {
+      const { token: newToken, user: newUser } = await api.login(phone, password);
+      
+      setToken(newToken);
+      setUser(newUser);
+      api.setToken(newToken);
+      
+      await AsyncStorage.setItem(TOKEN_KEY, newToken);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    } catch (error) {
+      console.error('登录失败:', error);
+      throw error;
+    }
   };
 
   const register = async (data: RegisterData) => {
-    const { token: newToken, user: newUser } = await api.register(data);
-    
-    setToken(newToken);
-    setUser(newUser);
-    api.setToken(newToken);
-    
-    await AsyncStorage.setItem(TOKEN_KEY, newToken);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    try {
+      const { token: newToken, user: newUser } = await api.register(data);
+      
+      setToken(newToken);
+      setUser(newUser);
+      api.setToken(newToken);
+      
+      await AsyncStorage.setItem(TOKEN_KEY, newToken);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    } catch (error) {
+      console.error('注册失败:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    setToken(null);
-    setUser(null);
-    api.setToken(null);
-    
-    await AsyncStorage.removeItem(TOKEN_KEY);
-    await AsyncStorage.removeItem(USER_KEY);
+    try {
+      setToken(null);
+      setUser(null);
+      api.setToken(null);
+      
+      await AsyncStorage.removeItem(TOKEN_KEY);
+      await AsyncStorage.removeItem(USER_KEY);
+    } catch (error) {
+      console.error('登出失败:', error);
+    }
   };
 
   const updateUser = (userData: Partial<User>) => {

@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { LogBox } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from '@/components/Provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 import '../global.css';
+
+// 全局未处理 Promise 错误捕获（仅 Web 端）
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    console.error('全局捕获未处理 Promise 错误：', event.reason);
+  });
+}
 
 LogBox.ignoreLogs([
   "TurboModuleRegistry.getEnforcing(...): 'RNMapsAirModule' could not be found",
