@@ -44,9 +44,13 @@ export default function HomeTab() {
     setShowPostModal(true);
   };
 
+  const handlePostPress = (post: Post) => {
+    router.push(`/post/${post.id}`);
+  };
+
   return (
     <View style={styles.container}>
-      <HomeScreen onPostPress={(post) => onPostPress(post.id)} />
+      <HomeScreen onPostPress={handlePostPress} />
       
       {/* 发布按钮 */}
       <TouchableOpacity
