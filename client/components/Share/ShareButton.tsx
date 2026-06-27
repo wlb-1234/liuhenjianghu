@@ -21,7 +21,11 @@ interface ShareButtonProps {
 export function ShareButton({ postId, title, size = 24, color }: ShareButtonProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const shareUrl = `https://expo-app-production-c11a.up.railway.app/post/${postId}`;
+  // 使用环境变量构建分享链接，兜底使用自定义域名
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'https://liuhenjianghu.com';
+  const shareUrl = `${baseUrl}/post/${postId}`;
   const shareText = title ? `${title}\n${shareUrl}` : shareUrl;
 
   const handleCopyLink = async () => {

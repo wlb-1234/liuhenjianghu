@@ -3,7 +3,7 @@
  * 用于前端文本输入时的敏感词实时检测
  */
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu-production.up.railway.app';
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://server-production-d2bda.up.railway.app';
 
 export interface SensitiveCheckResult {
   hasSensitive: boolean;
