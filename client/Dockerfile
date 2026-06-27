@@ -17,7 +17,7 @@ RUN npm install @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-ic
 COPY . .
 
 # 设置环境变量用于构建
-ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://server-production-d2bda.up.railway.app
+ENV EXPO_PUBLIC_BACKEND_BASE_URL=https://liuhenjianghu.com
 
 # 构建 Expo Web 应用
 RUN npm run build
