@@ -1,15 +1,28 @@
+console.log('>>> index.tsx 模块开始加载');
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { useRootNavigationState, useSegments } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
+
+console.log('>>> index.tsx 基础导入完成');
+
 import HomeTab from './(tabs)/index';
 import SocialTab from './(tabs)/social';
 import ProfileTab from './(tabs)/profile';
+
+console.log('>>> index.tsx Tab 导入完成');
+
 import { ChatScreenProps, default as ChatPage } from '@/screens/social/ChatScreen';
 import PostDetailPage from './post-detail';
+
+console.log('>>> index.tsx 页面导入完成');
+
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+
+console.log('>>> index.tsx 所有导入完成');
 
 type MainTab = 'home' | 'social' | 'profile';
 
