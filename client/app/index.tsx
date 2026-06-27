@@ -19,6 +19,8 @@ export default function MainIndex() {
   const segments = useSegments();
   const rootState = useRootNavigationState();
 
+  console.log('>>> MainIndex 渲染，isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
   const [currentTab, setCurrentTab] = useState<MainTab>('home');
   const [showChat, setShowChat] = useState(false);
   const [chatParams, setChatParams] = useState<{ userId: number; userName: string; userAvatar: string | null }>({ userId: 0, userName: '', userAvatar: null });
@@ -29,15 +31,22 @@ export default function MainIndex() {
 
   // 路由控制
   useEffect(() => {
-    if (!rootState?.key || isLoading) return;
+    console.log('>>> useEffect 执行，rootState?.key:', !!rootState?.key, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+    if (!rootState?.key || isLoading) {
+      console.log('>>> useEffect 提前返回，rootState 或 isLoading 不满足');
+      return;
+    }
 
     const inAuthRoute = segments.includes('login') || segments.includes('register');
+    console.log('>>> inAuthRoute:', inAuthRoute);
 
     if (!isAuthenticated && !inAuthRoute) {
+      console.log('>>> 未登录且不在认证路由，显示登录弹窗');
       // 延迟设置登录弹窗，避免在 effect 中同步调用 setState
       const timer = setTimeout(() => setShowLogin(true), 0);
       return () => clearTimeout(timer);
     } else if (isAuthenticated && inAuthRoute) {
+      console.log('>>> 已登录但在认证路由，重定向到首页');
       router.replace('/');
     }
   }, [rootState?.key, isAuthenticated, isLoading, segments]);

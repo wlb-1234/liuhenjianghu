@@ -31,14 +31,22 @@ LogBox.ignoreLogs([
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(true);
 
+  console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
+
   useEffect(() => {
+    console.log('>>> 2. useEffect 执行，开始初始化');
     // 初始化完成后隐藏启动屏
     const prepare = async () => {
       try {
         // 可以在这里做初始化操作，如加载字体、获取用户信息等
+        console.log('>>> 3. prepare 函数开始执行');
         await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('>>> 4. prepare 函数执行完成');
+      } catch (error) {
+        console.error('>>> prepare 函数出错:', error);
       } finally {
         setIsReady(true);
+        console.log('>>> 5. isReady 设置为 true');
         // await SplashScreen.hideAsync();
       }
     };
@@ -47,8 +55,11 @@ export default function RootLayout() {
   }, []);
 
   if (!isReady) {
+    console.log('>>> 6. isReady 为 false，返回 null');
     return null;
   }
+
+  console.log('>>> 7. isReady 为 true，开始渲染 Provider');
 
   return (
     <ErrorBoundary>
