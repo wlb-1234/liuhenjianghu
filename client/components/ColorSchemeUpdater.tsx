@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { ColorSchemeName, Platform } from 'react-native';
 import { Uniwind } from 'uniwind'
 
-const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080';
+const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'https://liuhenjianghu.com';
 
 // system: 跟随系统变化
 // light: 固定为 light 主题
