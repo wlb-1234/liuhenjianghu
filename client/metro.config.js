@@ -5,6 +5,12 @@ const { withUniwindConfig } = require('uniwind/metro');
 
 const config = getDefaultConfig(__dirname);
 
+// 启用 sourcemap 便于调试
+config.serializer = {
+  ...config.serializer,
+  sourceMapUrl: 'sourceMapURL',
+};
+
 // 安全地获取 Expo 的默认排除列表
 const existingBlockList = [].concat(config.resolver.blockList || []);
 
