@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -31,22 +31,38 @@ LogBox.ignoreLogs([
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(true);
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
+  const segments = useSegments();
 
   console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
 
   // 登录状态拦截 - 在根布局中直接拦截
   useEffect(() => {
+    // 等待导航就绪
+    if (!rootNavigationState?.key) {
+      console.log('>>> [_layout根布局] 导航未就绪，等待...');
+      return;
+    }
+
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       console.log('>>> [_layout根布局] 检测到 token:', token);
+      console.log('>>> [_layout根布局] 当前 segments:', segments);
+      
+      // 检查当前是否在登录页
+      const isInLoginRoute = segments.includes('login');
+      console.log('>>> [_layout根布局] isInLoginRoute:', isInLoginRoute);
       
       // 如果当前不在登录页，且没有 token，则跳转
-      if (!token && !window.location.pathname.includes('/login')) {
+      if (!token && !isInLoginRoute) {
         console.log('>>> [_layout根布局] 无 token，跳转到登录页');
-        router.replace('/login');
+        // 使用 setTimeout 延迟跳转，确保 Root Layout 已经完全挂载
+        setTimeout(() => {
+          router.replace('/login');
+        }, 100);
       }
     }
-  }, []);
+  }, [rootNavigationState?.key, segments]);
 
   useEffect(() => {
     console.log('>>> 2. useEffect 执行，开始初始化');
