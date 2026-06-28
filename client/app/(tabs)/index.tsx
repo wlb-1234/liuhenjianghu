@@ -37,8 +37,12 @@ export default function HomeTab() {
     console.log('>>> [首页] 检测到 token:', token);
     if (!token) {
       console.log('>>> [首页] 无 token，立即跳转到登录页');
-      // 使用 replace 避免返回
-      router.replace('/login');
+      // 使用 window.location.href 直接跳转（Web 端）
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      } else {
+        router.replace('/login');
+      }
     } else {
       console.log('>>> [首页] 已登录，显示首页');
     }
