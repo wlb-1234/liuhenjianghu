@@ -61,6 +61,14 @@ export default function RootLayout() {
 
   console.log('>>> 7. isReady 为 true，开始渲染 Provider');
 
+  // 临时测试：强制返回一个可见元素，绕过所有条件
+  return (
+    <div style={{ color: 'red', fontSize: '40px', padding: '20px', backgroundColor: 'yellow' }}>
+      强制渲染测试 - 如果你能看到这段文字，说明 RootLayout 能正常渲染
+    </div>
+  );
+
+  /*
   return (
     <ErrorBoundary>
       <Provider>
@@ -95,4 +103,5 @@ export default function RootLayout() {
       </Provider>
     </ErrorBoundary>
   );
+  */
 }
