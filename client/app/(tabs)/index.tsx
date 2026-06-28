@@ -27,24 +27,19 @@ export default function HomeTab() {
   const router = useSafeRouter();
   const [showPostModal, setShowPostModal] = useState(false);
 
-  // 未登录时跳转到登录页面
+  // 登录状态检查 - 放在最前面，优先执行
   useEffect(() => {
-    // 使用 localStorage 检测 token（Web 端）
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    }
-    console.log('>>> [首页] 检测到 token:', token);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    console.log('>>> [Tabs首页] 检测到 token:', token);
     if (!token) {
-      console.log('>>> [首页] 无 token，立即跳转到登录页');
-      // 使用 window.location.href 直接跳转（Web 端）
+      console.log('>>> [Tabs首页] 无 token，跳转到登录页');
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       } else {
         router.replace('/login');
       }
     } else {
-      console.log('>>> [首页] 已登录，显示首页');
+      console.log('>>> [Tabs首页] 已登录，显示首页');
     }
   }, []);
 
