@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from '@/components/Provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { AuthGuard } from '@/components/AuthGuard';
 
 import '../global.css';
 
@@ -31,8 +30,23 @@ LogBox.ignoreLogs([
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(true);
+  const router = useRouter();
 
   console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
+
+  // 登录状态拦截 - 在根布局中直接拦截
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      console.log('>>> [_layout根布局] 检测到 token:', token);
+      
+      // 如果当前不在登录页，且没有 token，则跳转
+      if (!token && !window.location.pathname.includes('/login')) {
+        console.log('>>> [_layout根布局] 无 token，跳转到登录页');
+        router.replace('/login');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     console.log('>>> 2. useEffect 执行，开始初始化');
@@ -65,7 +79,6 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <Provider>
-        <AuthGuard />
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -75,7 +88,6 @@ export default function RootLayout() {
             headerShown: false,
           }}
         >
-          <Stack.Screen name="index" options={{ title: "" }} />
           <Stack.Screen name="(tabs)" options={{ title: "" }} />
           <Stack.Screen name="login" options={{ title: "" }} />
           <Stack.Screen name="register" options={{ title: "" }} />
