@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/contexts/AuthContext';
-import { BACKEND_BASE_URL } from '@/utils/api';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
+
+const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080';
 
 export default function AccountDeletionScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, session } = useAuth();
+  const router = useSafeRouter();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
 
@@ -21,11 +24,11 @@ export default function AccountDeletionScreen() {
     
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_BASE_URL}/api/v1/account/request-deletion`, {
+      const res = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/account/request-deletion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`,
+          'x-session': session || '',
         },
       });
       const data = await res.json();
@@ -51,10 +54,10 @@ export default function AccountDeletionScreen() {
     
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_BASE_URL}/api/v1/account/cancel-deletion`, {
+      const res = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/account/cancel-deletion`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'x-session': session || '',
         },
       });
       const data = await res.json();
@@ -91,7 +94,7 @@ export default function AccountDeletionScreen() {
   };
 
   return (
-    <Screen title="账户注销" showBack>
+    <Screen>
       <ScrollView style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>账户注销说明</Text>
@@ -165,7 +168,7 @@ export default function AccountDeletionScreen() {
 
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
         >
           <Text style={styles.backButtonText}>返回</Text>
         </TouchableOpacity>

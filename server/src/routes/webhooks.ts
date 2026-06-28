@@ -127,44 +127,6 @@ router.put('/:id', (req, res) => {
 });
 
 /**
- * 删除Webhook配置
- * DELETE /api/v1/webhooks/:id
- */
-router.delete('/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // 不允许删除控制台输出
-    if (id === 'console') {
-      return res.status(400).json({
-        code: 400,
-        message: '无法删除控制台输出配置',
-      });
-    }
-    
-    const deleted = deleteWebhook(id);
-    
-    if (deleted) {
-      res.json({
-        code: 200,
-        message: 'Webhook配置已删除',
-      });
-    } else {
-      res.status(404).json({
-        code: 404,
-        message: 'Webhook配置不存在',
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      code: 500,
-      message: '删除Webhook配置失败',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-/**
  * 测试Webhook
  * POST /api/v1/webhooks/:id/test
  */
@@ -270,6 +232,44 @@ router.delete('/alerts', (req, res) => {
     res.status(500).json({
       code: 500,
       message: '清除告警历史失败',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * 删除Webhook配置
+ * DELETE /api/v1/webhooks/:id
+ */
+router.delete('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // 不允许删除控制台输出
+    if (id === 'console') {
+      return res.status(400).json({
+        code: 400,
+        message: '无法删除控制台输出配置',
+      });
+    }
+    
+    const deleted = deleteWebhook(id);
+    
+    if (deleted) {
+      res.json({
+        code: 200,
+        message: 'Webhook配置已删除',
+      });
+    } else {
+      res.status(404).json({
+        code: 404,
+        message: 'Webhook配置不存在',
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      code: 500,
+      message: '删除Webhook配置失败',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

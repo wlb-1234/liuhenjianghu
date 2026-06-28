@@ -207,6 +207,22 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* 账号管理 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>账号管理</Text>
+          
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            onPress={() => router.push('/account-deletion')}
+          >
+            <Text style={styles.menuIcon}>注</Text>
+            <View style={styles.menuContent}>
+              <Text style={styles.menuText}>账号注销</Text>
+              <Text style={styles.menuArrow}>›</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* 版权信息 */}
         <View style={styles.copyrightSection}>
           <Text style={styles.copyrightTitle}>流痕江湖</Text>

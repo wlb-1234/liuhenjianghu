@@ -79,8 +79,7 @@ export default function RootLayout() {
           <Stack.Screen name="post" options={{ title: "" }} />
           <Stack.Screen name="chat" options={{ title: "" }} />
           <Stack.Screen name="post-detail" options={{ title: "" }} />
-          <Stack.Screen name="profile-edit" options={{ title: "" }} />
-          <Stack.Screen name="setting" options={{ title: "" }} />
+          <Stack.Screen name="settings" options={{ title: "" }} />
           <Stack.Screen name="vip" options={{ title: "" }} />
           <Stack.Screen name="orders" options={{ title: "" }} />
           <Stack.Screen name="balance" options={{ title: "" }} />
@@ -88,6 +87,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" options={{ title: "" }} />
           <Stack.Screen name="feedback" options={{ title: "" }} />
           <Stack.Screen name="about" options={{ title: "" }} />
+          <Stack.Screen name="account-deletion" options={{ title: "" }} />
           <Stack.Screen name="admin" options={{ title: "" }} />
           <Stack.Screen name="+not-found" options={{ title: "" }} />
         </Stack>
