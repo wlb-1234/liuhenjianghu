@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Modal, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import HomeScreen from '@/screens/home/HomeScreen';
 import PostScreen from '@/screens/post/PostScreen';
@@ -23,9 +23,18 @@ interface Post {
 }
 
 export default function HomeTab() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useSafeRouter();
   const [showPostModal, setShowPostModal] = useState(false);
+
+  // 未登录时跳转到登录页面
+  useEffect(() => {
+    console.log('>>> HomeTab: isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+    if (!isLoading && !isAuthenticated) {
+      console.log('>>> HomeTab: 未登录，跳转到登录页面');
+      router.replace('/login');
+    }
+  }, [isLoading, isAuthenticated]);
 
   const handlePostSuccess = () => {
     setShowPostModal(false);
