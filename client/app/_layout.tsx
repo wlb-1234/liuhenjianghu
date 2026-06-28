@@ -61,11 +61,38 @@ export default function RootLayout() {
 
   console.log('>>> 7. isReady 为 true，开始渲染 Provider');
 
-  // 临时测试：强制返回一个可见元素，绕过所有条件
+  // 测试：只渲染 Stack，不渲染 Provider
   return (
-    <div style={{ color: 'red', fontSize: '40px', padding: '20px', backgroundColor: 'yellow' }}>
-      强制渲染测试 - 如果你能看到这段文字，说明 RootLayout 能正常渲染
-    </div>
+    <ErrorBoundary>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ title: "" }} />
+        <Stack.Screen name="login" options={{ title: "" }} />
+        <Stack.Screen name="register" options={{ title: "" }} />
+        <Stack.Screen name="post" options={{ title: "" }} />
+        <Stack.Screen name="chat" options={{ title: "" }} />
+        <Stack.Screen name="post-detail" options={{ title: "" }} />
+        <Stack.Screen name="profile-edit" options={{ title: "" }} />
+        <Stack.Screen name="setting" options={{ title: "" }} />
+        <Stack.Screen name="vip" options={{ title: "" }} />
+        <Stack.Screen name="orders" options={{ title: "" }} />
+        <Stack.Screen name="balance" options={{ title: "" }} />
+        <Stack.Screen name="favorites" options={{ title: "" }} />
+        <Stack.Screen name="notifications" options={{ title: "" }} />
+        <Stack.Screen name="feedback" options={{ title: "" }} />
+        <Stack.Screen name="about" options={{ title: "" }} />
+        <Stack.Screen name="admin" options={{ title: "" }} />
+        <Stack.Screen name="+not-found" options={{ title: "" }} />
+      </Stack>
+      <Toast />
+    </ErrorBoundary>
   );
 
   /*
