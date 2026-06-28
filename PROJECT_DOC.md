@@ -1003,6 +1003,26 @@ server/
 
 ## 变更日志
 
+### 2026-06-28
+
+#### 前端白屏问题修复 (15:49)
+
+| 时间 | 变更内容 | 文件 |
+|------|----------|------|
+| 15:30 | 修正后端 API 地址从前端域名改为真正的后端服务地址 | client/Dockerfile, client/components/ColorSchemeUpdater.tsx |
+| 15:35 | 简化 Provider 组件，移除 HeroUINativeProvider 等导致渲染失败的组件 | client/components/Provider.tsx |
+| 15:40 | 删除 app/index.tsx，让 (tabs)/index.tsx 作为首页 | client/app/index.tsx |
+| 15:45 | 移除 app.config.ts 中的 "output": "single" 配置 | client/app.config.ts |
+| 15:49 | 登录页面恢复正常显示 | - |
+
+**问题根因：**
+1. `EXPO_PUBLIC_BACKEND_BASE_URL` 环境变量错误地指向了前端网站域名 `https://liuhenjianghu.com`，导致 API 请求被前端路由拦截
+2. `Provider` 组件中的 `HeroUINativeProvider` 导致了渲染失败
+
+**修复方案：**
+1. 将 `EXPO_PUBLIC_BACKEND_BASE_URL` 改为后端服务地址 `https://server-production-d2bda.up.railway.app`
+2. 简化 `Provider` 组件，只保留 `AuthProvider` 和 `GestureHandlerRootView`
+
 ### 2025-06-11
 
 #### UI/前端优化
