@@ -14,6 +14,8 @@ export function AuthGuard() {
   const rootState = useRootNavigationState();
 
   useEffect(() => {
+    console.log('>>> AuthGuard: rootState?.key:', rootState?.key, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated, 'segments:', segments);
+    
     // 1. 待机检测：导航未挂载 或 鉴权正在加载中，直接返回
     if (!rootState?.key || isLoading) return;
 
@@ -22,6 +24,7 @@ export function AuthGuard() {
 
     // 3. 未登录保护：未登录且不在登录页 → 跳转登录页
     if (!isAuthenticated && !inLoginRoute) {
+      console.log('>>> AuthGuard: 未登录，跳转到登录页面');
       router.replace('/login');
     }
   }, [rootState?.key, isAuthenticated, isLoading, segments]);
