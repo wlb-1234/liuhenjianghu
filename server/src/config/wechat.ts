@@ -15,13 +15,13 @@ export const WECHAT_PAY_CONFIG = {
   API_KEY: process.env.WX_API_KEY || '',
   
   // AppID（移动应用ID）
-  APPID: process.env.WX_APPID || '',
+  APPID: process.env.WX_APPID || 'wxa39303f2ff21a87c',
   
   // 公众号AppID（如果有）
   PUBLIC_APPID: process.env.WX_PUBLIC_APPID || '',
   
   // 回调地址（需要公网可访问）
-  NOTIFY_URL: process.env.WX_NOTIFY_URL || 'https://liuhenjianghu-production.up.railway.app/api/v1/payment/notify',
+  NOTIFY_URL: process.env.WX_NOTIFY_URL || 'https://liuhenjianghu.com/api/v1/payment/notify',
   
   // 统一下单接口
   UNIFIED_ORDER_URL: 'https://api.mch.weixin.qq.com/pay/unifiedorder',
