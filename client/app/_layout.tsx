@@ -6,6 +6,7 @@ import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from '@/components/Provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AuthGuard } from '@/components/AuthGuard';
 
 import '../global.css';
 
@@ -64,6 +65,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <Provider>
+        <AuthGuard />
         <StatusBar style="light" />
         <Stack
           screenOptions={{
