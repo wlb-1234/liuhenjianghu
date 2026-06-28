@@ -29,12 +29,20 @@ export default function HomeTab() {
 
   // 未登录时跳转到登录页面
   useEffect(() => {
-    console.log('>>> HomeTab: isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
-    if (!isLoading && !isAuthenticated) {
-      console.log('>>> HomeTab: 未登录，跳转到登录页面');
-      router.replace('/login');
+    // 使用 localStorage 检测 token（Web 端）
+    let token = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || sessionStorage.getItem('token');
     }
-  }, [isLoading, isAuthenticated]);
+    console.log('>>> [首页] 检测到 token:', token);
+    if (!token) {
+      console.log('>>> [首页] 无 token，立即跳转到登录页');
+      // 使用 replace 避免返回
+      router.replace('/login');
+    } else {
+      console.log('>>> [首页] 已登录，显示首页');
+    }
+  }, []);
 
   const handlePostSuccess = () => {
     setShowPostModal(false);
