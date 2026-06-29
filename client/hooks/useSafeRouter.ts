@@ -150,3 +150,9 @@ export function useSafeSearchParams<T = Record<string, unknown>>(): T {
 
   return decodedParams;
 }
+
+/**
+ * 安全获取当前路径 Hook
+ * @returns 当前路由路径
+ */
+export { usePathname } from 'expo-router';

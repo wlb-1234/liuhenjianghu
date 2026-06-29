@@ -14,7 +14,7 @@ import { useSafeRouter } from '@/hooks/useSafeRouter';
 const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080';
 
 export default function AccountDeletionScreen() {
-  const { user, logout, session } = useAuth();
+  const { user, logout, token } = useAuth();
   const router = useSafeRouter();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -28,7 +28,7 @@ export default function AccountDeletionScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-session': session || '',
+          'Authorization': `Bearer ${token || ''}`,
         },
       });
       const data = await res.json();
