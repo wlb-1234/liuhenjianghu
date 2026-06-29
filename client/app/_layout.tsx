@@ -1,10 +1,9 @@
-// 强制重建 - 2026-06-28 23:00 - 修改版本号触发缓存失效
+// 强制重建 - 2026-06-29 20:40 - 优化跳转逻辑
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useRootNavigationState, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
-import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from '@/components/Provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -26,73 +25,63 @@ LogBox.ignoreLogs([
   "Theme .* is missing variable",
 ]);
 
-// 保持启动屏直到准备好
-// SplashScreen.preventAutoHideAsync();
-
-// 强制重建 - 2026-06-28 23:30
 export default function RootLayout() {
-  const [isReady, setIsReady] = useState(true);
   const router = useRouter();
-  const rootNavigationState = useRootNavigationState();
   const segments = useSegments();
+  const [isReady, setIsReady] = useState(false);
 
   console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
 
-  // 登录状态拦截 - 在根布局中直接拦截
+  // 等待路由就绪
   useEffect(() => {
-    // 等待导航就绪
-    if (!rootNavigationState?.key) {
-      console.log('>>> [_layout根布局] 导航未就绪，等待...');
-      return;
+    if (segments.length > 0) {
+      setIsReady(true);
+      console.log('>>> 路由就绪，segments:', segments);
     }
+  }, [segments]);
+
+  // 登录状态检查
+  useEffect(() => {
+    if (!isReady) return; // 路由未就绪，不执行跳转
 
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
-      console.log('>>> [_layout根布局] 检测到 token:', token);
-      console.log('>>> [_layout根布局] 当前 segments:', segments);
-      
-      // 检查当前是否在登录页
-      const isInLoginRoute = segments.includes('login');
-      console.log('>>> [_layout根布局] isInLoginRoute:', isInLoginRoute);
-      
-      // 如果当前不在登录页，且没有 token，则跳转
-      if (!token && !isInLoginRoute) {
-        console.log('>>> [_layout根布局] 无 token，跳转到登录页');
-        // 使用 setTimeout 延迟跳转，确保 Root Layout 已经完全挂载
+      const isLoginRoute = segments.includes('login');
+
+      console.log('>>> [Layout] 当前路由:', segments);
+      console.log('>>> [Layout] token:', token);
+      console.log('>>> [Layout] isLoginRoute:', isLoginRoute);
+
+      if (!token && !isLoginRoute) {
+        console.log('>>> [Layout] 无 token，跳转到登录页');
+        // 使用 setTimeout 确保在渲染周期后跳转
         setTimeout(() => {
           router.replace('/login');
-        }, 100);
+        }, 50);
       }
     }
-  }, [rootNavigationState?.key, segments]);
+  }, [isReady, segments]);
 
   useEffect(() => {
     console.log('>>> 2. useEffect 执行，开始初始化');
-    // 初始化完成后隐藏启动屏
     const prepare = async () => {
       try {
-        // 可以在这里做初始化操作，如加载字体、获取用户信息等
         console.log('>>> 3. prepare 函数开始执行');
         await new Promise(resolve => setTimeout(resolve, 100));
         console.log('>>> 4. prepare 函数执行完成');
       } catch (error) {
         console.error('>>> prepare 函数出错:', error);
-      } finally {
-        setIsReady(true);
-        console.log('>>> 5. isReady 设置为 true');
-        // await SplashScreen.hideAsync();
       }
     };
-
     prepare();
   }, []);
 
   if (!isReady) {
-    console.log('>>> 6. isReady 为 false，返回 null');
+    console.log('>>> 5. isReady 为 false，返回 null');
     return null;
   }
 
-  console.log('>>> 7. isReady 为 true，开始渲染 Provider');
+  console.log('>>> 6. isReady 为 true，开始渲染 Provider');
 
   return (
     <ErrorBoundary>
