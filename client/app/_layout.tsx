@@ -1,3 +1,4 @@
+// 强制重建 - 2026-06-28 23:00 - 修改版本号触发缓存失效
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
