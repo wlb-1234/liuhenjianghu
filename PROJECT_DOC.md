@@ -1805,6 +1805,22 @@ const logout = async () => {
 - 移除 `SettingsScreen.tsx` 中的调试 console.log
 - 移除 `sensitiveCheck/index.tsx` 中的调试 console.log
 
+### v1.0.8 (2026-06-29 23:00)
+
+**TypeScript 错误修复：**
+- `profile.tsx`: 添加缺失的 `onLogout` 属性
+- `useSafeRouter.ts`: 导出 `usePathname`
+- `accountDeletion/index.tsx`: 使用 `token` 替代 `session`
+
+### v1.0.7 (2026-06-29 22:30)
+
+**后端 TODO 修复：**
+- `payment.ts`: 实现 JWT 解析获取 user_id，区分普通用户和管理员查询
+- `rateLimit.ts`: 添加 `adminAuthMiddleware` 管理员权限验证中间件
+
+**前端优化：**
+- 移除调试 console.log
+
 ### v1.0.6 (2026-06-29 21:45)
 
 **合规完善：**
