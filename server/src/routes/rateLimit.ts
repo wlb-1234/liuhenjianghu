@@ -1,6 +1,32 @@
 import express, { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
+
+// 管理员权限验证中间件
+function adminAuthMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未授权，请先登录' });
+  }
+  
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as { adminId?: number; role?: string };
+    
+    // 验证是否为管理员
+    if (!decoded.adminId) {
+      return res.status(403).json({ success: false, error: '需要管理员权限' });
+    }
+    
+    next();
+  } catch (error) {
+    return res.status(401).json({ success: false, error: '登录已过期，请重新登录' });
+  }
+}
 
 // 内存存储限流数据
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -137,8 +163,7 @@ router.get('/config', (req, res) => {
 });
 
 // 更新限流配置（管理员）
-router.put('/config', (req, res) => {
-  // TODO: 添加管理员权限验证
+router.put('/config', adminAuthMiddleware, (req, res) => {
   const { level, limit, windowMs } = req.body;
   
   if (level && limit !== undefined && windowMs !== undefined) {
@@ -154,8 +179,7 @@ router.put('/config', (req, res) => {
 });
 
 // 重置用户限流（管理员）
-router.post('/reset/:userId', (req, res) => {
-  // TODO: 添加管理员权限验证
+router.post('/reset/:userId', adminAuthMiddleware, (req, res) => {
   const { userId } = req.params;
   rateLimitStore.delete(userId);
   res.json({ success: true, message: '限流已重置' });

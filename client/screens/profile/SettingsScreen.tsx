@@ -43,7 +43,7 @@ export default function SettingsScreen() {
         }
       }
     } catch (error) {
-      console.log('加载主题设置失败', error);
+      // 加载主题设置失败，使用默认值
     }
   };
 
@@ -60,7 +60,7 @@ export default function SettingsScreen() {
         setShowThemeModal(false);
       }
     } catch (error) {
-      console.log('保存主题失败', error);
+      // 保存主题失败
     }
     setLoading(false);
   };

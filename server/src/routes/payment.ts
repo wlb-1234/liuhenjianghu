@@ -3,6 +3,7 @@
  */
 import express, { Request, Response } from 'express';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import WECHAT_PAY_CONFIG from '../config/wechat';
 import { 
   generateNonceStr, 
@@ -14,6 +15,8 @@ import {
 } from '../utils/wechatPay';
 import { query } from '../config/database';
 import { ResultSetHeader } from 'mysql2/promise';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 const router = express.Router();
 
@@ -60,11 +63,32 @@ router.get('/orders', async (req: Request, res: Response) => {
     const params: any[] = [];
 
     // 如果有 token，说明是用户端请求，只查询该用户的订单
+    let userIdFromToken: number | null = null;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      // 从 token 获取 user_id（简化处理，直接查询）
-      const token = authHeader.split(' ')[1];
-      // TODO: 实际应该解析 JWT 获取 user_id
-      // 这里先不做限制，允许查询所有订单用于管理后台
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId?: number; adminId?: number };
+        // 优先使用 userId，如果是管理员则使用 adminId
+        userIdFromToken = decoded.userId || decoded.adminId || null;
+      } catch (error) {
+        // token 无效，忽略
+      }
+    }
+
+    // 如果不是管理员（没有 adminId），则只查询该用户的订单
+    const isAdmin = authHeader && authHeader.startsWith('Bearer ') && (() => {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET) as { adminId?: number };
+        return !!decoded.adminId;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!isAdmin && userIdFromToken) {
+      whereClause += ' AND user_id = ?';
+      params.push(userIdFromToken);
     }
 
     if (search) {

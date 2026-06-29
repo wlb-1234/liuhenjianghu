@@ -83,7 +83,6 @@ export default function SensitiveCheckDemo() {
             style: 'destructive',
             onPress: () => {
               // 调用实际发帖 API，使用过滤后的文本
-              console.log('提交帖子（已过滤）:', result.filtered);
               Alert.alert('提示', '帖子已提交（敏感词已过滤）');
             }
           }
@@ -91,7 +90,6 @@ export default function SensitiveCheckDemo() {
       );
     } else {
       // 调用实际发帖 API
-      console.log('提交帖子:', postContent);
       Alert.alert('提示', '帖子提交成功');
     }
   };
