@@ -52,14 +52,17 @@ export default function RootLayout() {
     if (!isReady) return; // 路由未就绪，不执行跳转
 
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      // 使用与 AuthContext 相同的 key
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       const isLoginRoute = segments.includes('login');
+      const isRegisterRoute = segments.includes('register');
 
       console.log('>>> [Layout] 当前路由:', segments);
       console.log('>>> [Layout] token:', token);
       console.log('>>> [Layout] isLoginRoute:', isLoginRoute);
 
-      if (!token && !isLoginRoute) {
+      // 如果当前不在登录页或注册页，且没有 token，则跳转
+      if (!token && !isLoginRoute && !isRegisterRoute) {
         console.log('>>> [Layout] 无 token，跳转到登录页');
         // 使用 setTimeout 确保在渲染周期后跳转
         setTimeout(() => {
