@@ -11,7 +11,7 @@ export default function PrivacyScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>流痕江湖隐私政策</Text>
-          <Text style={styles.date}>最后更新：2024年1月1日</Text>
+          <Text style={styles.date}>最后更新：2026年6月29日</Text>
 
           <Text style={styles.section}>引言</Text>
           <Text style={styles.paragraph}>

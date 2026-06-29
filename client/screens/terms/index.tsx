@@ -11,7 +11,7 @@ export default function TermsScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>流痕江湖用户服务协议</Text>
-          <Text style={styles.date}>最后更新：2024年1月1日</Text>
+          <Text style={styles.date}>最后更新：2026年6月29日</Text>
 
           <Text style={styles.section}>一、服务条款的确认和接受</Text>
           <Text style={styles.paragraph}>
