@@ -202,6 +202,9 @@ export default function UpgradeScreen() {
       {/* 底部按钮 */}
       {selectedLevel > (user?.member_level || 0) && (
         <View style={styles.footer}>
+          <Text style={styles.refundNotice}>
+            购买即同意《用户协议》，会员为虚拟商品，购买满24小时或使用核心功能后不支持退款
+          </Text>
           <View style={styles.footerInfo}>
             <Text style={styles.footerLabel}>升级至：</Text>
             <Text style={styles.footerValue}>{MEMBERS[selectedLevel].name}</Text>
@@ -417,13 +420,18 @@ const styles = StyleSheet.create({
     height: 100,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     padding: 16,
     backgroundColor: '#FDFBF7',
     borderTopWidth: 1,
     borderTopColor: '#E8E0D0',
-    gap: 16,
+    gap: 12,
+  },
+  refundNotice: {
+    fontSize: 11,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 16,
   },
   footerInfo: {
     flexDirection: 'row',
