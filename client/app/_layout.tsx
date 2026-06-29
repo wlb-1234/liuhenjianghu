@@ -1,4 +1,4 @@
-// 强制重建 - 2026-06-29 20:40 - 优化跳转逻辑
+// 强制重建 - 2026-06-29 21:00 - 添加强制代码变更触发 Railway 重新构建
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -29,6 +29,13 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isReady, setIsReady] = useState(false);
+  
+  // 2026-06-29 强制代码变更 - 触发 Railway 重新构建
+  const [forceRebuild, setForceRebuild] = useState(false);
+  useEffect(() => {
+    setForceRebuild(true);
+    console.log('>>> 强制代码变更已触发，forceRebuild:', forceRebuild);
+  }, []);
 
   console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
 
