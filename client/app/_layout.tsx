@@ -29,6 +29,7 @@ LogBox.ignoreLogs([
 // 保持启动屏直到准备好
 // SplashScreen.preventAutoHideAsync();
 
+// 强制重建 - 2026-06-28 23:30
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(true);
   const router = useRouter();
