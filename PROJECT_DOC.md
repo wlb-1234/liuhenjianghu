@@ -1657,4 +1657,62 @@ server/src/routes/members.ts
 - 环境变量配置是否正确
 - 网络连通性是否正常
 - 代码是否有运行时错误
+
+---
+
+## 认证与路由配置
+
+> 更新时间：2026-06-29 21:30
+
+### 路由守卫规则
+
+| 场景 | 行为 | 实现位置 |
+|------|------|----------|
+| **未登录时访问网站** | 自动跳转到登录页面 | `client/app/_layout.tsx` |
+| **登录后访问网站** | 显示首页（Tabs） | 正常路由 |
+| **退出登录后** | 跳转回登录页面 | `client/contexts/AuthContext.tsx` |
+
+### 实现细节
+
+#### 1. 未登录跳转逻辑
+```tsx
+// client/app/_layout.tsx
+useEffect(() => {
+  if (!isReady) return;
+  
+  // 使用与 AuthContext 相同的 key
+  const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+  const isLoginRoute = segments.includes('login');
+  const isRegisterRoute = segments.includes('register');
+
+  // 如果当前不在登录页或注册页，且没有 token，则跳转
+  if (!token && !isLoginRoute && !isRegisterRoute) {
+    setTimeout(() => {
+      router.replace('/login');
+    }, 50);
+  }
+}, [isReady, segments]);
+```
+
+#### 2. Token 存储
+- **存储方式**：`AsyncStorage`（Web 端自动映射到 `localStorage`）
+- **Token Key**：`auth_token`
+- **User Key**：`auth_user`
+
+#### 3. 退出登录逻辑
+```tsx
+// client/contexts/AuthContext.tsx
+const logout = async () => {
+  setToken(null);
+  setUser(null);
+  api.setToken(null);
+  await AsyncStorage.removeItem(TOKEN_KEY);
+  await AsyncStorage.removeItem(USER_KEY);
+};
+```
+
+### 注意事项
+1. **Token Key 一致性**：`_layout.tsx` 和 `AuthContext.tsx` 必须使用相同的 key（`auth_token`）
+2. **注册页豁免**：注册页不需要跳转，避免死循环
+3. **路由就绪检查**：使用 `segments.length > 0` 确保路由已挂载
 - CORS 配置是否正确
