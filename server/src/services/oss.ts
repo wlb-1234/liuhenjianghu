@@ -16,12 +16,20 @@ const OSS_CONFIG = {
 
 // 检查OSS是否已配置
 const isOSSConfigured = () => {
-  return (
+  const configured = (
     OSS_CONFIG.region !== 'YOUR_REGION' &&
     OSS_CONFIG.accessKeyId !== 'YOUR_ACCESS_KEY_ID' &&
     OSS_CONFIG.accessKeySecret !== 'YOUR_ACCESS_KEY_SECRET' &&
     OSS_CONFIG.bucket !== 'YOUR_BUCKET_NAME'
   );
+  console.log('[OSS] 配置检查:', {
+    region: OSS_CONFIG.region,
+    bucket: OSS_CONFIG.bucket,
+    hasAccessKeyId: !!OSS_CONFIG.accessKeyId && OSS_CONFIG.accessKeyId !== 'YOUR_ACCESS_KEY_ID',
+    hasAccessKeySecret: !!OSS_CONFIG.accessKeySecret && OSS_CONFIG.accessKeySecret !== 'YOUR_ACCESS_KEY_SECRET',
+    configured
+  });
+  return configured;
 };
 
 // 仅在配置完整时初始化客户端
