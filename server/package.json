@@ -11,6 +11,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@alicloud/dysmsapi20170525": "^4.5.1",
+    "@alicloud/openapi-client": "^0.4.15",
+    "@alicloud/tea-util": "^1.4.11",
     "@pinata/sdk": "^2.1.0",
     "@supabase/supabase-js": "2.95.3",
     "ali-oss": "^6.23.0",

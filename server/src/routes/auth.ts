@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { getUserByPhone, createUser, getUserById, updateUser } from '../services/userService';
 import { authMiddleware, authMiddlewareWithUser, generateToken, AuthRequest } from '../middleware/auth';
+import { sendVerificationCode } from '../services/sms';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
@@ -16,18 +17,20 @@ router.post('/send-code', async (req: Request, res: Response) => {
       return res.status(400).json({ error: '请输入有效的手机号' });
     }
     
-    // 生成6位验证码
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // 使用短信服务发送验证码
+    const result = await sendVerificationCode(phone);
     
-    // 实际项目中，这里应该调用短信服务发送验证码
-    // 这里简化为直接返回验证码用于测试
-    console.log(`验证码 ${code} 已发送至 ${phone}`);
+    if (!result.success) {
+      return res.status(500).json({ error: result.error || '验证码发送失败，请稍后重试' });
+    }
     
-    // 始终返回验证码用于测试
+    // 开发环境下返回验证码用于测试，生产环境不返回
+    const isDev = process.env.NODE_ENV !== 'production';
+    
     res.json({ 
       success: true, 
       message: '验证码已发送',
-      code: code
+      ...(isDev && { code: result.code })
     });
   } catch (error) {
     console.error('发送验证码错误:', error);
