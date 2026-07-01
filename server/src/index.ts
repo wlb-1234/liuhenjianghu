@@ -335,36 +335,12 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// 数据库心跳 - 防止 Supabase 免费版数据库休眠
-function startDatabaseHeartbeat() {
-  const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 每5分钟一次
-  
-  const heartbeat = async () => {
-    try {
-      await query('SELECT 1');
-      console.log('[DB Heartbeat] ✅ 数据库连接正常', new Date().toISOString());
-    } catch (err: any) {
-      console.error('[DB Heartbeat] ❌ 数据库连接失败:', err.message);
-    }
-  };
-  
-  // 启动时立即执行一次
-  heartbeat();
-  
-  // 定时执行
-  setInterval(heartbeat, HEARTBEAT_INTERVAL);
-  console.log('[DB Heartbeat] 数据库心跳已启动，间隔 5 分钟');
-}
-
 // 启动服务
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] China Regions API v3.0.0 started on port ${PORT}`);
   console.log(`[Server] Admin UI: http://localhost:${PORT}/admin`);
   console.log(`[Server] API Docs: http://localhost:${PORT}/api-docs`);
   console.log(`[Server] Health: http://localhost:${PORT}/api/v1/health`);
-  
-  // 启动数据库心跳
-  startDatabaseHeartbeat();
 });
 
 export default app;
