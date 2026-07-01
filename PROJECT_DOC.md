@@ -1793,17 +1793,27 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-06-29 22:30
+> 最后更新：2026-06-30 15:00
 
-### v1.0.7 (2026-06-29 22:30)
+### v1.0.9 (2026-06-30 15:00)
 
-**后端修复：**
-- `payment.ts`: 实现 JWT 解析获取 user_id，区分普通用户和管理员查询订单
-- `rateLimit.ts`: 添加 `adminAuthMiddleware` 管理员权限验证中间件
+**短信服务集成：**
+- 集成阿里云短信服务（使用 HTTP API，非 SDK）
+- 创建 `server/src/services/sms.ts` 短信服务模块
+- 修改 `auth.ts` 使用真实短信服务发送验证码
+- 移除阿里云 SDK（与 ES Module 不兼容导致崩溃）
+- 改用 `fetch` 直接调用阿里云短信 REST API
+- 使用 Node.js 内置 `crypto` 模块生成签名
 
-**前端优化：**
-- 移除 `SettingsScreen.tsx` 中的调试 console.log
-- 移除 `sensitiveCheck/index.tsx` 中的调试 console.log
+**环境变量配置：**
+- `ALIYUN_ACCESS_KEY_ID`: 阿里云 AccessKey ID
+- `ALIYUN_ACCESS_KEY_SECRET`: 阿里云 AccessKey Secret
+- `SMS_SIGN_NAME`: 短信签名
+- `SMS_TEMPLATE_CODE`: 短信模板 CODE
+
+**数据库心跳（已移除）：**
+- 尝试添加数据库心跳防止 Supabase 休眠
+- 因导致服务启动崩溃已移除
 
 ### v1.0.8 (2026-06-29 23:00)
 
