@@ -1,124 +1,98 @@
 /**
- * 阿里云短信服务
+ * 阿里云短信服务 - 使用 HTTP API 直接调用（避免 SDK 兼容性问题）
  */
-import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525';
-import * as $OpenApi from '@alicloud/openapi-client';
-import * as $Util from '@alicloud/tea-util';
+import crypto from 'crypto';
 
-// 阿里云短信配置
-const SMS_CONFIG = {
-  accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID || '',
-  accessKeySecret: process.env.ALIYUN_ACCESS_KEY_SECRET || '',
-  endpoint: 'dysmsapi.aliyuncs.com',
-  signName: process.env.ALIYUN_SMS_SIGN_NAME || '', // 短信签名
-  templateCode: process.env.ALIYUN_SMS_TEMPLATE_CODE || '', // 短信模板Code
-};
-
-// 验证码存储（临时存储，生产环境应使用 Redis）
-const verificationCodes = new Map<string, { code: string; expires: number }>();
+const ALIYUN_ACCESS_KEY_ID = process.env.ALIYUN_ACCESS_KEY_ID || '';
+const ALIYUN_ACCESS_KEY_SECRET = process.env.ALIYUN_ACCESS_KEY_SECRET || '';
+const SMS_SIGN_NAME = process.env.SMS_SIGN_NAME || '';
+const SMS_TEMPLATE_CODE = process.env.SMS_TEMPLATE_CODE || '';
 
 /**
- * 创建短信客户端
+ * 生成阿里云 API 签名
  */
-function createClient(): Dysmsapi20170525 {
-  const config = new $OpenApi.Config({
-    accessKeyId: SMS_CONFIG.accessKeyId,
-    accessKeySecret: SMS_CONFIG.accessKeySecret,
-  });
-  config.endpoint = SMS_CONFIG.endpoint;
-  return new Dysmsapi20170525(config);
+function sign(params: Record<string, string>, accessKeySecret: string): string {
+  const sortedKeys = Object.keys(params).sort();
+  const canonicalizedQueryString = sortedKeys
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join('&');
+
+  const stringToSign = `GET&${encodeURIComponent('/')}&${encodeURIComponent(canonicalizedQueryString)}`;
+  const hmac = crypto.createHmac('sha1', accessKeySecret + '&');
+  hmac.update(stringToSign);
+  return hmac.digest('base64');
 }
 
 /**
  * 发送短信验证码
  * @param phone 手机号
- * @returns 验证码（用于测试）
+ * @param code 验证码
  */
-export async function sendVerificationCode(phone: string): Promise<{ success: boolean; code?: string; error?: string }> {
-  // 检查是否配置了阿里云短信
-  if (!SMS_CONFIG.accessKeyId || !SMS_CONFIG.accessKeySecret || !SMS_CONFIG.signName || !SMS_CONFIG.templateCode) {
-    // 未配置短信服务，使用模拟模式
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[SMS] 模拟模式 - 验证码 ${code} 发送至 ${phone}`);
-    
-    // 存储验证码（5分钟有效）
-    verificationCodes.set(phone, {
-      code,
-      expires: Date.now() + 5 * 60 * 1000,
-    });
-    
-    return { success: true, code };
+export async function sendVerificationSMS(phone: string, code: string): Promise<boolean> {
+  if (!ALIYUN_ACCESS_KEY_ID || !ALIYUN_ACCESS_KEY_SECRET) {
+    console.error('[SMS] 阿里云 AccessKey 未配置');
+    return false;
+  }
+
+  if (!SMS_SIGN_NAME || !SMS_TEMPLATE_CODE) {
+    console.error('[SMS] 短信签名或模板未配置');
+    return false;
   }
 
   try {
-    // 生成6位验证码
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // 创建客户端
-    const client = createClient();
-    
-    // 构建请求
-    const sendSmsRequest = new $Dysmsapi20170525.SendSmsRequest({
-      phoneNumbers: phone,
-      signName: SMS_CONFIG.signName,
-      templateCode: SMS_CONFIG.templateCode,
-      templateParam: JSON.stringify({ code }),
+    const nonce = crypto.randomUUID();
+    const timestamp = new Date().toISOString().replace(/\.\d{3}/, '');
+
+    const params: Record<string, string> = {
+      AccessKeyId: ALIYUN_ACCESS_KEY_ID,
+      Action: 'SendSms',
+      Format: 'JSON',
+      PhoneNumbers: phone,
+      RegionId: 'cn-hangzhou',
+      SignName: SMS_SIGN_NAME,
+      SignatureMethod: 'HMAC-SHA1',
+      SignatureNonce: nonce,
+      SignatureVersion: '1.0',
+      TemplateCode: SMS_TEMPLATE_CODE,
+      TemplateParam: JSON.stringify({ code }),
+      Version: '2017-05-25',
+    };
+
+    const signature = sign(params, ALIYUN_ACCESS_KEY_SECRET);
+    params.Signature = signature;
+
+    const queryString = Object.keys(params)
+      .sort()
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join('&');
+
+    const url = `https://dysmsapi.aliyuncs.com/?${queryString}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
     });
-    
-    // 发送短信
-    const runtime = new $Util.RuntimeOptions({});
-    const result = await client.sendSmsWithOptions(sendSmsRequest, runtime);
-    
-    if (result.body?.code === 'OK') {
-      // 存储验证码（5分钟有效）
-      verificationCodes.set(phone, {
-        code,
-        expires: Date.now() + 5 * 60 * 1000,
-      });
-      
-      console.log(`[SMS] 验证码 ${code} 已发送至 ${phone}`);
-      return { success: true, code };
+
+    const result = await response.json() as any;
+
+    if (result.Code === 'OK') {
+      console.log(`[SMS] ✅ 验证码已发送至 ${phone}`);
+      return true;
     } else {
-      console.error(`[SMS] 发送失败: ${result.body?.message}`);
-      return { success: false, error: result.body?.message || '发送失败' };
+      console.error(`[SMS] ❌ 发送失败:`, result);
+      return false;
     }
   } catch (error: any) {
-    console.error('[SMS] 发送短信错误:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * 验证验证码
- * @param phone 手机号
- * @param code 验证码
- * @returns 是否有效
- */
-export function verifyCode(phone: string, code: string): boolean {
-  const stored = verificationCodes.get(phone);
-  
-  if (!stored) {
+    console.error('[SMS] ❌ 发送异常:', error.message);
     return false;
   }
-  
-  // 检查是否过期
-  if (Date.now() > stored.expires) {
-    verificationCodes.delete(phone);
-    return false;
-  }
-  
-  // 验证验证码
-  if (stored.code === code) {
-    verificationCodes.delete(phone);
-    return true;
-  }
-  
-  return false;
 }
 
 /**
  * 检查短信服务是否已配置
  */
-export function isSmsConfigured(): boolean {
-  return !!(SMS_CONFIG.accessKeyId && SMS_CONFIG.accessKeySecret && SMS_CONFIG.signName && SMS_CONFIG.templateCode);
+export function isSMSConfigured(): boolean {
+  return !!(ALIYUN_ACCESS_KEY_ID && ALIYUN_ACCESS_KEY_SECRET && SMS_SIGN_NAME && SMS_TEMPLATE_CODE);
 }

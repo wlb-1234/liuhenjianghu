@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { getUserByPhone, createUser, getUserById, updateUser } from '../services/userService';
 import { authMiddleware, authMiddlewareWithUser, generateToken, AuthRequest } from '../middleware/auth';
-import { sendVerificationCode } from '../services/sms';
+import { sendVerificationSMS } from '../services/sms';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
@@ -18,7 +18,7 @@ router.post('/send-code', async (req: Request, res: Response) => {
     }
     
     // 使用短信服务发送验证码
-    const result = await sendVerificationCode(phone);
+    const result = await sendVerificationSMS(phone);
     
     if (!result.success) {
       return res.status(500).json({ error: result.error || '验证码发送失败，请稍后重试' });
