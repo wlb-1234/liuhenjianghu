@@ -3,20 +3,10 @@
  * 处理系统消息、评论通知、点赞通知等
  */
 
-import pg from 'pg';
-const { Pool } = pg;
+import { getPool } from '../config/database.js';
 
-const pool = new Pool({
-  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'Liuhen2026App',
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
+// 使用共享数据库连接池
+const getPoolInstance = () => getPool();
 
 // 消息类型枚举
 export enum MessageType {
@@ -59,7 +49,7 @@ export class NotificationService {
     priority: MessagePriority = MessagePriority.NORMAL
   ): Promise<MessageResult> {
     try {
-      const result = await pool.query(
+      const result = await getPoolInstance().query(
         `INSERT INTO notifications (user_id, type, title, content, data, priority)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id, created_at`,
@@ -220,7 +210,7 @@ export class NotificationService {
         params.push(...excludeUserIds);
       }
 
-      const result = await pool.query(query, params);
+      const result = await getPoolInstance().query(query, params);
 
       return {
         success: true,
@@ -238,7 +228,7 @@ export class NotificationService {
    */
   static async getUnreadCount(userId: number): Promise<number> {
     try {
-      const result = await pool.query(
+      const result = await getPoolInstance().query(
         'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false',
         [userId]
       );
@@ -254,7 +244,7 @@ export class NotificationService {
    */
   static async markAsRead(userId: number, notificationId: number): Promise<boolean> {
     try {
-      await pool.query(
+      await getPoolInstance().query(
         'UPDATE notifications SET is_read = true, read_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2',
         [notificationId, userId]
       );
@@ -270,7 +260,7 @@ export class NotificationService {
    */
   static async markAllAsRead(userId: number): Promise<number> {
     try {
-      const result = await pool.query(
+      const result = await getPoolInstance().query(
         'UPDATE notifications SET is_read = true, read_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND is_read = false',
         [userId]
       );
@@ -286,7 +276,7 @@ export class NotificationService {
    */
   static async deleteNotification(userId: number, notificationId: number): Promise<boolean> {
     try {
-      await pool.query(
+      await getPoolInstance().query(
         'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
         [notificationId, userId]
       );
@@ -302,7 +292,7 @@ export class NotificationService {
    */
   static async cleanupExpiredMessages(): Promise<number> {
     try {
-      const result = await pool.query(
+      const result = await getPoolInstance().query(
         `DELETE FROM notifications 
          WHERE created_at < NOW() - INTERVAL '30 days' 
          AND is_read = true`
@@ -340,7 +330,7 @@ export class NotificationService {
       query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
       params.push(limit, offset);
 
-      const result = await pool.query(query, params);
+      const result = await getPoolInstance().query(query, params);
       return result.rows;
     } catch (error: any) {
       console.error('获取消息列表失败:', error.message);
@@ -353,7 +343,7 @@ export class NotificationService {
    */
   static async getNotificationStats(userId: number): Promise<Record<string, number>> {
     try {
-      const result = await pool.query(`
+      const result = await getPoolInstance().query(`
         SELECT type, COUNT(*) as count
         FROM notifications
         WHERE user_id = $1

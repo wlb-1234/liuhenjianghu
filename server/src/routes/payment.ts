@@ -15,6 +15,7 @@ import {
 } from '../utils/wechatPay';
 import { query } from '../config/database';
 import { ResultSetHeader } from 'mysql2/promise';
+import { NotificationService, MessagePriority } from '../services/notificationService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
@@ -351,6 +352,29 @@ router.post('/notify', async (req: Request, res: Response) => {
             'UPDATE users SET balance = balance + ? WHERE id = ?',
             [parseInt(total_fee), orderData.user_id]
           );
+        }
+
+        // 发送充值到账通知
+        try {
+          const amountYuan = (parseInt(total_fee) / 100).toFixed(2);
+          let title = '充值到账通知';
+          let content = `您已成功充值 ${amountYuan} 元，余额已更新，感谢您的支持！`;
+          
+          if (orderData.order_type === 'vip') {
+            title = '会员开通成功';
+            const expireDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+            content = `您已成功开通会员，有效期至${expireDate.toLocaleDateString('zh-CN')}，感谢您的支持！`;
+          }
+          
+          await NotificationService.sendSystemMessage(
+            orderData.user_id,
+            title,
+            content,
+            { type: orderData.order_type, orderId: out_trade_no, amount: amountYuan },
+            MessagePriority.HIGH
+          );
+        } catch (notifError: any) {
+          console.error('发送充值通知失败(不影响支付流程):', notifError.message);
         }
       }
 

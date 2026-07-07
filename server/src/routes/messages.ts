@@ -3,6 +3,7 @@ import { db, messages, conversations, users } from "../storage/database";
 import { eq, and, or, desc, sql, ne } from "drizzle-orm";
 import { z } from "zod";
 import { authMiddleware as authenticate } from "../middleware/auth";
+import { NotificationService, MessagePriority } from "../services/notificationService.js";
 
 const router = Router();
 
@@ -201,6 +202,31 @@ router.post("/", authenticate, async (req: any, res) => {
       .update(conversations)
       .set({ updatedAt: new Date().toISOString() })
       .where(eq(conversations.id, convId));
+
+    // 发送新私信通知给接收方
+    if (senderId !== receiverId) {
+      try {
+        // 获取发送者昵称
+        const senderInfo = await db
+          .select({ nickname: users.nickname })
+          .from(users)
+          .where(eq(users.id, senderId))
+          .limit(1);
+        
+        const senderName = senderInfo[0]?.nickname || '有人';
+        const displayContent = type === 'text' ? content.substring(0, 30) : '[消息]';
+        
+        await NotificationService.sendSystemMessage(
+          receiverId,
+          '新私信提醒',
+          `${senderName} 给您发了一条消息: ${displayContent}`,
+          { type: 'private_message', senderId, conversationId: convId, messageType: type },
+          MessagePriority.NORMAL
+        );
+      } catch (notifError: any) {
+        console.error('发送私信通知失败(不影响消息发送):', notifError.message);
+      }
+    }
 
     res.json({ message: newMessage[0] });
   } catch (error) {

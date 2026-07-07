@@ -8,6 +8,7 @@ import { createMetricsMiddleware } from './middleware/prometheus.js';
 import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
+import { startMembershipExpiryReminder } from './services/membershipExpiryService.js';
 import { getSupabaseClient } from './storage/database/supabase-client.js';
 import { query } from './config/database.js';
 import crypto from 'crypto';
@@ -63,6 +64,7 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 // 初始化
 initRedis();
 initAlertSystem();
+startMembershipExpiryReminder();
 
 // CORS 跨域配置
 const corsOptions = {
@@ -324,6 +326,17 @@ app.use('/api/v1/realname', realnameRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/posts', postsRouter);
 app.use('/api/v1/admin/logs', operationLogsRouter);
+
+// 手动触发会员到期提醒检查（管理员接口）
+app.post('/api/v1/admin/membership-expiry-check', async (req: Request, res: Response) => {
+  try {
+    const { triggerMembershipExpiryCheck } = await import('./services/membershipExpiryService.js');
+    const result = await triggerMembershipExpiryCheck();
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
