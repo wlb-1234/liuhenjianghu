@@ -416,6 +416,47 @@ app.post('/api/v1/admin/version/publish', async (req: Request, res: Response) =>
   }
 });
 
+// 初始化数据库表（管理员接口，用于创建缺失的表）
+app.post('/api/v1/admin/init-db', async (req: Request, res: Response) => {
+  try {
+    const { query } = await import('./config/database.js');
+    
+    // 创建 app_versions 表
+    await query(`
+      CREATE TABLE IF NOT EXISTS app_versions (
+        id SERIAL PRIMARY KEY,
+        platform VARCHAR(20) NOT NULL,
+        version VARCHAR(20) NOT NULL,
+        build_number INTEGER NOT NULL,
+        min_supported_version VARCHAR(20) DEFAULT '1.0.0',
+        update_type VARCHAR(20) DEFAULT 'optional',
+        update_url TEXT,
+        release_notes TEXT,
+        force_update BOOLEAN DEFAULT FALSE,
+        published_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await query(`CREATE INDEX IF NOT EXISTS idx_app_versions_platform ON app_versions(platform)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_app_versions_build ON app_versions(build_number DESC)`);
+    
+    // 给 users 表添加 known_devices 字段
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS known_devices JSONB DEFAULT '[]'::jsonb`);
+    
+    // 插入默认版本
+    await query(`
+      INSERT INTO app_versions (platform, version, build_number, release_notes, published_at)
+      VALUES ('both', '1.0.10', 10, '新增消息通知功能', CURRENT_TIMESTAMP)
+      ON CONFLICT DO NOTHING
+    `);
+    
+    res.json({ success: true, message: '数据库初始化完成' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('[Error]', err.message);
