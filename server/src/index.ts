@@ -338,6 +338,84 @@ app.post('/api/v1/admin/membership-expiry-check', async (req: Request, res: Resp
   }
 });
 
+// 发送系统维护通知（管理员接口）
+app.post('/api/v1/admin/maintenance-notify', async (req: Request, res: Response) => {
+  try {
+    const { sendMaintenanceNotification } = await import('./services/securityNotificationService.js');
+    const { title, content, startTime, endTime } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ success: false, message: '维护内容不能为空' });
+    }
+    
+    const result = await sendMaintenanceNotification(
+      title || '系统维护通知',
+      content,
+      startTime || '',
+      endTime
+    );
+    
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 检查应用版本更新
+app.get('/api/v1/version/check', async (req: Request, res: Response) => {
+  try {
+    const { platform, version, buildNumber } = req.query;
+    
+    if (!platform || !version || !buildNumber) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少必要参数: platform, version, buildNumber' 
+      });
+    }
+    
+    const { checkUpdate } = await import('./services/versionService.js');
+    const result = await checkUpdate(
+      platform as 'ios' | 'android',
+      version as string,
+      parseInt(buildNumber as string)
+    );
+    
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 发布新版本（管理员接口）
+app.post('/api/v1/admin/version/publish', async (req: Request, res: Response) => {
+  try {
+    const { publishVersion } = await import('./services/versionService.js');
+    const { platform, version, buildNumber, minSupportedVersion, updateType, updateUrl, releaseNotes, forceUpdate } = req.body;
+    
+    if (!platform || !version || !buildNumber) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少必要参数: platform, version, buildNumber' 
+      });
+    }
+    
+    const result = await publishVersion({
+      platform,
+      version,
+      buildNumber,
+      minSupportedVersion,
+      updateType,
+      updateUrl,
+      releaseNotes,
+      forceUpdate
+    });
+    
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // 错误处理
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('[Error]', err.message);

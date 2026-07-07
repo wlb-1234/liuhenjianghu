@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getPool } from '../config/database.js';
+import { sendViolationNotification } from '../services/securityNotificationService';
 
 const router = Router();
 
@@ -10,14 +11,14 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const pool = getPool();
-    const [rows] = await pool.query(`
+    const result = await pool.query(`
       SELECT id, user_id, blocked_user_id, reason, created_at, expires_at, is_active
       FROM blacklist
       ORDER BY created_at DESC
       LIMIT 100
     `);
-    res.json({ success: true, data: rows });
-  } catch (error) {
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
     console.error('[Blacklist] Get error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
@@ -40,8 +41,18 @@ router.post('/', async (req, res) => {
 
     await pool.query(`
       INSERT INTO blacklist (user_id, blocked_user_id, reason, expires_at, is_active)
-      VALUES (?, ?, ?, ?, true)
+      VALUES ($1, $2, $3, $4, true)
     `, [userId || 'admin', blockedUserId, reason || '', expiresAt]);
+
+    // 发送违规通知给被封禁的用户
+    if (blockedUserId) {
+      const action = days ? 'ban' : 'warning';
+      sendViolationNotification(
+        parseInt(blockedUserId), 
+        reason || '违反社区规范', 
+        action
+      );
+    }
 
     res.json({ success: true, message: 'User added to blacklist' });
   } catch (error) {
@@ -72,18 +83,19 @@ router.delete('/:id', async (req, res) => {
 router.get('/check/:userId', async (req, res) => {
   try {
     const pool = getPool();
-    const [rows] = await pool.query(`
+    const result = await pool.query(`
       SELECT * FROM blacklist 
-      WHERE blocked_user_id = ? AND is_active = true 
+      WHERE blocked_user_id = $1 AND is_active = true 
       AND (expires_at IS NULL OR expires_at > NOW())
     `, [req.params.userId]);
 
+    const rows = result.rows;
     res.json({ 
       success: true, 
       isBlocked: rows.length > 0,
       blocked: rows.length > 0 ? rows[0] : null
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Blacklist] Check error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }

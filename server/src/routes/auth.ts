@@ -4,6 +4,16 @@ import * as jwt from 'jsonwebtoken';
 import { getUserByPhone, createUser, getUserById, updateUser } from '../services/userService';
 import { authMiddleware, authMiddlewareWithUser, generateToken, AuthRequest } from '../middleware/auth';
 import { sendVerificationSMS } from '../services/sms';
+import { 
+  recordLoginFailure, 
+  clearLoginFailure, 
+  getLoginFailureCount,
+  checkNewDeviceLogin,
+  sendNewDeviceLoginNotification,
+  sendAccountAbnormalNotification,
+  sendPasswordChangeNotification
+} from '../services/securityNotificationService';
+import { getPool } from '../config/database.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
@@ -17,11 +27,14 @@ router.post('/send-code', async (req: Request, res: Response) => {
       return res.status(400).json({ error: '请输入有效的手机号' });
     }
     
-    // 使用短信服务发送验证码
-    const result = await sendVerificationSMS(phone);
+    // 生成6位验证码
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     
-    if (!result.success) {
-      return res.status(500).json({ error: result.error || '验证码发送失败，请稍后重试' });
+    // 使用短信服务发送验证码
+    const success = await sendVerificationSMS(phone, code);
+    
+    if (!success) {
+      return res.status(500).json({ error: '验证码发送失败，请稍后重试' });
     }
     
     // 开发环境下返回验证码用于测试，生产环境不返回
@@ -30,7 +43,7 @@ router.post('/send-code', async (req: Request, res: Response) => {
     res.json({ 
       success: true, 
       message: '验证码已发送',
-      ...(isDev && { code: result.code })
+      ...(isDev && { code })
     });
   } catch (error) {
     console.error('发送验证码错误:', error);
@@ -120,6 +133,8 @@ router.post('/register', async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { phone, password } = req.body;
+    const ip = req.ip || req.headers['x-forwarded-ip'] as string || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
     
     if (!phone || !password) {
       return res.status(400).json({ error: '请输入手机号和密码' });
@@ -134,7 +149,26 @@ router.post('/login', async (req: Request, res: Response) => {
     // 验证密码
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      // 记录登录失败
+      recordLoginFailure(phone, ip);
+      const failCount = getLoginFailureCount(phone);
+      
+      // 超过5次失败，发送账号异常提醒
+      if (failCount >= 5 && failCount % 5 === 0) {
+        sendAccountAbnormalNotification(user.id, failCount, ip);
+      }
+      
       return res.status(401).json({ error: '手机号或密码错误' });
+    }
+    
+    // 登录成功，清除失败记录
+    clearLoginFailure(phone);
+    
+    // 检查是否是新设备登录
+    const isNewDevice = await checkNewDeviceLogin(user.id, ip, userAgent);
+    if (isNewDevice) {
+      // 异步发送新设备登录提醒（不阻塞登录）
+      sendNewDeviceLoginNotification(user.id, ip, userAgent);
     }
     
     // 生成 token
@@ -237,6 +271,54 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
   } catch (error) {
     console.error('更新用户信息错误:', error);
     res.status(500).json({ error: '更新失败' });
+  }
+});
+
+// 修改密码
+router.put('/password', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ error: '请输入原密码和新密码' });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: '新密码长度不能少于6位' });
+    }
+    
+    // 获取用户信息
+    const user = await getUserById(req.userId!);
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+    
+    // 验证原密码
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: '原密码错误' });
+    }
+    
+    // 加密新密码
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // 更新密码
+    const pool = getPool();
+    await pool.query(
+      'UPDATE users SET password = $1 WHERE id = $2',
+      [hashedPassword, req.userId]
+    );
+    
+    // 发送密码修改通知
+    sendPasswordChangeNotification(req.userId!);
+    
+    res.json({ 
+      success: true,
+      message: '密码修改成功'
+    });
+  } catch (error) {
+    console.error('修改密码错误:', error);
+    res.status(500).json({ error: '修改密码失败' });
   }
 });
 

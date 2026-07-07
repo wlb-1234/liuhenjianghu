@@ -1793,7 +1793,47 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-06-30 16:00
+> 最后更新：2026-06-30 17:00
+
+### v1.0.11 (2026-06-30 17:00)
+
+**消息通知系统 - 第二批 & 第三批功能：**
+
+1. **系统维护通知**
+   - 管理员接口 `POST /api/v1/admin/maintenance-notify`
+   - 支持设置维护时间范围
+   - 广播给所有用户
+
+2. **违规通知**
+   - 用户被加入黑名单时自动发送违规通知
+   - 区分封禁和警告两种类型
+
+3. **新设备登录提醒**
+   - 记录用户已知设备指纹
+   - 检测到新设备登录时发送提醒
+   - 显示设备类型和IP地址
+
+4. **密码修改通知**
+   - 新增 `PUT /api/v1/auth/password` 接口
+   - 修改密码成功后发送站内通知
+
+5. **版本更新提醒**
+   - 新增 `app_versions` 数据表
+   - 客户端检查更新 `GET /api/v1/version/check`
+   - 管理员发布版本 `POST /api/v1/admin/version/publish`
+   - 支持强制更新和可选更新
+
+6. **账号异常提醒**
+   - 记录登录失败次数
+   - 超过5次失败发送账号异常提醒
+
+**新建文件：**
+- `server/src/services/securityNotificationService.ts` - 安全通知服务
+- `server/src/services/versionService.ts` - 版本管理服务
+
+**数据库变更：**
+- 新增 `app_versions` 表
+- `users` 表新增 `known_devices` 字段
 
 ### v1.0.10 (2026-06-30 16:00)
 
