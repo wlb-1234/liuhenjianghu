@@ -1882,6 +1882,33 @@ const logout = async () => {
 - 新增 `app_versions` 表
 - `users` 表新增 `known_devices` 字段
 
+### v1.0.14 (2026-07-08 15:30)
+
+**OSS 对象存储配置完成**
+
+**配置信息：**
+- Bucket 名称：`liuhenjianghu`
+- 区域：`oss-cn-beijing`
+- 读写权限：私有
+- RAM 用户：`liuhen-oss-user`
+- 权限策略：`Liuhenjianghu-OSS-Min-Permission`（仅允许操作 liuhenjianghu Bucket）
+
+**Railway 环境变量：**
+- `OSS_REGION`: oss-cn-beijing
+- `OSS_ACCESS_KEY_ID`: (已配置在 Railway)
+- `OSS_ACCESS_KEY_SECRET`: (已配置在 Railway)
+- `OSS_BUCKET`: liuhenjianghu
+
+**上传测试：**
+- ✅ 应用图标上传成功
+- 路径：`app-store/icon/app-icon-1024.png`
+- 可通过签名 URL 访问
+
+**功能说明：**
+- 用户头像上传
+- 帖子图片上传
+- 应用素材备份
+
 ### v1.0.10 (2026-06-30 16:00)
 
 **消息通知系统 - 第一批功能：**
