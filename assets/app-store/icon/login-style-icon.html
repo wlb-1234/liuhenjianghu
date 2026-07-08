@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 1024px;
+  height: 1024px;
+  overflow: hidden;
+}
+
+.icon-container {
+  width: 1024px;
+  height: 1024px;
+  position: relative;
+  background: linear-gradient(180deg, #0D0D15 0%, #0A0A10 50%, #080810 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 金色光点 */
+.dot {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.6);
+}
+.dot1 { width: 2px; height: 2px; top: 15%; left: 20%; }
+.dot2 { width: 1px; height: 1px; top: 25%; left: 70%; }
+.dot3 { width: 2px; height: 2px; top: 40%; left: 85%; }
+.dot4 { width: 1px; height: 1px; top: 55%; left: 10%; }
+.dot5 { width: 2px; height: 2px; top: 70%; left: 60%; }
+.dot6 { width: 1px; height: 1px; top: 80%; left: 30%; }
+.dot7 { width: 2px; height: 2px; top: 35%; left: 45%; }
+.dot8 { width: 1px; height: 1px; top: 60%; left: 80%; }
+
+/* 金色光斑 */
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+}
+.glow1 {
+  width: 200px;
+  height: 200px;
+  top: 10%;
+  left: 15%;
+  background: rgba(212, 175, 55, 0.15);
+}
+.glow2 {
+  width: 150px;
+  height: 150px;
+  top: 50%;
+  right: 20%;
+  background: rgba(212, 175, 55, 0.1);
+}
+.glow3 {
+  width: 180px;
+  height: 180px;
+  bottom: 20%;
+  left: 40%;
+  background: rgba(212, 175, 55, 0.12);
+}
+
+/* 水纹装饰 */
+.water-wave {
+  position: absolute;
+  top: 80px;
+  left: 30px;
+}
+
+.water-wave svg path {
+  stroke: #8B7355;
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.5;
+}
+
+/* 标题 */
+.title-container {
+  text-align: center;
+  z-index: 10;
+}
+
+.main-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 96px;
+  font-weight: bold;
+  color: #FFD700;
+  letter-spacing: 8px;
+  text-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.9),
+    0 0 40px rgba(255, 215, 0, 0.5),
+    0 0 60px rgba(255, 215, 0, 0.3);
+}
+
+/* 副标题 */
+.subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  z-index: 10;
+}
+
+.arrow {
+  font-size: 18px;
+  color: #D4AF37;
+}
+
+.subtitle-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 20px;
+  color: #B8860B;
+  letter-spacing: 2px;
+}
+</style>
+</head>
+<body>
+<div class="icon-container">
+  <!-- 金色光点 -->
+  <div class="dot dot1"></div>
+  <div class="dot dot2"></div>
+  <div class="dot dot3"></div>
+  <div class="dot dot4"></div>
+  <div class="dot dot5"></div>
+  <div class="dot dot6"></div>
+  <div class="dot dot7"></div>
+  <div class="dot dot8"></div>
+  
+  <!-- 金色光斑 -->
+  <div class="glow glow1"></div>
+  <div class="glow glow2"></div>
+  <div class="glow glow3"></div>
+  
+  <!-- 水纹装饰 -->
+  <div class="water-wave">
+    <svg width="120" height="60" viewBox="0 0 120 60">
+      <path d="M0,15 Q15,5 30,15 T60,15 T90,15 T120,15" />
+      <path d="M0,25 Q15,15 30,25 T60,25 T90,25 T120,25" />
+      <path d="M0,35 Q15,25 30,35 T60,35 T90,35 T120,35" />
+    </svg>
+  </div>
+  
+  <!-- 主标题 -->
+  <div class="title-container">
+    <div class="main-title">流痕江湖</div>
+  </div>
+  
+  <!-- 副标题 -->
+  <div class="subtitle-container">
+    <span class="arrow">◀</span>
+    <span class="subtitle-text">人海为江湖，留言皆流痕</span>
+    <span class="arrow">▶</span>
+  </div>
+</div>
+</body>
+</html>
