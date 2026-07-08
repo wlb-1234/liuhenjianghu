@@ -1,0 +1,6623 @@
+============================================================
+
+            流痕江湖社交App 源代码文档
+                    V1.0
+
+============================================================
+
+生成时间: 2026/7/8 15:45:14
+总文件数: 590
+总代码行数: 129653
+
+============================================================
+
+
+------------------------------------------------------------
+                        前 60 页
+------------------------------------------------------------
+
+// ============================================================
+// 文件: _layout.tsx
+// 路径: client/app/(tabs)/_layout.tsx
+// ============================================================
+import { Tabs } from 'expo-router';
+import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useCSSVariable } from 'uniwind';
+
+export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const [background, muted, accent, border] = useCSSVariable([
+    '--color-background',
+    '--color-muted',
+    '--color-accent',
+    '--color-border',
+  ]) as string[];
+
+  let tabBarStyle: any = {
+    backgroundColor: '#FDFBF7',
+    borderTopWidth: 1,
+    borderTopColor: '#E8E0D0',
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? insets.bottom : 12,
+    height: 60 + (Platform.OS === 'ios' ? insets.bottom : 12),
+  };
+
+  if (Platform.OS === 'web') {
+    tabBarStyle = {
+      ...tabBarStyle,
+      height: 'auto',
+    };
+  }
+
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle,
+        tabBarActiveTintColor: '#8B4513',
+        tabBarInactiveTintColor: '#A89F91',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 2,
+        },
+      }}
+    >
+      <Tabs.Screen
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 1 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        name="index"
+        options={{
+          title: '首页',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} colo...
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="social"
+        options={{
+          title: '社交',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={24} ...
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="collection"
+        options={{
+          title: '收藏',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'bookmark' : 'bookmark-outline'} size={...
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: '聊天',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} ...
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: '搜索',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'search' : 'search-outline'} size={24} ...
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: '我的',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} ...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 2 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
+
+
+
+// ============================================================
+// 文件: chat.tsx
+// 路径: client/app/(tabs)/chat.tsx
+// ============================================================
+export { default } from "@/screens/chat";
+
+
+
+// ============================================================
+// 文件: collection.tsx
+// 路径: client/app/(tabs)/collection.tsx
+// ============================================================
+export { default } from "@/screens/collection";
+
+
+
+// ============================================================
+// 文件: index.tsx
+// 路径: client/app/(tabs)/index.tsx
+// ============================================================
+import React, { useState, useEffect } from 'react';
+import { View, Modal, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import HomeScreen from '@/screens/home/HomeScreen';
+import PostScreen from '@/screens/post/PostScreen';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
+
+interface Post {
+  id: number;
+  user_id: number;
+  content: string;
+  images: string[];
+  region_code: string;
+  like_count: number;
+  comment_count: number;
+  is_pinned: boolean;
+  is_liked: boolean;
+  expire_at: string;
+  created_at: string;
+  nickname: string;
+  avatar: string | null;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 3 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  member_level: number;
+}
+
+export default function HomeTab() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useSafeRouter();
+  const [showPostModal, setShowPostModal] = useState(false);
+
+  const handlePostSuccess = () => {
+    setShowPostModal(false);
+  };
+
+  const handleOpenPost = () => {
+    if (!isAuthenticated) {
+      Alert.alert('提示', '请先登录后再发布留言', [
+        { text: '取消', style: 'cancel' },
+        { text: '去登录', onPress: () => {
+          router.push('/login');
+        }}
+      ]);
+      return;
+    }
+    setShowPostModal(true);
+  };
+
+  const handlePostPress = (post: Post) => {
+    router.push(`/post/${post.id}`);
+  };
+
+  return (
+    <View style={styles.container}>
+      <HomeScreen onPostPress={handlePostPress} />
+      
+      {/* 发布按钮 */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleOpenPost}
+        activeOpacity={0.8}
+      >
+        <View style={styles.fabInner}>
+          <View style={styles.fabIcon}>
+            <View style={styles.fabIconLine} />
+            <View style={styles.fabIconLine} />
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* 发布Modal */}
+      <Modal
+        visible={showPostModal}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 4 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPostModal(false)}
+      >
+        <PostScreen
+          onClose={() => setShowPostModal(false)}
+          onSuccess={handlePostSuccess}
+        />
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#8B4513',
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabIcon: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  fabIconLine: {
+    width: 24,
+    height: 3,
+    backgroundColor: '#FDFBF7',
+    borderRadius: 2,
+  },
+});
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 5 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+
+// ============================================================
+// 文件: profile.tsx
+// 路径: client/app/(tabs)/profile.tsx
+// ============================================================
+import React from 'react';
+import ProfileScreen from '@/screens/profile/ProfileScreen';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function ProfileTab() {
+  const router = useSafeRouter();
+  const { logout } = useAuth();
+
+  const handleUpgrade = () => {
+    router.push('/vip');
+  };
+
+  const handleSettings = () => {
+    router.push('/settings');
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
+  return (
+    <ProfileScreen 
+      onUpgrade={handleUpgrade} 
+      onSettings={handleSettings}
+      onLogout={handleLogout}
+    />
+  );
+}
+
+
+
+// ============================================================
+// 文件: search.tsx
+// 路径: client/app/(tabs)/search.tsx
+// ============================================================
+export { default } from "@/screens/search";
+
+
+
+// ============================================================
+// 文件: social.tsx
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 6 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 路径: client/app/(tabs)/social.tsx
+// ============================================================
+import React, { useState } from 'react';
+import SocialScreen from '@/screens/social/SocialScreen';
+
+interface Props {
+  onChatPress: (userId: number, userName: string, userAvatar: string | null) ...
+  onUserPress: (userId: number) => void;
+}
+
+export default function SocialTab({ onChatPress, onUserPress }: Props) {
+  return (
+    <SocialScreen
+      onChatPress={(userId) => onChatPress(userId, '', null)}
+      onUserPress={onUserPress}
+    />
+  );
+}
+
+
+
+// ============================================================
+// 文件: +not-found.tsx
+// 路径: client/app/+not-found.tsx
+// ============================================================
+import { View, Text } from 'react-native';
+import { Link } from 'expo-router';
+
+export default function NotFoundScreen() {
+  return (
+    <View className="flex-1 justify-center items-center bg-background">
+      <Text className="text-foreground">
+        页面不存在
+      </Text>
+      <Link href="/" className="text-accent mt-6">
+        返回首页
+      </Link>
+    </View>
+  );
+}
+
+
+
+// ============================================================
+// 文件: _layout.tsx
+// 路径: client/app/_layout.tsx
+// ============================================================
+// 强制重建 - 2026-06-29 21:00 - 添加强制代码变更触发 Railway 重新构建
+import { useEffect, useState } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 7 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+import { StatusBar } from 'expo-status-bar';
+import { LogBox, Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { Provider } from '@/components/Provider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+import '../global.css';
+
+// 全局未处理 Promise 错误捕获（仅 Web 端）
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    console.error('全局捕获未处理 Promise 错误：', event.reason);
+  });
+}
+
+LogBox.ignoreLogs([
+  "TurboModuleRegistry.getEnforcing(...): 'RNMapsAirModule' could not be found",
+  "shadow* style props are deprecated",
+  "textShadow* style props are deprecated",
+  "All themes must have the same variables",
+  "Theme .* is missing variable",
+]);
+
+export default function RootLayout() {
+  const router = useRouter();
+  const segments = useSegments();
+  const [isReady, setIsReady] = useState(false);
+  
+  // 2026-06-29 强制代码变更 - 触发 Railway 重新构建
+  const [forceRebuild, setForceRebuild] = useState(false);
+  useEffect(() => {
+    setForceRebuild(true);
+    console.log('>>> 强制代码变更已触发，forceRebuild:', forceRebuild);
+  }, []);
+
+  console.log('>>> 1. RootLayout 开始渲染，isReady:', isReady);
+
+  // 等待路由就绪
+  useEffect(() => {
+    if (segments.length > 0) {
+      setIsReady(true);
+      console.log('>>> 路由就绪，segments:', segments);
+    }
+  }, [segments]);
+
+  // 登录状态检查
+  useEffect(() => {
+    if (!isReady) return; // 路由未就绪，不执行跳转
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 8 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    if (typeof window !== 'undefined') {
+      // 使用与 AuthContext 相同的 key
+      const token = localStorage.getItem('auth_token') || localStorage.getIte...
+      const isLoginRoute = segments.includes('login');
+      const isRegisterRoute = segments.includes('register');
+
+      console.log('>>> [Layout] 当前路由:', segments);
+      console.log('>>> [Layout] token:', token);
+      console.log('>>> [Layout] isLoginRoute:', isLoginRoute);
+
+      // 如果当前不在登录页或注册页，且没有 token，则跳转
+      if (!token && !isLoginRoute && !isRegisterRoute) {
+        console.log('>>> [Layout] 无 token，跳转到登录页');
+        // 使用 setTimeout 确保在渲染周期后跳转
+        setTimeout(() => {
+          router.replace('/login');
+        }, 50);
+      }
+    }
+  }, [isReady, segments]);
+
+  useEffect(() => {
+    console.log('>>> 2. useEffect 执行，开始初始化');
+    const prepare = async () => {
+      try {
+        console.log('>>> 3. prepare 函数开始执行');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('>>> 4. prepare 函数执行完成');
+      } catch (error) {
+        console.error('>>> prepare 函数出错:', error);
+      }
+    };
+    prepare();
+  }, []);
+
+  if (!isReady) {
+    console.log('>>> 5. isReady 为 false，返回 null');
+    return null;
+  }
+
+  console.log('>>> 6. isReady 为 true，开始渲染 Provider');
+
+  return (
+    <ErrorBoundary>
+      <Provider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 9 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+            gestureDirection: 'horizontal',
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ title: "" }} />
+          <Stack.Screen name="login" options={{ title: "" }} />
+          <Stack.Screen name="register" options={{ title: "" }} />
+          <Stack.Screen name="post" options={{ title: "" }} />
+          <Stack.Screen name="chat" options={{ title: "" }} />
+          <Stack.Screen name="settings" options={{ title: "" }} />
+          <Stack.Screen name="vip" options={{ title: "" }} />
+          <Stack.Screen name="orders" options={{ title: "" }} />
+          <Stack.Screen name="balance" options={{ title: "" }} />
+          <Stack.Screen name="favorites" options={{ title: "" }} />
+          <Stack.Screen name="notifications" options={{ title: "" }} />
+          <Stack.Screen name="feedback" options={{ title: "" }} />
+          <Stack.Screen name="about" options={{ title: "" }} />
+          <Stack.Screen name="account-deletion" options={{ title: "" }} />
+          <Stack.Screen name="admin" options={{ title: "" }} />
+          <Stack.Screen name="+not-found" options={{ title: "" }} />
+        </Stack>
+        <Toast />
+      </Provider>
+    </ErrorBoundary>
+  );
+}
+
+
+
+// ============================================================
+// 文件: about.tsx
+// 路径: client/app/about.tsx
+// ============================================================
+export { default } from "@/screens/about";
+
+
+
+// ============================================================
+// 文件: account-deletion.tsx
+// 路径: client/app/account-deletion.tsx
+// ============================================================
+export { default } from "@/screens/accountDeletion";
+
+
+
+// ============================================================
+// 文件: _layout.tsx
+// 路径: client/app/admin/_layout.tsx
+// ============================================================
+import { Stack } from 'expo-router';
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 10 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+import { StatusBar } from 'expo-status-bar';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeRouter, usePathname } from '@/hooks/useSafeRouter';
+
+const menuItems = [
+  { name: '仪表盘', path: '/admin/dashboard', icon: 'grid' },
+  { name: '用户', path: '/admin/users', icon: 'people' },
+  { name: '内容', path: '/admin/content', icon: 'document-text' },
+  { name: '审核', path: '/admin/moderation', icon: 'shield-checkmark' },
+  { name: '举报', path: '/admin/reports', icon: 'flag' },
+  { name: '反馈', path: '/admin/feedbacks', icon: 'chatbox-ellipses' },
+  { name: '会员', path: '/admin/members', icon: 'diamond' },
+  { name: '支付', path: '/admin/payment', icon: 'wallet' },
+];
+
+export default function AdminLayout() {
+  const insets = useSafeAreaInsets();
+  const router = useSafeRouter();
+  const pathname = usePathname();
+
+  return (
+    <View className="flex-1 bg-stone-900">
+      <StatusBar style="light" />
+      
+      {/* 顶部标题栏 */}
+      <View 
+        className="bg-stone-800 border-b border-stone-700"
+        style={{ paddingTop: insets.top + 8 }}
+      >
+        <View className="px-4 pb-3 flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <View className="w-8 h-8 rounded-lg bg-amber-600 items-center jus...
+              <Ionicons name="shield" size={18} color="white" />
+            </View>
+            <View>
+              <Text className="text-amber-500 font-bold text-lg">流痕江湖</Text>
+              <Text className="text-stone-500 text-xs">管理后台</Text>
+            </View>
+          </View>
+          <TouchableOpacity 
+            className="w-10 h-10 rounded-full bg-stone-700 items-center justi...
+            onPress={() => router.push('/')}
+          >
+            <Ionicons name="exit-outline" size={20} color="#a8a29e" />
+          </TouchableOpacity>
+        </View>
+
+        {/* 顶部 Tab 导航 */}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 11 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        <View className="flex-row px-2 pb-2">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.path || pathname === item.path...
+            return (
+              <TouchableOpacity
+                key={item.path}
+                className={`flex-1 py-2 items-center rounded-lg mx-1 ${
+                  isActive ? 'bg-amber-600' : ''
+                }`}
+                onPress={() => router.push(item.path)}
+              >
+                <Ionicons 
+                  name={(isActive ? item.icon : `${item.icon}-outline`) as any} 
+                  size={18} 
+                  color={isActive ? 'white' : '#78716c'} 
+                />
+                <Text 
+                  className={`text-xs mt-1 ${isActive ? 'text-white' : 'text-...
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* 内容区域 */}
+      <Stack 
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#1c1917' },
+        }}
+      />
+    </View>
+  );
+}
+
+
+
+// ============================================================
+// 文件: content.tsx
+// 路径: client/app/admin/content.tsx
+// ============================================================
+export { default } from "@/screens/admin/ContentManageScreen";
+
+
+
+// ============================================================
+// 文件: dashboard.tsx
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 12 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 路径: client/app/admin/dashboard.tsx
+// ============================================================
+export { default } from "@/screens/admin/DashboardScreen";
+
+
+
+// ============================================================
+// 文件: feedbacks.tsx
+// 路径: client/app/admin/feedbacks.tsx
+// ============================================================
+export { default } from "@/screens/admin/FeedbackManageScreen";
+
+
+
+// ============================================================
+// 文件: index.tsx
+// 路径: client/app/admin/index.tsx
+// ============================================================
+export { default } from "@/screens/admin/LoginScreen";
+
+
+
+// ============================================================
+// 文件: logs.tsx
+// 路径: client/app/admin/logs.tsx
+// ============================================================
+export { default } from "@/screens/admin/LogScreen";
+
+
+
+// ============================================================
+// 文件: members.tsx
+// 路径: client/app/admin/members.tsx
+// ============================================================
+export { default } from "@/screens/admin/MemberLevelScreen";
+
+
+
+// ============================================================
+// 文件: moderation.tsx
+// 路径: client/app/admin/moderation.tsx
+// ============================================================
+export { default } from "@/screens/admin/ModerationScreen";
+
+
+
+// ============================================================
+// 文件: payment.tsx
+// 路径: client/app/admin/payment.tsx
+// ============================================================
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 13 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export { default } from "@/screens/admin/PaymentManageScreen";
+
+
+
+// ============================================================
+// 文件: realname.tsx
+// 路径: client/app/admin/realname.tsx
+// ============================================================
+export { default } from "@/screens/admin/RealnameManageScreen";
+
+
+
+// ============================================================
+// 文件: reports.tsx
+// 路径: client/app/admin/reports.tsx
+// ============================================================
+export { default } from "@/screens/admin/ReportsScreen";
+
+
+
+// ============================================================
+// 文件: users.tsx
+// 路径: client/app/admin/users.tsx
+// ============================================================
+export { default } from "@/screens/admin/UserManageScreen";
+
+
+
+// ============================================================
+// 文件: agreement.tsx
+// 路径: client/app/agreement.tsx
+// ============================================================
+export { default } from "@/screens/setting/AgreementScreen";
+
+
+
+// ============================================================
+// 文件: balance.tsx
+// 路径: client/app/balance.tsx
+// ============================================================
+export { default } from "@/screens/balance";
+
+
+
+// ============================================================
+// 文件: [userId].tsx
+// 路径: client/app/chat/[userId].tsx
+// ============================================================
+export { default } from "@/screens/chat/[userId]";
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 14 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+// ============================================================
+// 文件: chat.tsx
+// 路径: client/app/chat.tsx
+// ============================================================
+import React, { useState } from 'react';
+import { View, StyleSheet, Modal } from 'react-native';
+import ChatScreen from '@/screens/social/ChatScreen';
+import { useSafeSearchParams, useSafeRouter } from '@/hooks/useSafeRouter';
+
+export default function ChatPage() {
+  const router = useSafeRouter();
+  const params = useSafeSearchParams<{ userId: string; userName?: string; use...
+  
+  const userId = parseInt(params.userId || '0', 10);
+  const userName = params.userName || '江湖好友';
+  const userAvatar = params.userAvatar || null;
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  if (!userId) {
+    return null;
+  }
+
+  return (
+    <View style={styles.container}>
+      <ChatScreen
+        userId={userId}
+        userName={userName}
+        userAvatar={userAvatar}
+        onBack={handleBack}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F0E6',
+  },
+});
+
+
+
+// ============================================================
+// 文件: favorites.tsx
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 15 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 路径: client/app/favorites.tsx
+// ============================================================
+export { default } from "@/screens/favorites";
+
+
+
+// ============================================================
+// 文件: feedback.tsx
+// 路径: client/app/feedback.tsx
+// ============================================================
+export { default } from "@/screens/feedback";
+
+
+
+// ============================================================
+// 文件: login.tsx
+// 路径: client/app/login.tsx
+// ============================================================
+export { default } from "@/screens/auth/LoginScreen";
+
+
+
+// ============================================================
+// 文件: notifications.tsx
+// 路径: client/app/notifications.tsx
+// ============================================================
+export { default } from "@/screens/notifications";
+
+
+
+// ============================================================
+// 文件: orders.tsx
+// 路径: client/app/orders.tsx
+// ============================================================
+export { default } from "@/screens/orders";
+
+
+
+// ============================================================
+// 文件: [id].tsx
+// 路径: client/app/post/[id].tsx
+// ============================================================
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 16 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  Image,
+  Dimensions,
+} from 'react-native';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { apiRequest } from '@/services/api';
+import { ShareButton } from '@/components/Share';
+
+const { width } = Dimensions.get('window');
+
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  images: string[];
+  author: {
+    id: number;
+    name: string;
+    avatar: string;
+  };
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+  is_liked?: boolean;
+}
+
+export default function SharedPostScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchPost();
+    }
+  }, [id]);
+
+  const fetchPost = async () => {
+    try {
+      const data = await apiRequest(`/posts/${id}`);
+      setPost(data);
+    } catch (error) {
+      console.error('获取帖子失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!post) return;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 17 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    try {
+      const res = await apiRequest(`/posts/${post.id}/like`, {
+        method: 'POST',
+      });
+      setPost({
+        ...post,
+        is_liked: res.is_liked,
+        like_count: res.is_liked ? post.like_count + 1 : post.like_count - 1,
+      });
+    } catch (error) {
+      console.error('点赞失败:', error);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN');
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#C9A96E" />
+      </View>
+    );
+  }
+
+  if (!post) {
+    return (
+      <View style={styles.error}>
+        <Text style={styles.errorText}>帖子不存在或已被删除</Text>
+        <TouchableOpacity style={styles.homeBtn} onPress={() => window.locati...
+          <Text style={styles.homeBtnText}>返回首页</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: '帖子详情',
+          headerStyle: { backgroundColor: '#1a1a1a' },
+          headerTintColor: '#C9A96E',
+        }}
+      />
+      <ScrollView style={styles.container}>
+        {/* 作者信息 */}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 18 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        <View style={styles.authorRow}>
+          <Image
+            source={{ uri: post.author.avatar || 'https://images.unsplash.com...
+            style={styles.avatar}
+          />
+          <View style={styles.authorInfo}>
+            <Text style={styles.authorName}>{post.author.name}</Text>
+            <Text style={styles.postDate}>{formatDate(post.created_at)}</Text>
+          </View>
+        </View>
+
+        {/* 标题 */}
+        {post.title && <Text style={styles.title}>{post.title}</Text>}
+
+        {/* 内容 */}
+        <Text style={styles.content}>{post.content}</Text>
+
+        {/* 图片 */}
+        {post.images && post.images.length > 0 && (
+          <View style={styles.images}>
+            {post.images.map((img, index) => (
+              <Image
+                key={index}
+                source={{ uri: img }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            ))}
+          </View>
+        )}
+
+        {/* 操作栏 */}
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.actionItem} onPress={handleLike}>
+            <Ionicons
+              name={post.is_liked ? 'heart' : 'heart-outline'}
+              size={24}
+              color={post.is_liked ? '#E74C3C' : '#666'}
+            />
+            <Text style={styles.actionText}>{post.like_count}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.actionItem}>
+            <Ionicons name="chatbubble-outline" size={24} color="#666" />
+            <Text style={styles.actionText}>{post.comment_count}</Text>
+          </View>
+
+          <ShareButton postId={post.id} title={post.title} size={24} color="#...
+        </View>
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 19 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        {/* 底部提示 */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>来自「流痕江湖」</Text>
+          <TouchableOpacity onPress={() => window.location.href = '/'}>
+            <Text style={styles.openApp}>打开 App 查看更多</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#121212',
+  },
+  error: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#121212',
+    padding: 20,
+  },
+  errorText: {
+    color: '#999',
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  homeBtn: {
+    backgroundColor: '#C9A96E',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  homeBtnText: {
+    color: '#121212',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 20 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  authorInfo: {
+    marginLeft: 12,
+  },
+  authorName: {
+    color: '#C9A96E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  postDate: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    padding: 15,
+    paddingBottom: 5,
+  },
+  content: {
+    color: '#ccc',
+    fontSize: 16,
+    lineHeight: 26,
+    padding: 15,
+    paddingTop: 5,
+  },
+  images: {
+    padding: 15,
+    paddingTop: 5,
+  },
+  image: {
+    width: width - 30,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderTopWidth: 1,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 21 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    borderTopColor: '#2a2a2a',
+    gap: 30,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  footer: {
+    alignItems: 'center',
+    padding: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#2a2a2a',
+    marginTop: 20,
+  },
+  footerText: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  openApp: {
+    color: '#C9A96E',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
+
+
+// ============================================================
+// 文件: index.tsx
+// 路径: client/app/post-detail/index.tsx
+// ============================================================
+export { default } from "@/screens/post-detail";
+
+
+
+// ============================================================
+// 文件: post.tsx
+// 路径: client/app/post.tsx
+// ============================================================
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 22 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const API_URL = 'http://localhost:9091';
+
+export default function PostScreen() {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      Alert.alert('提示', '请输入标题');
+      return;
+    }
+    if (!content.trim()) {
+      Alert.alert('提示', '请输入内容');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          content,
+          authorId: 1,
+        }),
+      });
+
+      if (response.ok) {
+        Alert.alert('成功', '发布成功！');
+        setTitle('');
+        setContent('');
+      } else {
+        Alert.alert('错误', '发布失败');
+      }
+    } catch (error) {
+      Alert.alert('错误', '网络错误');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 23 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>发布帖子</Text>
+      </View>
+      <ScrollView style={styles.content}>
+        <TextInput
+          style={styles.titleInput}
+          placeholder="标题"
+          placeholderTextColor="#666"
+          value={title}
+          onChangeText={setTitle}
+        />
+        <TextInput
+          style={styles.contentInput}
+          placeholder="分享你的江湖故事..."
+          placeholderTextColor="#666"
+          multiline
+          value={content}
+          onChangeText={setContent}
+        />
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? '发布中...' : '发布'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 24 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  titleInput: {
+    backgroundColor: '#16213e',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  contentInput: {
+    backgroundColor: '#16213e',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    minHeight: 200,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  submitButton: {
+    backgroundColor: '#e94560',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+
+
+// ============================================================
+// 文件: privacy.tsx
+// 路径: client/app/privacy.tsx
+// ============================================================
+export { default } from "@/screens/setting/PrivacyScreen";
+
+
+
+// ============================================================
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 25 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 文件: realname.tsx
+// 路径: client/app/realname.tsx
+// ============================================================
+export { default } from "@/screens/realname";
+
+
+
+// ============================================================
+// 文件: register.tsx
+// 路径: client/app/register.tsx
+// ============================================================
+export { default } from "@/screens/auth/RegisterScreen";
+
+
+
+// ============================================================
+// 文件: settings.tsx
+// 路径: client/app/settings.tsx
+// ============================================================
+export { default } from "@/screens/profile/SettingsScreen";
+
+
+
+// ============================================================
+// 文件: upgrade.tsx
+// 路径: client/app/upgrade.tsx
+// ============================================================
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
+import { useAuth } from '@/contexts/AuthContext';
+import api from '@/services/api';
+
+const MEMBERS = [
+  {
+    level: 0,
+    name: '江湖散人',
+    price: 0,
+    region: '本镇',
+    daily: 10,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 26 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    retention: 7,
+    canPin: false,
+    features: ['本镇范围内发布', '每日10条留言', '7天留存'],
+    color: '#9A9A9A',
+  },
+  {
+    level: 1,
+    name: '县帮帮主',
+    price: 9,
+    region: '本县',
+    daily: 30,
+    retention: 15,
+    canPin: false,
+    features: ['本县范围内发布', '每日30条留言', '15天留存'],
+    color: '#C9A96E',
+    popular: false,
+  },
+  {
+    level: 2,
+    name: '市盟盟主',
+    price: 19,
+    region: '本市',
+    daily: 80,
+    retention: 30,
+    canPin: false,
+    features: ['本市范围内发布', '每日80条留言', '30天留存'],
+    color: '#D4B896',
+    popular: true,
+  },
+  {
+    level: 3,
+    name: '省派掌门',
+    price: 39,
+    region: '本省',
+    daily: 200,
+    retention: 60,
+    canPin: false,
+    features: ['本省范围内发布', '每日200条留言', '60天留存'],
+    color: '#E8D5B7',
+  },
+  {
+    level: 4,
+    name: '天下会主',
+    price: 69,
+    region: '全国',
+    daily: 999,
+    retention: 90,
+    canPin: true,
+    features: ['全国范围内发布', '不限条数', '90天留存', '留言置顶'],
+    color: '#FFD700',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 27 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  },
+];
+
+export default function UpgradeScreen() {
+  const router = useSafeRouter();
+  const { user, refreshUser } = useAuth();
+  const [selectedLevel, setSelectedLevel] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (selectedLevel <= (user?.member_level || 0)) {
+      Alert.alert('提示', '您已拥有此等级或更高等级');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 模拟支付流程
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      await api.upgradeMember(selectedLevel);
+      await refreshUser();
+      Alert.alert('升级成功', `恭喜成为${MEMBERS[selectedLevel].name}！`, [
+        { text: '确定', onPress: () => router.back() },
+      ]);
+    } catch (error: any) {
+      Alert.alert('升级失败', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    router.back();
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* 头部 */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <Text style={styles.closeText}>×</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>升级会员</Text>
+        <View style={styles.headerRight} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 当前等级 */}
+        <View style={styles.currentLevel}>
+          <Text style={styles.currentLabel}>当前等级</Text>
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 28 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+          <LinearGradient
+            colors={[MEMBERS[user?.member_level || 0].color, '#8B4513']}
+            style={styles.currentBadge}
+          >
+            <Text style={styles.currentName}>{MEMBERS[user?.member_level || 0...
+          </LinearGradient>
+        </View>
+
+        {/* 会员卡片 */}
+        <Text style={styles.sectionTitle}>选择会员等级</Text>
+        {MEMBERS.map(member => {
+          const isCurrent = member.level === user?.member_level;
+          const isSelected = member.level === selectedLevel;
+          const isUpgradable = member.level > (user?.member_level || 0);
+
+          return (
+            <TouchableOpacity
+              key={member.level}
+              style={[
+                styles.memberCard,
+                isSelected && styles.memberCardSelected,
+                member.level === 4 && styles.memberCardGold,
+              ]}
+              onPress={() => isUpgradable && setSelectedLevel(member.level)}
+              disabled={!isUpgradable}
+            >
+              {member.popular && (
+                <View style={styles.popularBadge}>
+                  <Text style={styles.popularText}>热门</Text>
+                </View>
+              )}
+              {member.level === 4 && (
+                <View style={styles.goldBadge}>
+                  <Text style={styles.goldBadgeText}>最高级</Text>
+                </View>
+              )}
+              
+              <View style={styles.memberHeader}>
+                <View>
+                  <Text style={[styles.memberName, member.level === 4 && styl...
+                    {member.name}
+                  </Text>
+                  <Text style={styles.memberRegion}>发布范围：{member.region}</Text>
+                </View>
+                <View style={styles.priceContainer}>
+                  <Text style={[styles.price, member.level === 4 && styles.go...
+                    ¥{member.price}
+                  </Text>
+                  <Text style={styles.priceUnit}>/月</Text>
+                </View>
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 29 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+              </View>
+
+              <View style={styles.features}>
+                {member.features.map((feature, index) => (
+                  <View key={index} style={styles.featureItem}>
+                    <Text style={styles.featureIcon}>✓</Text>
+                    <Text style={styles.featureText}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {isCurrent && (
+                <View style={styles.currentTag}>
+                  <Text style={styles.currentTagText}>当前</Text>
+                </View>
+              )}
+              {!isUpgradable && !isCurrent && (
+                <View style={styles.lockedTag}>
+                  <Text style={styles.lockedTagText}>不可降级</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* 底部按钮 */}
+      {selectedLevel > (user?.member_level || 0) && (
+        <View style={styles.footer}>
+          <Text style={styles.refundNotice}>
+            购买即同意《用户协议》，会员为虚拟商品，购买满24小时或使用核心功能后不支持退款
+          </Text>
+          <View style={styles.footerInfo}>
+            <Text style={styles.footerLabel}>升级至：</Text>
+            <Text style={styles.footerValue}>{MEMBERS[selectedLevel].name}</T...
+          </View>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleUpgrade}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FDFBF7" />
+            ) : (
+              <LinearGradient colors={['#C9A96E', '#8B4513']} style={styles.b...
+                <Text style={styles.buttonText}>
+                  立即升级 ¥{MEMBERS[selectedLevel].price}/月
+                </Text>
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 30 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F0E6',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FDFBF7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E0D0',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeText: {
+    fontSize: 28,
+    color: '#8B7355',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2C2C2C',
+    textAlign: 'center',
+  },
+  headerRight: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  currentLevel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 31 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 12,
+  },
+  currentLabel: {
+    fontSize: 14,
+    color: '#8B7355',
+  },
+  currentBadge: {
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  currentName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FDFBF7',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C2C2C',
+    marginBottom: 16,
+  },
+  memberCard: {
+    backgroundColor: '#FDFBF7',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    position: 'relative',
+  },
+  memberCardSelected: {
+    borderColor: '#8B4513',
+    backgroundColor: '#FFF8F0',
+  },
+  memberCardGold: {
+    backgroundColor: '#FFFEF5',
+    borderColor: '#FFD700',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -8,
+    right: 16,
+    backgroundColor: '#C0392B',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 32 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  popularText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FDFBF7',
+  },
+  goldBadge: {
+    position: 'absolute',
+    top: -8,
+    right: 16,
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  goldBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#5C3D2E',
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  memberName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C2C2C',
+  },
+  goldText: {
+    color: '#C9A96E',
+  },
+  memberRegion: {
+    fontSize: 13,
+    color: '#8B7355',
+    marginTop: 4,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#8B4513',
+  },
+  priceUnit: {
+    fontSize: 12,
+    color: '#8B7355',
+  },
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 33 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  features: {
+    gap: 8,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  featureIcon: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontWeight: '700',
+  },
+  featureText: {
+    fontSize: 14,
+    color: '#5C5C5C',
+  },
+  currentTag: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#8B4513',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  currentTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FDFBF7',
+  },
+  lockedTag: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#D4C9B8',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  lockedTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8B7355',
+  },
+  bottomPadding: {
+    height: 100,
+  },
+  footer: {
+    flexDirection: 'column',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 34 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    padding: 16,
+    backgroundColor: '#FDFBF7',
+    borderTopWidth: 1,
+    borderTopColor: '#E8E0D0',
+    gap: 12,
+  },
+  refundNotice: {
+    fontSize: 11,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  footerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerLabel: {
+    fontSize: 14,
+    color: '#8B7355',
+  },
+  footerValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2C2C2C',
+  },
+  upgradeButton: {
+    flex: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 24,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FDFBF7',
+  },
+});
+
+
+
+// ============================================================
+// 文件: vip.tsx
+// 路径: client/app/vip.tsx
+// ============================================================
+export { default } from "@/screens/vip/VipScreen";
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 35 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+// ============================================================
+// 文件: app.config.ts
+// 路径: client/app.config.ts
+// ============================================================
+import { ExpoConfig, ConfigContext } from 'expo/config';
+
+const appName = process.env.COZE_PROJECT_NAME || process.env.EXPO_PUBLIC_COZE...
+const projectId = process.env.COZE_PROJECT_ID || process.env.EXPO_PUBLIC_COZE...
+const slugAppName = projectId ? `app${projectId}` : 'myapp';
+
+export default ({ config }: ConfigContext): ExpoConfig => {
+  return {
+    ...config,
+    "name": appName,
+    "slug": slugAppName,
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.liuhen.jianghu",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.liuhen.jianghu",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 36 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      "url": "https://u.expo.dev/YOUR_PROJECT_ID"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "plugins": [
+      process.env.EXPO_PUBLIC_BACKEND_BASE_URL ? [
+        "expo-router",
+        {
+          "origin": process.env.EXPO_PUBLIC_BACKEND_BASE_URL
+        }
+      ] : 'expo-router',
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#1a1a2e"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": `允许流痕江湖App访问您的相册，以便您上传或保存图片。`,
+          "cameraPermission": `允许流痕江湖App使用您的相机，以便您直接拍摄照片上传。`,
+          "microphonePermission": `允许流痕江湖App访问您的麦克风，以便您拍摄带有声音的视频。`
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": `流痕江湖App需要访问您的位置以提供周边服务及导航功能。`
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": `流痕江湖App需要访问相机以拍摄照片和视频。`,
+          "microphonePermission": `流痕江湖App需要访问麦克风以录制视频声音。`,
+          "recordAudioAndroid": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "fontSource": {
+      "fonts": ["./assets/fonts/calligraphy.ttf", "./assets/fonts/NotoSerifKR...
+    },
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 37 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    "extra": {
+      "EXPO_PUBLIC_BACKEND_BASE_URL": "https://liuhenjianghu.com"
+    }
+  }
+}
+
+
+
+// ============================================================
+// 文件: AuthGuard.tsx
+// 路径: client/components/AuthGuard.tsx
+// ============================================================
+import { useEffect } from 'react';
+import { useSegments, useRootNavigationState } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
+
+/**
+ * 认证守卫组件
+ * 未登录时自动跳转到登录页面
+ */
+export function AuthGuard() {
+  const router = useSafeRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const rootState = useRootNavigationState();
+
+  useEffect(() => {
+    console.log('>>> AuthGuard: rootState?.key:', rootState?.key, 'isLoading:...
+    
+    // 1. 待机检测：导航未挂载 或 鉴权正在加载中，直接返回
+    if (!rootState?.key || isLoading) return;
+
+    // 2. 路径检测：确认当前不在登录页 (防止死循环)
+    const inLoginRoute = segments.includes('login') || segments.includes('reg...
+
+    // 3. 未登录保护：未登录且不在登录页 → 跳转登录页
+    if (!isAuthenticated && !inLoginRoute) {
+      console.log('>>> AuthGuard: 未登录，跳转到登录页面');
+      router.replace('/login');
+    }
+  }, [rootState?.key, isAuthenticated, isLoading, segments]);
+
+  return null;
+}
+
+
+
+// ============================================================
+// 文件: ColorSchemeUpdater.tsx
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 38 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 路径: client/components/ColorSchemeUpdater.tsx
+// ============================================================
+import { Fragment, useEffect, useState } from 'react';
+import { ColorSchemeName, Platform } from 'react-native';
+import { Uniwind } from 'uniwind'
+
+const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL...
+
+// system: 跟随系统变化
+// light: 固定为 light 主题
+// dark: 固定为 dark 主题
+const DEFAULT_THEME: 'system' | 'light' | 'dark' = 'system'
+
+const WebOnlyColorSchemeUpdater = function () {
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    loadThemeFromServer();
+  }, []);
+
+  // 从服务器加载主题设置
+  const loadThemeFromServer = async () => {
+    try {
+      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/th...
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const themeMode = data.data.mode || 'system';
+          Uniwind.setTheme(themeMode);
+        } else {
+          Uniwind.setTheme(DEFAULT_THEME);
+        }
+      } else {
+        Uniwind.setTheme(DEFAULT_THEME);
+      }
+    } catch (error) {
+      console.log('加载主题失败，使用默认主题');
+      Uniwind.setTheme(DEFAULT_THEME);
+    }
+    setInitialized(true);
+  };
+
+  useEffect(() => {
+    function handleMessage(e: MessageEvent<{ event: string; colorScheme: Colo...
+      if (e.data?.event === 'coze.workbench.colorScheme') {
+        const cs = e.data.colorScheme;
+        if (typeof cs === 'string') {
+          Uniwind.setTheme(cs);
+        }
+      }
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 39 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    }
+
+    if (Platform.OS === 'web') {
+      window.addEventListener('message', handleMessage, false);
+    }
+
+    return () => {
+      if (Platform.OS === 'web') {
+        window.removeEventListener('message', handleMessage, false);
+      }
+    }
+  }, []);
+
+  // Web端跟随浏览器系统主题
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      const handleChange = (e: MediaQueryListEvent) => {
+        // 只有在"跟随系统"模式下才响应系统变化
+        loadThemeFromServer();
+      };
+      
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  return null;
+};
+
+export {
+  WebOnlyColorSchemeUpdater,
+}
+
+
+
+// ============================================================
+// 文件: ErrorBoundary.tsx
+// 路径: client/components/ErrorBoundary.tsx
+// ============================================================
+import React, { Component, type ReactNode } from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 40 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      return (
+        <View style={styles.container}>
+          <Text style={styles.title}>出错了</Text>
+          <Text style={styles.message}>{this.state.error?.message}</Text>
+          <Text style={styles.stack}>{this.state.error?.stack}</Text>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'red',
+    marginBottom: 10,
+  },
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 41 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  message: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  stack: {
+    fontSize: 10,
+    color: '#666',
+    fontFamily: 'monospace',
+  },
+});
+
+
+
+// ============================================================
+// 文件: PrettyScrollbar.tsx
+// 路径: client/components/PrettyScrollbar.tsx
+// ============================================================
+import { useEffect, ReactNode } from 'react';
+import { Platform } from 'react-native';
+
+const STYLE_ID = 'coze-pretty-scrollbar';
+
+function WebOnlyPrettyScrollbar({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      let style = document.getElementById(STYLE_ID);
+      if (!style) {
+        style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = `
+        ::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 2px;
+        }
+        `;
+        document.head.appendChild(style);
+      }
+
+      return () => {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 42 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        const existingStyle = document.getElementById(STYLE_ID);
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+      }
+    }
+  }, []);
+
+  return <>{children}</>
+}
+
+export { WebOnlyPrettyScrollbar }
+
+
+
+// ============================================================
+// 文件: Provider.tsx
+// 路径: client/components/Provider.tsx
+// ============================================================
+import { AuthProvider } from '@/contexts/AuthContext';
+import { type ReactNode } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+function Provider({ children }: { children: ReactNode }) {
+  return (
+    <AuthProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        {children}
+      </GestureHandlerRootView>
+    </AuthProvider>
+  );
+}
+
+export {
+  Provider,
+}
+
+
+
+// ============================================================
+// 文件: Screen.tsx
+// 路径: client/components/Screen.tsx
+// ============================================================
+import React, { useEffect } from 'react';
+import {
+  Platform,
+  StyleSheet,
+  ScrollView,
+  View,
+  TouchableWithoutFeedback,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 43 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  Keyboard,
+  ViewStyle,
+  FlatList,
+  SectionList,
+  Modal,
+} from 'react-native';
+import { withUniwind } from 'uniwind';
+import { useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+// 引入 KeyboardAware 系列组件
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareFlatList,
+  KeyboardAwareSectionList
+} from 'react-native-keyboard-aware-scroll-view';
+
+/**
+ * # Screen 组件使用指南
+ *
+ * 核心原则：统一使用手动安全区管理 (padding)，支持沉浸式布局，解决 iOS/Android 状态栏一致性问题。
+ *
+ * ## 1. 普通页面 (默认)
+ * - 场景：标准的白底或纯色背景页面，Header 在安全区下方。
+ * - 用法：`<Screen>{children}</Screen>`
+ * - 行为：自动处理上下左右安全区，状态栏文字黑色。
+ *
+ * ## 2. 沉浸式 Header (推荐)
+ * - 场景：Header 背景色/图片需要延伸到状态栏 (如首页、个人中心)。
+ * - 用法：`<Screen safeAreaEdges={['left', 'right', 'bottom']}>` (去掉 'top')
+ * - 配合：页面内部 Header 组件必须手动添加 paddingTop:
+ *   ```tsx
+ *   const insets = useSafeAreaInsets();
+ *   <View style={{ paddingTop: insets.top + 12, backgroundColor: '...' }}>
+ *   ```
+ *
+ * ## 3. 底部有 TabBar 或 悬浮按钮
+ * - 场景：页面底部有固定导航栏，或者需要精细控制底部留白。
+ * - 用法：`<Screen safeAreaEdges={['top', 'left', 'right']}>` (去掉 'bottom')
+ * - 配合：
+ *   - 若是滚动页：`<ScrollView contentContainerStyle={{ paddingBottom: insets.bott...
+ *   - 若是固定页：`<View style={{ paddingBottom: insets.bottom + 60 }}>`
+ *
+ * ## 4. 滚动列表/表单
+ * - 场景：长内容，需要键盘避让。
+ * - 用法：`<Screen>{children}</Screen>`
+ * - 行为：若子树不包含 ScrollView/FlatList/SectionList，则外层自动使用 ScrollView，
+ *        自动处理键盘遮挡，底部安全区会自动加在内容末尾。
+ */
+interface ScreenProps {
+  children: React.ReactNode;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 44 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  /** 背景色，默认 #fff */
+  backgroundColor?: string;
+  /**
+   * 状态栏样式
+   * - 'dark': 黑色文字 (默认)
+   * - 'light': 白色文字 (深色背景时用)
+   */
+  statusBarStyle?: 'auto' | 'inverted' | 'light' | 'dark';
+  /**
+   * 状态栏背景色
+   * - 默认 'transparent' 以支持沉浸式
+   * - Android 下如果需要不透明，可传入具体颜色
+   */
+  statusBarColor?: string;
+  /**
+   * 安全区控制 (关键属性)
+   * - 默认: ['top', 'left', 'right', 'bottom'] (全避让)
+   * - 沉浸式 Header: 去掉 'top'
+   * - 自定义底部: 去掉 'bottom'
+   */
+  safeAreaEdges?: Edge[];
+  /** 自定义容器样式 */
+  style?: ViewStyle;
+}
+
+type KeyboardAwareProps = {
+  element: React.ReactElement<any, any>;
+  extraPadding: number;
+  contentInsetBehaviorIOS: 'automatic' | 'never';
+};
+
+const KeyboardAwareScrollable = ({
+  element,
+  extraPadding,
+  contentInsetBehaviorIOS,
+}: KeyboardAwareProps) => {
+  // 获取原始组件的 props
+  const childAttrs = ((element as React.ReactElement).props ?? {}) as Record<...
+  const originStyle = childAttrs['contentContainerStyle'];
+  const styleArray = Array.isArray(originStyle) ? originStyle : originStyle ?...
+  const merged = Object.assign({}, ...styleArray);
+  const currentPB = typeof merged.paddingBottom === 'number' ? merged.padding...
+
+  // 合并 paddingBottom (安全区 + 额外留白)
+  const enhancedContentStyle = [{ ...merged, paddingBottom: currentPB + extra...
+
+  // 基础配置 props，用于传递给 KeyboardAware 组件
+  const commonProps = {
+    ...childAttrs,
+    contentContainerStyle: enhancedContentStyle,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 45 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    keyboardShouldPersistTaps: childAttrs['keyboardShouldPersistTaps'] ?? 'ha...
+    keyboardDismissMode: childAttrs['keyboardDismissMode'] ?? 'on-drag',
+    enableOnAndroid: true,
+    // 类似于原代码中的 setTimeout/scrollToEnd 逻辑，这里设置额外的滚动高度确保输入框可见
+    extraHeight: 100,
+    // 禁用自带的 ScrollView 自动 inset，由外部 padding 控制
+    enableAutomaticScroll: true,
+    ...(Platform.OS === 'ios'
+      ? { contentInsetAdjustmentBehavior: childAttrs['contentInsetAdjustmentB...
+      : {}),
+  };
+
+  const t = (element as React.ReactElement).type;
+
+  // 根据组件类型返回对应的 KeyboardAware 版本
+  // 注意：不再使用 KeyboardAvoidingView，直接替换为增强版 ScrollView
+  if (t === ScrollView) {
+    return <KeyboardAwareScrollView {...element.props} {...commonProps} />;
+  }
+
+  if (t === FlatList) {
+    return <KeyboardAwareFlatList {...element.props} {...commonProps} />;
+  }
+
+  if (t === SectionList) {
+    return <KeyboardAwareSectionList {...element.props} {...commonProps} />;
+  }
+
+  // 理论上不应运行到这里，如果是非标准组件则原样返回，仅修改样式
+  return React.cloneElement(element, {
+    contentContainerStyle: enhancedContentStyle,
+    keyboardShouldPersistTaps: childAttrs['keyboardShouldPersistTaps'] ?? 'ha...
+    keyboardDismissMode: childAttrs['keyboardDismissMode'] ?? 'on-drag',
+  });
+};
+
+const RawScreen = ({
+  children,
+  backgroundColor = 'var(--background)',
+  statusBarStyle = 'dark',
+  statusBarColor = 'transparent',
+  safeAreaEdges = ['top', 'left', 'right', 'bottom'],
+  style,
+}: ScreenProps) => {
+  const insets = useSafeAreaInsets();
+  const [keyboardShown, setKeyboardShown] = React.useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardD...
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardD...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 46 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    const s1 = Keyboard.addListener(showEvent, () => setKeyboardShown(true));
+    const s2 = Keyboard.addListener(hideEvent, () => setKeyboardShown(false));
+    return () => { s1.remove(); s2.remove(); };
+  }, []);
+
+  // 自动检测：若子树中包含 ScrollView/FlatList/SectionList，则认为页面自身处理滚动
+  const isNodeScrollable = (node: React.ReactNode): boolean => {
+    const isScrollableElement = (el: unknown): boolean => {
+      if (!React.isValidElement(el)) return false;
+      const element = el as React.ReactElement<any, any>;
+      const t = element.type;
+      // 不递归检查 Modal 内容，避免将弹窗内的 ScrollView 误判为页面已具备垂直滚动
+      if (t === Modal) return false;
+      const props = element.props as Record<string, unknown> | undefined;
+      // 仅识别“垂直”滚动容器；横向滚动不视为页面已处理垂直滚动
+      // eslint-disable-next-line react/prop-types
+      const isHorizontal = !!(props && props.horizontal === true);
+      if ((t === ScrollView || t === FlatList || t === SectionList) && !isHor...
+      const c: React.ReactNode | undefined = props && 'children' in props
+        ? (props.children as React.ReactNode)
+        : undefined;
+      if (Array.isArray(c)) return c.some(isScrollableElement);
+      return c ? isScrollableElement(c) : false;
+    };
+    if (Array.isArray(node)) return node.some(isScrollableElement);
+    return isScrollableElement(node);
+  };
+
+  const childIsNativeScrollable = isNodeScrollable(children);
+
+  // 说明：避免双重补白
+  // KeyboardAwareScrollView 内部会自动处理键盘高度。
+  // 我们主要关注非键盘状态下的 Safe Area 管理。
+
+  // 解析安全区设置
+  const hasTop = safeAreaEdges.includes('top');
+  const hasBottom = safeAreaEdges.includes('bottom');
+  const hasLeft = safeAreaEdges.includes('left');
+  const hasRight = safeAreaEdges.includes('right');
+
+  // 强制禁用 iOS 自动调整内容区域，完全由手动 padding 控制，消除系统自动计算带来的多余空白
+  const contentInsetBehaviorIOS = 'never';
+
+  const wrapperStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor,
+    paddingTop: hasTop ? insets.top : 0,
+    paddingLeft: hasLeft ? insets.left : 0,
+    paddingRight: hasRight ? insets.right : 0,
+    // 当页面不使用外层 ScrollView 时（子树本身可滚动），由外层 View 负责底部安全区
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 47 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    paddingBottom: (childIsNativeScrollable && hasBottom)
+      ? (keyboardShown ? 0 : insets.bottom)
+      : 0,
+  };
+
+  // 若子树不可滚动，则外层使用 KeyboardAwareScrollView 提供“全局页面滑动”能力
+  const useScrollContainer = !childIsNativeScrollable;
+
+  // 2. 滚动容器配置
+  // 如果使用滚动容器，则使用 KeyboardAwareScrollView 替代原有的 ScrollView
+  const Container = useScrollContainer ? KeyboardAwareScrollView : View;
+
+  const containerProps = useScrollContainer ? {
+    contentContainerStyle: {
+      flexGrow: 1,
+      // 滚动模式下，Bottom 安全区由内容容器处理，保证内容能完整显示且不被 Home Indicator 遮挡，同时背景色能延伸到底部
+      paddingBottom: hasBottom ? (keyboardShown ? 0 : insets.bottom) : 0,
+    },
+    keyboardShouldPersistTaps: 'handled' as const,
+    showsVerticalScrollIndicator: false,
+    keyboardDismissMode: 'on-drag' as const,
+    enableOnAndroid: true,
+    extraHeight: 100, // 替代原代码手动计算的 offset
+    // iOS 顶部白条修复：强制不自动添加顶部安全区
+    ...(Platform.OS === 'ios'
+      ? { contentInsetAdjustmentBehavior: contentInsetBehaviorIOS }
+      : {}),
+  } : {};
+
+  // 3. 若子元素自身包含滚动容器，给该滚动容器单独添加键盘避让，不影响其余固定元素（如底部栏）
+  const wrapScrollableWithKeyboardAvoid = (nodes: React.ReactNode): React.Rea...
+    const isVerticalScrollable = (el: React.ReactElement<any, any>): boolean ...
+      const t = el.type;
+      const elementProps = ((el as React.ReactElement).props ?? {}) as Record...
+      const isHorizontal = !!elementProps.horizontal;
+      return (t === ScrollView || t === FlatList || t === SectionList) && !is...
+    };
+
+    const wrapIfNeeded = (el: React.ReactElement<any, any>, idx?: number): Re...
+      if (isVerticalScrollable(el)) {
+        return (
+          <KeyboardAwareScrollable
+            key={el.key ?? idx}
+            element={el}
+            extraPadding={keyboardShown ? 0 : (hasBottom ? insets.bottom : 0)}
+            contentInsetBehaviorIOS={contentInsetBehaviorIOS}
+          />
+        );
+      }
+      return el;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 48 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    };
+
+    if (Array.isArray(nodes)) {
+      return nodes.map((n, idx) => {
+        if (React.isValidElement(n)) {
+          return wrapIfNeeded(n as React.ReactElement<any, any>, idx);
+        }
+        return n;
+      });
+    }
+    if (React.isValidElement(nodes)) {
+      return wrapIfNeeded(nodes as React.ReactElement<any, any>, 0);
+    }
+    return nodes;
+  };
+
+  return (
+    // 核心原则：严禁使用 SafeAreaView，统一使用 View + padding 手动管理
+    <View style={wrapperStyle}>
+      {/* 状态栏配置：强制透明背景 + 沉浸式，以支持背景图延伸 */}
+      <StatusBar
+        style={statusBarStyle}
+        backgroundColor={statusBarColor}
+        translucent
+      />
+
+      {/* 键盘避让：仅当外层使用 ScrollView 时启用，避免固定底部栏随键盘上移 */}
+      {useScrollContainer ? (
+         // 替换为 KeyboardAwareScrollView，移除原先的 KeyboardAvoidingView 包裹
+         // 因为 KeyboardAwareScrollView 已经内置了处理逻辑
+        <Container style={[styles.innerContainer, style]} {...containerProps}>
+          {children}
+        </Container>
+      ) : (
+        // 页面自身已处理滚动，不启用全局键盘避让，保证固定底部栏不随键盘上移
+        childIsNativeScrollable ? (
+          <View style={[styles.innerContainer, style]}>
+            {wrapScrollableWithKeyboardAvoid(children)}
+          </View>
+        ) : (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Plat...
+            <View style={[styles.innerContainer, style]}>
+              {children}
+            </View>
+          </TouchableWithoutFeedback>
+        )
+      )}
+    </View>
+  );
+};
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 49 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+const styles = StyleSheet.create({
+  innerContainer: {
+    flex: 1,
+    // 确保内部容器透明，避免背景色遮挡
+    backgroundColor: 'transparent',
+  },
+});
+
+export const Screen = withUniwind(RawScreen);
+
+
+
+// ============================================================
+// 文件: ShareButton.tsx
+// 路径: client/components/Share/ShareButton.tsx
+// ============================================================
+import React, { useState } from 'react';
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  Modal,
+  StyleSheet,
+  Platform,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
+
+interface ShareButtonProps {
+  postId: number;
+  title?: string;
+  size?: number;
+  color?: string;
+}
+
+export function ShareButton({ postId, title, size = 24, color }: ShareButtonP...
+  const [modalVisible, setModalVisible] = useState(false);
+
+  // 使用环境变量构建分享链接，兜底使用自定义域名
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'https://liuhenjianghu.com';
+  const shareUrl = `${baseUrl}/post/${postId}`;
+  const shareText = title ? `${title}\n${shareUrl}` : shareUrl;
+
+  const handleCopyLink = async () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.navi...
+      // Web 平台：使用原生 Clipboard API
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 50 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      await window.navigator.clipboard.writeText(shareUrl);
+    }
+    setModalVisible(false);
+    Alert.alert('已复制', '链接已复制到剪贴板');
+  };
+
+  const handleShare = async () => {
+    // Web 平台：复制链接
+    handleCopyLink();
+  };
+
+  const handleShareToWechat = () => {
+    const wechatShareUrl = `https://api.uomg.com/api/qrcode?url=${encodeURICo...
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(wechatShareUrl, '_blank');
+    }
+    setModalVisible(false);
+  };
+
+  const handleShareToWeibo = () => {
+    const weiboShareUrl = `https://service.weibo.com/share/share.php?url=${en...
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(weiboShareUrl, '_blank');
+    }
+    setModalVisible(false);
+  };
+
+  const handleShareToQQ = () => {
+    const qqShareUrl = `https://connect.qq.com/widget/shareqq/index.html?url=...
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(qqShareUrl, '_blank');
+    }
+    setModalVisible(false);
+  };
+
+  return (
+    <>
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <Ionicons name="share-outline" size={size} color={color} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 51 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>分享到</Text>
+
+            <View style={styles.shareOptions}>
+              <TouchableOpacity style={styles.shareOption} onPress={handleSha...
+                <View style={[styles.shareIcon, { backgroundColor: '#07C160' ...
+                  <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>微信</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareOption} onPress={handleSha...
+                <View style={[styles.shareIcon, { backgroundColor: '#07C160' ...
+                  <Ionicons name="people" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>朋友圈</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareOption} onPress={handleSha...
+                <View style={[styles.shareIcon, { backgroundColor: '#E6162D' ...
+                  <Ionicons name="logo-sina-weibo" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>微博</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareOption} onPress={handleSha...
+                <View style={[styles.shareIcon, { backgroundColor: '#1296DB' ...
+                  <Ionicons name="chatbox-ellipses" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>QQ</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareOption} onPress={handleCop...
+                <View style={[styles.shareIcon, { backgroundColor: '#8B8B8B' ...
+                  <Ionicons name="link" size={24} color="#fff" />
+                </View>
+                <Text style={styles.shareLabel}>复制链接</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.cancelText}>取消</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 52 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  shareOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  shareOption: {
+    alignItems: 'center',
+    width: '25%',
+    marginBottom: 20,
+  },
+  shareIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  shareLabel: {
+    fontSize: 12,
+    color: '#fff',
+  },
+  cancelButton: {
+    backgroundColor: '#333',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 53 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+  },
+  cancelText: {
+    fontSize: 16,
+    color: '#fff',
+  },
+});
+
+export default ShareButton;
+
+
+
+// ============================================================
+// 文件: index.ts
+// 路径: client/components/Share/index.ts
+// ============================================================
+export { ShareButton } from './ShareButton';
+
+
+
+// ============================================================
+// 文件: SmartDateInput.tsx
+// 路径: client/components/SmartDateInput.tsx
+// ============================================================
+import React, { useState, useMemo } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Keyboard,
+  Platform,
+  useColorScheme,
+  ViewStyle,
+  TextStyle
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import dayjs from 'dayjs';
+import { FontAwesome6 } from '@expo/vector-icons';
+
+// --------------------------------------------------------
+// 1. 配置 Dayjs 
+// --------------------------------------------------------
+// 即使服务端返回 '2023-10-20T10:00:00Z' (UTC)，
+// dayjs(utcString).format() 会自动转为手机当前的本地时区显示。
+// 如果需要传回给后端，我们再转回 ISO 格式。
+
+interface SmartDateInputProps {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 54 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  label?: string;           // 表单标题 (可选)
+  value?: string | null;    // 服务端返回的时间字符串 (ISO 8601, 带 T)
+  onChange: (isoDate: string) => void; // 回调给父组件的值，依然是标准 ISO 字符串
+  placeholder?: string;
+  mode?: 'date' | 'time' | 'datetime'; // 支持日期、时间、或两者
+  displayFormat?: string;   // UI展示的格式，默认 YYYY-MM-DD
+  error?: string;           // 错误信息
+  
+  // 样式自定义（可选）
+  containerStyle?: ViewStyle;        // 外层容器样式
+  inputStyle?: ViewStyle;            // 输入框样式
+  textStyle?: TextStyle;             // 文字样式
+  labelStyle?: TextStyle;            // 标签样式
+  placeholderTextStyle?: TextStyle;  // 占位符文字样式
+  errorTextStyle?: TextStyle;        // 错误信息文字样式
+  iconColor?: string;                // 图标颜色
+  iconSize?: number;                 // 图标大小
+}
+
+export const SmartDateInput = ({ 
+  label, 
+  value, 
+  onChange, 
+  placeholder = '请选择',
+  mode = 'date',
+  displayFormat,
+  error,
+  containerStyle,
+  inputStyle,
+  textStyle,
+  labelStyle,
+  placeholderTextStyle,
+  errorTextStyle,
+  iconColor,
+  iconSize = 18
+}: SmartDateInputProps) => {
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // 默认展示格式
+  const format = displayFormat || (mode === 'time' ? 'HH:mm' : 'YYYY-MM-DD');
+
+  // --------------------------------------------------------
+  // 2. 核心：数据转换逻辑 
+  // --------------------------------------------------------
+  
+  // 解析服务端值，确保无效值不传给控件；time 模式兼容仅时间字符串
+  const parsedValue = useMemo(() => {
+    if (!value) return null;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 55 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+    const direct = dayjs(value);
+    if (direct.isValid()) return direct;
+
+    if (mode === 'time') {
+      const timeOnly = dayjs(`1970-01-01T${value}`);
+      if (timeOnly.isValid()) return timeOnly;
+    }
+
+    return null;
+  }, [value, mode]);
+
+  // A. 将字符串转为 JS Date 对象给控件使用
+  // 如果 value 是空或无效，回退到当前时间
+  const dateObjectForPicker = useMemo(() => {
+    return parsedValue ? parsedValue.toDate() : new Date();
+  }, [parsedValue]);
+
+  // B. 将 Date 对象转为展示字符串
+  const displayString = useMemo(() => {
+    if (!parsedValue) return '';
+    return parsedValue.format(format);
+  }, [parsedValue, format]);
+
+  // --------------------------------------------------------
+  // 3. 核心：交互逻辑 (解决键盘遮挡/无法收起)
+  // --------------------------------------------------------
+
+  const showDatePicker = () => {
+    // 【关键点】打开日期控件前，必须强制收起键盘！
+    // 否则键盘会遮挡 iOS 的底部滚轮，或者导致 Android 焦点混乱
+    Keyboard.dismiss(); 
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const handleConfirm = (date: Date) => {
+    hideDatePicker();
+    // 采用带本地偏移的 ISO 字符串，避免 date 模式在非 UTC 时区出现跨天
+    const serverString = dayjs(date).format(format);
+    onChange(serverString);
+  };
+
+  // 根据 mode 选择图标
+  const iconName = mode === 'time' ? 'clock' : 'calendar';
+
+  return (
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 56 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    <View style={[styles.container, containerStyle]}>
+      {/* 标题 */}
+      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+
+      {/* 
+         这里用 TouchableOpacity 模拟 Input。
+         模拟组件永远不会唤起键盘。
+      */}
+      <TouchableOpacity 
+        style={[
+          styles.inputBox, 
+          error ? styles.inputBoxError : null,
+          inputStyle
+        ]} 
+        onPress={showDatePicker}
+        activeOpacity={0.7}
+      >
+        <Text 
+          style={[
+            styles.text,
+            textStyle,
+            !value && styles.placeholder,
+            !value && placeholderTextStyle
+          ]}
+          numberOfLines={1}
+        >
+          {displayString || placeholder}
+        </Text>
+        
+        <FontAwesome6 
+          name={iconName} 
+          size={iconSize} 
+          color={iconColor || (value ? '#4B5563' : '#9CA3AF')} 
+          style={styles.icon}
+        />
+      </TouchableOpacity>
+      
+      {error && <Text style={[styles.errorText, errorTextStyle]}>{error}</Text>}
+
+      {/* 
+         DateTimePickerModal 是 React Native Modal。
+         它会覆盖在所有 View 之上。
+      */}
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode={mode}
+        date={dateObjectForPicker} // 传入 Date 对象
+        onConfirm={handleConfirm}
+        onCancel={hideDatePicker}
+        // iOS 只有用这个 display 样式才最稳，避免乱七八糟的 inline 样式
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 57 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'} 
+        // 自动适配系统深色模式，或者根据 isDark 变量控制
+        isDarkModeEnabled={isDark}
+        // 强制使用中文环境
+        locale="zh-CN"
+        confirmTextIOS="确定"
+        cancelTextIOS="取消"
+      />
+    </View>
+  );
+};
+
+// 设计样式
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151', // Gray 700
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  inputBox: {
+    height: 52, // 增加高度提升触控体验
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12, // 更圆润的角
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB', // Gray 200
+    // 增加轻微阴影提升层次感 (iOS)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    // Android
+    elevation: 1,
+  },
+  inputBoxError: {
+    borderColor: '#EF4444', // Red 500
+    backgroundColor: '#FEF2F2', // Red 50
+  },
+  text: {
+    fontSize: 16,
+    color: '#111827', // Gray 900
+    flex: 1,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 58 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  },
+  placeholder: {
+    color: '#9CA3AF', // Gray 400 - 标准占位符颜色
+  },
+  icon: {
+    marginLeft: 12,
+  },
+  errorText: {
+    marginTop: 4,
+    marginLeft: 2,
+    fontSize: 12,
+    color: '#EF4444',
+  }
+});
+
+
+// ============================================================
+// 文件: AuthContext.tsx
+// 路径: client/contexts/AuthContext.tsx
+// ============================================================
+import React, { createContext, useContext, useState, useEffect, ReactNode } f...
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '@/services/api';
+
+interface User {
+  id: number;
+  phone: string;
+  nickname: string;
+  avatar: string | null;
+  province_code: string | null;
+  city_code: string | null;
+  district_code: string | null;
+  town_code: string | null;
+  member_level: number;
+  member_expire_at: string | null;
+  today_post_count: number;
+  total_likes: number;
+  total_posts: number;
+  created_at: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (phone: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 59 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  refreshUser: () => Promise<void>;
+}
+
+interface RegisterData {
+  phone: string;
+  code: string;
+  password: string;
+  nickname: string;
+  province_code?: string;
+  city_code?: string;
+  district_code?: string;
+  town_code?: string;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadStoredAuth();
+  }, []);
+
+  const loadStoredAuth = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
+      const storedUser = await AsyncStorage.getItem(USER_KEY);
+
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        api.setToken(storedToken);
+
+        // 验证token是否有效
+        try {
+          const { user: freshUser } = await api.getMe();
+          setUser(freshUser);
+          await AsyncStorage.setItem(USER_KEY, JSON.stringify(freshUser));
+        } catch (error) {
+          // token无效，清除存储
+          await logout();
+        }
+      }
+    } catch (error) {
+      console.error('加载认证信息失败:', error);
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 60 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+------------------------------------------------------------
+                        后 60 页
+------------------------------------------------------------
+
+  reportedUserId?: number,
+  priority: number = 0
+): Promise<{ success: boolean; id?: number }> {
+  const p = getPool();
+
+  try {
+    const result = await p.query(
+      `INSERT INTO review_queue (type, target_id, content, reason, status, pr...
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+       RETURNING id`,
+      [type, targetId, content, reason, 'pending', priority, reportedBy || nu...
+    );
+
+    return { success: true, id: result.rows[0].id };
+  } catch (error: any) {
+    if (error.code === '42P01') {
+      // 表不存在，创建表
+      await p.query(`
+        CREATE TABLE IF NOT EXISTS review_queue (
+          id SERIAL PRIMARY KEY,
+          type VARCHAR(20) NOT NULL,
+          target_id INTEGER NOT NULL,
+          content TEXT,
+          reason TEXT,
+          status VARCHAR(20) DEFAULT 'pending',
+          priority INTEGER DEFAULT 0,
+          reported_by INTEGER,
+          reported_user_id INTEGER,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          reviewed_at TIMESTAMP,
+          reviewed_by INTEGER
+        )
+      `);
+      // 重试插入
+      const result = await p.query(
+        `INSERT INTO review_queue (type, target_id, content, reason, status, ...
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+         RETURNING id`,
+        [type, targetId, content, reason, 'pending', priority, reportedBy || ...
+      );
+      return { success: true, id: result.rows[0].id };
+    }
+    throw error;
+  }
+}
+
+/**
+ * 获取待审核内容详情
+ */
+export async function getReviewItemDetail(id: number): Promise<ReviewItem | n...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 1 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const p = getPool();
+
+  const result = await p.query(
+    'SELECT * FROM review_queue WHERE id = $1',
+    [id]
+  );
+
+  return result.rows[0] || null;
+}
+
+
+
+// ============================================================
+// 文件: securityNotificationService.ts
+// 路径: server/src/services/securityNotificationService.ts
+// ============================================================
+/**
+ * 安全通知服务
+ * 处理登录安全、账号异常等通知
+ */
+
+import crypto from 'crypto';
+import { getPool } from '../config/database.js';
+import { NotificationService, MessagePriority } from './notificationService.js';
+
+// 登录失败记录（内存存储，重启后清空）
+const loginFailures = new Map<string, { count: number; lastAttempt: number; i...
+
+// 已知设备记录（简化版，使用IP+UA哈希）
+const knownDevices = new Map<number, Set<string>>();
+
+/**
+ * 生成设备指纹（简化版）
+ */
+function generateDeviceFingerprint(ip: string, userAgent: string): string {
+  const data = `${ip}_${userAgent.substring(0, 50)}`;
+  return crypto.createHash('md5').update(data).digest('hex').substring(0, 16);
+}
+
+/**
+ * 记录登录失败
+ */
+export function recordLoginFailure(phone: string, ip: string): void {
+  const key = phone;
+  const existing = loginFailures.get(key);
+  
+  if (existing) {
+    existing.count += 1;
+    existing.lastAttempt = Date.now();
+    existing.ip = ip;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 2 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  } else {
+    loginFailures.set(key, { count: 1, lastAttempt: Date.now(), ip });
+  }
+  
+  // 清理超过1小时的记录
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  for (const [k, v] of loginFailures) {
+    if (v.lastAttempt < oneHourAgo) {
+      loginFailures.delete(k);
+    }
+  }
+}
+
+/**
+ * 清除登录失败记录
+ */
+export function clearLoginFailure(phone: string): void {
+  loginFailures.delete(phone);
+}
+
+/**
+ * 获取登录失败次数
+ */
+export function getLoginFailureCount(phone: string): number {
+  return loginFailures.get(phone)?.count || 0;
+}
+
+/**
+ * 检查是否是新设备登录
+ */
+export async function checkNewDeviceLogin(
+  userId: number, 
+  ip: string, 
+  userAgent: string
+): Promise<boolean> {
+  const fingerprint = generateDeviceFingerprint(ip, userAgent);
+  
+  // 从数据库加载已知设备
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      'SELECT known_devices FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    const knownDevicesList = result.rows[0]?.known_devices || [];
+    
+    if (knownDevicesList.includes(fingerprint)) {
+      return false; // 已知设备
+    }
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 3 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    
+    // 记录新设备
+    const updatedDevices = [...knownDevicesList, fingerprint].slice(-10); // ...
+    await pool.query(
+      'UPDATE users SET known_devices = $1 WHERE id = $2',
+      [JSON.stringify(updatedDevices), userId]
+    );
+    
+    return true; // 新设备
+  } catch (error: any) {
+    console.error('[安全通知] 检查设备失败:', error.message);
+    return false; // 出错时不发送通知
+  }
+}
+
+/**
+ * 发送新设备登录提醒
+ */
+export async function sendNewDeviceLoginNotification(
+  userId: number,
+  ip: string,
+  userAgent: string
+): Promise<void> {
+  try {
+    // 简化IP显示（隐藏部分）
+    const ipParts = ip.split('.');
+    const maskedIp = ipParts.length === 4 
+      ? `${ipParts[0]}.${ipParts[1]}.*.*` 
+      : ip.substring(0, 10) + '***';
+    
+    // 简化UA显示
+    let deviceName = '未知设备';
+    if (userAgent.includes('iPhone')) deviceName = 'iPhone';
+    else if (userAgent.includes('Android')) deviceName = 'Android设备';
+    else if (userAgent.includes('Mac')) deviceName = 'Mac电脑';
+    else if (userAgent.includes('Windows')) deviceName = 'Windows电脑';
+    else if (userAgent.includes('Linux')) deviceName = 'Linux设备';
+    
+    await NotificationService.sendSystemMessage(
+      userId,
+      '新设备登录提醒',
+      `检测到您的账号在${deviceName}登录（IP: ${maskedIp}），若非本人操作请及时修改密码。`,
+      { type: 'new_device_login', ip, deviceName },
+      MessagePriority.HIGH
+    );
+  } catch (error: any) {
+    console.error('[安全通知] 发送新设备登录通知失败:', error.message);
+  }
+}
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 4 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * 发送账号异常提醒（多次登录失败）
+ */
+export async function sendAccountAbnormalNotification(
+  userId: number,
+  failCount: number,
+  ip: string
+): Promise<void> {
+  try {
+    const ipParts = ip.split('.');
+    const maskedIp = ipParts.length === 4 
+      ? `${ipParts[0]}.${ipParts[1]}.*.*` 
+      : '未知';
+    
+    await NotificationService.sendSystemMessage(
+      userId,
+      '账号安全提醒',
+      `您的账号存在${failCount}次登录失败行为（IP: ${maskedIp}），为保障安全请尽快修改密码。`,
+      { type: 'account_abnormal', failCount, ip },
+      MessagePriority.HIGH
+    );
+  } catch (error: any) {
+    console.error('[安全通知] 发送账号异常通知失败:', error.message);
+  }
+}
+
+/**
+ * 发送密码修改通知
+ */
+export async function sendPasswordChangeNotification(
+  userId: number
+): Promise<void> {
+  try {
+    await NotificationService.sendSystemMessage(
+      userId,
+      '密码修改成功',
+      '您的登录密码已修改成功。如非本人操作请立即联系客服。',
+      { type: 'password_changed' },
+      MessagePriority.HIGH
+    );
+  } catch (error: any) {
+    console.error('[安全通知] 发送密码修改通知失败:', error.message);
+  }
+}
+
+/**
+ * 发送违规通知
+ */
+export async function sendViolationNotification(
+  userId: number,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 5 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  reason: string,
+  action: string // 'warning' | 'ban' | 'content_removed'
+): Promise<void> {
+  try {
+    let title = '违规通知';
+    let content = '';
+    
+    switch (action) {
+      case 'warning':
+        title = '违规警告';
+        content = `您的内容因「${reason}」违反社区规范，已被警告。请注意规范使用，多次违规可能导致封号。`;
+        break;
+      case 'ban':
+        title = '账号封禁通知';
+        content = `您的账号因「${reason}」违反社区规范，已被封禁。如有疑问请联系客服申诉。`;
+        break;
+      case 'content_removed':
+        title = '内容删除通知';
+        content = `您发布的内容因「${reason}」违反社区规范，已被删除。请遵守社区规范，共同维护良好的社区环境。`;
+        break;
+      default:
+        content = `您的内容因「${reason}」违反社区规范，已被处理。`;
+    }
+    
+    await NotificationService.sendSystemMessage(
+      userId,
+      title,
+      content,
+      { type: 'violation', reason, action },
+      MessagePriority.HIGH
+    );
+  } catch (error: any) {
+    console.error('[安全通知] 发送违规通知失败:', error.message);
+  }
+}
+
+/**
+ * 发送系统维护通知（广播给所有用户）
+ */
+export async function sendMaintenanceNotification(
+  title: string,
+  content: string,
+  startTime: string,
+  endTime?: string
+): Promise<{ success: boolean; count?: number }> {
+  try {
+    let fullContent = content;
+    if (startTime) {
+      fullContent += `\n\n维护时间：${startTime}`;
+      if (endTime) {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 6 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        fullContent += ` 至 ${endTime}`;
+      }
+    }
+    fullContent += '\n\n维护期间部分功能暂不可用，敬请谅解。';
+    
+    const result = await NotificationService.broadcastSystemMessage(
+      title || '系统维护通知',
+      fullContent,
+      { type: 'maintenance', startTime, endTime }
+    );
+    
+    return { success: result.success, count: result.data?.count };
+  } catch (error: any) {
+    console.error('[安全通知] 发送维护通知失败:', error.message);
+    return { success: false };
+  }
+}
+
+
+
+// ============================================================
+// 文件: sensitiveWordService.ts
+// 路径: server/src/services/sensitiveWordService.ts
+// ============================================================
+// 敏感词过滤服务（简化版）
+const words: Map<string, { category: string; level: number }> = new Map();
+
+// 预置敏感词（不含广告类词汇）
+const builtInWords = [
+  { word: '毒品', category: '违法犯罪', level: 3 },
+  { word: '赌博', category: '违法犯罪', level: 3 },
+  { word: '诈骗', category: '违法犯罪', level: 3 },
+  { word: '黑客', category: '违法犯罪', level: 3 },
+  { word: '枪支', category: '违法犯罪', level: 3 },
+  { word: '政治敏感', category: '敏感内容', level: 3 },
+  { word: '分裂', category: '敏感内容', level: 3 },
+  { word: '暴力', category: '不良内容', level: 2 },
+  { word: '恐怖', category: '不良内容', level: 2 },
+  { word: '血腥', category: '不良内容', level: 2 },
+  { word: '色情', category: '不良内容', level: 3 },
+  { word: '低俗', category: '不良内容', level: 2 },
+  { word: '造谣', category: '虚假信息', level: 2 },
+  { word: '诽谤', category: '侵权内容', level: 2 },
+];
+
+// 初始化敏感词
+builtInWords.forEach(({ word, category, level }) => {
+  words.set(word, { category, level });
+});
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 7 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// DFA 算法：构建状态机
+class DFAMatcher {
+  private next: Map<string, number> = new Map();
+  private fail: number = 0;
+  private output: string[] = [];
+
+  insert(word: string): void {
+    let node = 0;
+    for (const char of word) {
+      const nextNode = this.next.get(`${node}:${char}`);
+      if (nextNode === undefined) {
+        this.next.set(`${node}:${char}`, ++node);
+      } else {
+        node = nextNode;
+      }
+    }
+  }
+}
+
+class SensitiveWordService {
+  private wordSet: string[] = [];
+
+  constructor() {
+    // 初始化敏感词
+    builtInWords.forEach(({ word }) => {
+      this.wordSet.push(word);
+    });
+  }
+
+  // 过滤文本，返回过滤后的文本和敏感词列表
+  filter(text: string): { filtered: string; words: string[]; blocked: boolean...
+    const found: string[] = [];
+    const lowerText = text.toLowerCase();
+
+    for (const word of this.wordSet) {
+      if (lowerText.includes(word.toLowerCase())) {
+        found.push(word);
+      }
+    }
+
+    let filtered = text;
+    found.forEach(word => {
+      filtered = filtered.replace(new RegExp(word, 'gi'), '*'.repeat(word.len...
+    });
+
+    return {
+      filtered,
+      words: found,
+      blocked: found.length > 0
+    };
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 8 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  }
+
+  // 检查是否包含敏感词
+  contains(text: string): boolean {
+    const lowerText = text.toLowerCase();
+    return this.wordSet.some(word => lowerText.includes(word.toLowerCase()));
+  }
+
+  // 检查文本，返回详细结果
+  checkText(text: string): { hasSensitive: boolean; words: string[]; filtered...
+    const lowerText = text.toLowerCase();
+    const found: string[] = [];
+    
+    for (const word of this.wordSet) {
+      if (lowerText.includes(word.toLowerCase())) {
+        found.push(word);
+      }
+    }
+    
+    let filtered = text;
+    found.forEach(word => {
+      filtered = filtered.replace(new RegExp(word, 'gi'), '*'.repeat(word.len...
+    });
+    
+    return {
+      hasSensitive: found.length > 0,
+      words: found,
+      filtered
+    };
+  }
+
+  // 获取所有敏感词
+  getWords(): Array<{ word: string; category: string; level: number }> {
+    return builtInWords;
+  }
+
+  // 添加敏感词
+  addWord(word: string, category: string = '自定义', level: number = 1): void {
+    if (!this.wordSet.includes(word)) {
+      this.wordSet.push(word);
+      builtInWords.push({ word, category, level });
+    }
+  }
+
+  // 删除敏感词
+  removeWord(word: string): void {
+    this.wordSet = this.wordSet.filter(w => w !== word);
+  }
+}
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 9 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export const sensitiveWordService = new SensitiveWordService();
+
+
+
+// ============================================================
+// 文件: sms.ts
+// 路径: server/src/services/sms.ts
+// ============================================================
+/**
+ * 阿里云短信服务 - 使用 HTTP API 直接调用（避免 SDK 兼容性问题）
+ */
+import crypto from 'crypto';
+
+const ALIYUN_ACCESS_KEY_ID = process.env.ALIYUN_ACCESS_KEY_ID || '';
+const ALIYUN_ACCESS_KEY_SECRET = process.env.ALIYUN_ACCESS_KEY_SECRET || '';
+const SMS_SIGN_NAME = process.env.SMS_SIGN_NAME || '';
+const SMS_TEMPLATE_CODE = process.env.SMS_TEMPLATE_CODE || '';
+
+/**
+ * 生成阿里云 API 签名
+ */
+function sign(params: Record<string, string>, accessKeySecret: string): string {
+  const sortedKeys = Object.keys(params).sort();
+  const canonicalizedQueryString = sortedKeys
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join('&');
+
+  const stringToSign = `GET&${encodeURIComponent('/')}&${encodeURIComponent(c...
+  const hmac = crypto.createHmac('sha1', accessKeySecret + '&');
+  hmac.update(stringToSign);
+  return hmac.digest('base64');
+}
+
+/**
+ * 发送短信验证码
+ * @param phone 手机号
+ * @param code 验证码
+ */
+export async function sendVerificationSMS(phone: string, code: string): Promi...
+  if (!ALIYUN_ACCESS_KEY_ID || !ALIYUN_ACCESS_KEY_SECRET) {
+    console.error('[SMS] 阿里云 AccessKey 未配置');
+    return false;
+  }
+
+  if (!SMS_SIGN_NAME || !SMS_TEMPLATE_CODE) {
+    console.error('[SMS] 短信签名或模板未配置');
+    return false;
+  }
+
+  try {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 10 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    const nonce = crypto.randomUUID();
+    const timestamp = new Date().toISOString().replace(/\.\d{3}/, '');
+
+    const params: Record<string, string> = {
+      AccessKeyId: ALIYUN_ACCESS_KEY_ID,
+      Action: 'SendSms',
+      Format: 'JSON',
+      PhoneNumbers: phone,
+      RegionId: 'cn-hangzhou',
+      SignName: SMS_SIGN_NAME,
+      SignatureMethod: 'HMAC-SHA1',
+      SignatureNonce: nonce,
+      SignatureVersion: '1.0',
+      TemplateCode: SMS_TEMPLATE_CODE,
+      TemplateParam: JSON.stringify({ code }),
+      Version: '2017-05-25',
+    };
+
+    const signature = sign(params, ALIYUN_ACCESS_KEY_SECRET);
+    params.Signature = signature;
+
+    const queryString = Object.keys(params)
+      .sort()
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key...
+      .join('&');
+
+    const url = `https://dysmsapi.aliyuncs.com/?${queryString}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const result = await response.json() as any;
+
+    if (result.Code === 'OK') {
+      console.log(`[SMS] ✅ 验证码已发送至 ${phone}`);
+      return true;
+    } else {
+      console.error(`[SMS] ❌ 发送失败:`, result);
+      return false;
+    }
+  } catch (error: any) {
+    console.error('[SMS] ❌ 发送异常:', error.message);
+    return false;
+  }
+}
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 11 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * 检查短信服务是否已配置
+ */
+export function isSMSConfigured(): boolean {
+  return !!(ALIYUN_ACCESS_KEY_ID && ALIYUN_ACCESS_KEY_SECRET && SMS_SIGN_NAME...
+}
+
+
+
+// ============================================================
+// 文件: socialService.ts
+// 路径: server/src/services/socialService.ts
+// ============================================================
+import { getPool } from '../config/database';
+
+// 关注/取消关注
+export async function toggleFollow(followerId: number, followingId: number) {
+  const p = getPool();
+  
+  if (followerId === followingId) {
+    throw new Error('不能关注自己');
+  }
+  
+  const existing = await p.query(
+    'SELECT * FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+  
+  if (existing.rows.length > 0) {
+    await p.query('DELETE FROM follows WHERE follower_id = $1 AND following_i...
+    return false;
+  } else {
+    await p.query(
+      'INSERT INTO follows (follower_id, following_id, created_at) VALUES ($1...
+      [followerId, followingId]
+    );
+    return true;
+  }
+}
+
+// 获取粉丝列表
+export async function getFollowers(userId: number, page = 1, pageSize = 20) {
+  const p = getPool();
+  const offset = (page - 1) * pageSize;
+  const result = await p.query(`
+    SELECT u.id, u.nickname, u.avatar, u.member_level,
+           EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_...
+    FROM users u
+    JOIN follows f ON u.id = f.follower_id
+    WHERE f.following_id = $2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 12 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    ORDER BY f.created_at DESC
+    LIMIT $3 OFFSET $4
+  `, [userId, userId, pageSize, offset]);
+  return result.rows;
+}
+
+// 获取关注列表
+export async function getFollowings(userId: number, page = 1, pageSize = 20) {
+  const p = getPool();
+  const offset = (page - 1) * pageSize;
+  const result = await p.query(`
+    SELECT u.id, u.nickname, u.avatar, u.member_level,
+           EXISTS(SELECT 1 FROM follows WHERE follower_id = $1 AND following_...
+    FROM users u
+    JOIN follows f ON u.id = f.following_id
+    WHERE f.follower_id = $2
+    ORDER BY f.created_at DESC
+    LIMIT $3 OFFSET $4
+  `, [userId, userId, pageSize, offset]);
+  return result.rows;
+}
+
+// 检查是否关注
+export async function isFollowing(followerId: number, followingId: number) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT * FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+  return result.rows.length > 0;
+}
+
+// 获取会话列表
+export async function getConversations(userId: number, page = 1, pageSize = 2...
+  const p = getPool();
+  const offset = (page - 1) * pageSize;
+  const result = await p.query(`
+    WITH latest_messages AS (
+      SELECT DISTINCT ON (LEAST(sender_id, receiver_id), GREATEST(sender_id, ...
+             *,
+             CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as ...
+      FROM messages
+      WHERE sender_id = $1 OR receiver_id = $1
+      ORDER BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id...
+    )
+    SELECT lm.*, u.nickname as other_user_nickname, u.avatar_url as other_use...
+    FROM latest_messages lm
+    JOIN users u ON lm.other_user_id = u.id
+    ORDER BY lm.created_at DESC
+    LIMIT $2 OFFSET $3
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 13 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  `, [userId, pageSize, offset]);
+  return result.rows;
+}
+
+// 获取消息列表
+export async function getMessages(userId: number, otherUserId: number, page =...
+  const p = getPool();
+  const offset = (page - 1) * pageSize;
+  const result = await p.query(`
+    SELECT m.*, u.nickname as sender_nickname, u.avatar_url as sender_avatar
+    FROM messages m
+    JOIN users u ON m.sender_id = u.id
+    WHERE (m.sender_id = $1 AND m.receiver_id = $2) OR (m.sender_id = $2 AND ...
+    ORDER BY m.created_at DESC
+    LIMIT $3 OFFSET $4
+  `, [userId, otherUserId, pageSize, offset]);
+  return result.rows;
+}
+
+// 发送消息
+export async function sendMessage(senderId: number, receiverId: number, conte...
+  const p = getPool();
+  const result = await p.query(`
+    INSERT INTO messages (sender_id, receiver_id, content, created_at)
+    VALUES ($1, $2, $3, NOW())
+    RETURNING *
+  `, [senderId, receiverId, content]);
+  return result.rows[0];
+}
+
+// 获取未读消息数
+export async function getUnreadCount(userId: number) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_rea...
+    [userId]
+  );
+  return parseInt(result.rows[0].count);
+}
+
+// 取消关注
+export async function unfollow(followerId: number, followingId: number) {
+  const p = getPool();
+  await p.query(
+    'DELETE FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+  return true;
+}
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 14 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+// ============================================================
+// 文件: userService.ts
+// 路径: server/src/services/userService.ts
+// ============================================================
+import { getPool } from '../config/database';
+
+// 用户相关操作
+export async function getUserByPhone(phone: string) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT * FROM users WHERE phone = $1',
+    [phone]
+  );
+  return result.rows[0];
+}
+
+export async function createUser(data: {
+  phone: string;
+  nickname: string;
+  password: string;
+  province_code?: string;
+  city_code?: string;
+  district_code?: string;
+  town_code?: string;
+}) {
+  const p = getPool();
+  const result = await p.query(
+    `INSERT INTO users (phone, nickname, password, province_code, city_code, ...
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+     RETURNING *`,
+    [data.phone, data.nickname, data.password, data.province_code || null, da...
+  );
+  return result.rows[0];
+}
+
+export async function getUserById(id: number) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT * FROM users WHERE id = $1',
+    [id]
+  );
+  return result.rows[0];
+}
+
+export async function updateUser(id: number, data: any) {
+  const p = getPool();
+  const fields: string[] = [];
+  const values: any[] = [];
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 15 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  let idx = 1;
+
+  for (const [key, value] of Object.entries(data)) {
+    fields.push(`${key} = $${idx}`);
+    values.push(value);
+    idx++;
+  }
+
+  values.push(id);
+
+  const result = await p.query(
+    `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+    values
+  );
+  return result.rows[0];
+}
+
+export async function verifyCode(phone: string, code: string) {
+  const p = getPool();
+  // 验证码5分钟内有效
+  const result = await p.query(
+    `SELECT * FROM verification_codes 
+     WHERE phone = $1 AND code = $2 AND type = 'login'
+     AND created_at > NOW() - INTERVAL '5 minutes'
+     ORDER BY created_at DESC LIMIT 1`,
+    [phone, code]
+  );
+  return result.rows[0];
+}
+
+export async function createCode(phone: string, code: string) {
+  const p = getPool();
+  // 删除旧验证码
+  await p.query('DELETE FROM verification_codes WHERE phone = $1 AND type = $...
+  // 创建新验证码
+  const result = await p.query(
+    `INSERT INTO verification_codes (phone, code, type, created_at)
+     VALUES ($1, $2, 'login', NOW()) RETURNING *`,
+    [phone, code]
+  );
+  return result.rows[0];
+}
+
+export async function verifyAdmin(username: string, password: string) {
+  const p = getPool();
+  const result = await p.query(
+    'SELECT * FROM admins WHERE username = $1',
+    [username]
+  );
+  if (result.rows.length === 0) return null;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 16 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  
+  const admin = result.rows[0];
+  const isValid = await bcrypt.compare(password, admin.password);
+  if (!isValid) return null;
+  
+  return admin;
+}
+
+export async function createAdmin(username: string, password: string) {
+  const p = getPool();
+  const passwordHash = await bcrypt.hash(password, 10);
+  const result = await p.query(
+    `INSERT INTO admins (username, password, created_at)
+     VALUES ($1, $2, NOW()) RETURNING *`,
+    [username, passwordHash]
+  );
+  return result.rows[0];
+}
+
+
+
+// ============================================================
+// 文件: userStatsService.ts
+// 路径: server/src/services/userStatsService.ts
+// ============================================================
+import pg from 'pg';
+const { Pool } = pg;
+
+// 使用与 auth 相同的数据库连接
+const pool = new Pool({
+  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres',
+  password: 'Liuhen2026App',
+  ssl: false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
+// 用户等级配置（基于注册时间）
+export const UserLevel = {
+  NEWBIE: { name: '初出茅庐', minDays: 0, color: '#9CA3AF' },
+  APPRENTICE: { name: '江湖学徒', minDays: 7, color: '#10B981' },
+  MARTIAL_HERO: { name: '武林高手', minDays: 30, color: '#3B82F6' },
+  SECT_MASTER: { name: '宗门掌门', minDays: 90, color: '#8B5CF6' },
+  LEGEND: { name: '江湖传说', minDays: 365, color: '#F59E0B' },
+};
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 17 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// 获取用户等级
+export const getUserLevel = (days: number) => {
+  const levels = Object.values(UserLevel).sort((a, b) => b.minDays - a.minDays);
+  for (const level of levels) {
+    if (days >= level.minDays) return level;
+  }
+  return UserLevel.NEWBIE;
+};
+
+// 用户统计
+export interface UserStats {
+  userId: string;
+  username: string;
+  avatar?: string;
+  exp: number;
+  level: { name: string; color: string };
+  postCount: number;
+  commentCount: number;
+  likeCount: number;
+  followerCount: number;
+  followingCount: number;
+  vipStatus: boolean;
+  vipExpireTime?: string;
+  activeDays: number;
+}
+
+// 计算活跃天数
+const getActiveDays = (createdAt: Date): number => {
+  const now = new Date();
+  const diff = now.getTime() - createdAt.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+};
+
+// 计算经验值（基于活跃天数和发帖数）
+const calculateExp = (activeDays: number, postCount: number): number => {
+  return activeDays * 10 + postCount * 50;
+};
+
+// 获取用户统计
+export const getUserStats = async (userId: number): Promise<UserStats | null>...
+  try {
+    // 不依赖 exp 列，使用 created_at 和其他字段计算
+    const result = await pool.query(
+      `SELECT id, phone, nickname, avatar, member_level, created_at 
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) return null;
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 18 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    const user = result.rows[0];
+    const createdAt = new Date(user.created_at);
+    const activeDays = getActiveDays(createdAt);
+    const postCount = 0; // 简化处理
+
+    return {
+      userId: user.id.toString(),
+      username: user.nickname || user.phone,
+      avatar: user.avatar || undefined,
+      exp: calculateExp(activeDays, postCount),
+      level: getUserLevel(activeDays),
+      postCount,
+      commentCount: 0,
+      likeCount: 0,
+      followerCount: 0,
+      followingCount: 0,
+      vipStatus: false,
+      activeDays,
+    };
+  } catch (error: any) {
+    console.error('获取用户统计失败:', error.message);
+    return null;
+  }
+};
+
+// 获取用户排行榜
+export const getLeaderboard = async (type: string = 'exp', limit: number = 20...
+  try {
+    // 基于 created_at 计算经验值进行排行
+    const result = await pool.query(
+      `SELECT id, phone, nickname, avatar, member_level, created_at,
+              EXTRACT(DAY FROM NOW() - created_at)::integer as active_days
+       FROM users 
+       ORDER BY created_at DESC 
+       LIMIT $1`,
+      [limit]
+    );
+
+    return result.rows.map((user, index) => {
+      const activeDays = user.active_days || 0;
+      return {
+        rank: index + 1,
+        userId: user.id,
+        username: user.nickname || user.phone,
+        avatar: user.avatar,
+        exp: calculateExp(activeDays, 0),
+        level: getUserLevel(activeDays),
+        memberLevel: user.member_level || 1,
+      };
+    });
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 19 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  } catch (error: any) {
+    console.error('获取排行榜失败:', error.message);
+    return [];
+  }
+};
+
+// 获取运营数据概览
+export const getOverviewStats = async () => {
+  try {
+    const usersResult = await pool.query('SELECT COUNT(*) as total FROM users');
+    const postsResult = await pool.query('SELECT COUNT(*) as total FROM posts');
+    const commentsResult = await pool.query('SELECT COUNT(*) as total FROM co...
+
+    const usersCount = parseInt(usersResult.rows[0]?.total || '0');
+    const postsCount = parseInt(postsResult.rows[0]?.total || '0');
+    const commentsCount = parseInt(commentsResult.rows[0]?.total || '0');
+
+    return {
+      totalUsers: usersCount,
+      totalPosts: postsCount,
+      totalComments: commentsCount,
+      newUsersToday: 0,
+      activeUsers: usersCount,
+      vipUsers: 0,
+    };
+  } catch (error: any) {
+    console.error('获取运营概览失败:', error.message);
+    return {
+      totalUsers: 0,
+      totalPosts: 0,
+      totalComments: 0,
+      newUsersToday: 0,
+      activeUsers: 0,
+      vipUsers: 0,
+    };
+  }
+};
+
+// 获取内容统计
+export const getContentStats = async () => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        (SELECT COUNT(*) FROM posts) as total_posts,
+        (SELECT COUNT(*) FROM comments) as total_comments,
+        (SELECT COUNT(*) FROM likes) as total_likes`
+    );
+
+    const row = result.rows[0] || {};
+    return {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 20 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      totalPosts: parseInt(row.total_posts || '0'),
+      totalComments: parseInt(row.total_comments || '0'),
+      totalLikes: parseInt(row.total_likes || '0'),
+      postsToday: 0,
+      commentsToday: 0,
+    };
+  } catch (error: any) {
+    console.error('获取内容统计失败:', error.message);
+    return {
+      totalPosts: 0,
+      totalComments: 0,
+      totalLikes: 0,
+      postsToday: 0,
+      commentsToday: 0,
+    };
+  }
+};
+
+
+
+// ============================================================
+// 文件: versionService.ts
+// 路径: server/src/services/versionService.ts
+// ============================================================
+/**
+ * 版本管理服务
+ * 处理应用版本检查和更新提醒
+ */
+
+import { getPool } from '../config/database.js';
+
+// 版本信息接口
+export interface AppVersion {
+  id: number;
+  platform: 'ios' | 'android' | 'both';
+  version: string;
+  build_number: number;
+  min_supported_version: string;
+  update_type: 'optional' | 'required' | 'none';
+  update_url: string;
+  release_notes: string;
+  force_update: boolean;
+  published_at: string | null;
+  created_at: string;
+}
+
+/**
+ * 获取最新版本信息
+ */
+export async function getLatestVersion(platform: 'ios' | 'android'): Promise<...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 21 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT * FROM app_versions 
+       WHERE (platform = $1 OR platform = 'both') 
+       AND published_at IS NOT NULL 
+       AND published_at <= NOW()
+       ORDER BY build_number DESC 
+       LIMIT 1`,
+      [platform]
+    );
+    
+    return result.rows[0] || null;
+  } catch (error: any) {
+    console.error('[版本管理] 获取版本信息失败:', error.message);
+    return null;
+  }
+}
+
+/**
+ * 检查是否需要更新
+ */
+export async function checkUpdate(
+  platform: 'ios' | 'android',
+  currentVersion: string,
+  currentBuildNumber: number
+): Promise<{
+  needUpdate: boolean;
+  forceUpdate: boolean;
+  latestVersion: string;
+  releaseNotes: string;
+  updateUrl: string;
+}> {
+  const latest = await getLatestVersion(platform);
+  
+  if (!latest) {
+    return {
+      needUpdate: false,
+      forceUpdate: false,
+      latestVersion: currentVersion,
+      releaseNotes: '',
+      updateUrl: ''
+    };
+  }
+  
+  const needUpdate = latest.build_number > currentBuildNumber;
+  
+  return {
+    needUpdate,
+    forceUpdate: latest.force_update || latest.update_type === 'required',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 22 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    latestVersion: latest.version,
+    releaseNotes: latest.release_notes || '',
+    updateUrl: latest.update_url || ''
+  };
+}
+
+/**
+ * 发布新版本
+ */
+export async function publishVersion(versionData: {
+  platform: 'ios' | 'android' | 'both';
+  version: string;
+  buildNumber: number;
+  minSupportedVersion?: string;
+  updateType?: 'optional' | 'required' | 'none';
+  updateUrl?: string;
+  releaseNotes?: string;
+  forceUpdate?: boolean;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const pool = getPool();
+    
+    await pool.query(
+      `INSERT INTO app_versions 
+       (platform, version, build_number, min_supported_version, update_type, ...
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [
+        versionData.platform,
+        versionData.version,
+        versionData.buildNumber,
+        versionData.minSupportedVersion || '1.0.0',
+        versionData.updateType || 'optional',
+        versionData.updateUrl || '',
+        versionData.releaseNotes || '',
+        versionData.forceUpdate || false
+      ]
+    );
+    
+    return { success: true, message: '版本发布成功' };
+  } catch (error: any) {
+    console.error('[版本管理] 发布版本失败:', error.message);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * 比较版本号
+ */
+export function compareVersions(v1: string, v2: string): number {
+  const parts1 = v1.split('.').map(Number);
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 23 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  const parts2 = v2.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+}
+
+
+
+// ============================================================
+// 文件: webhookService.ts
+// 路径: server/src/services/webhookService.ts
+// ============================================================
+/**
+ * Webhook告警通知服务
+ */
+import https from 'https';
+import http from 'http';
+
+// Webhook配置接口
+export interface WebhookConfig {
+  url: string;
+  enabled: boolean;
+  secret?: string;
+  retryCount: number;
+  retryDelay: number;
+}
+
+// Webhook通知类型
+export type AlertType = 
+  | 'HIGH_ERROR_RATE'      // 高错误率
+  | 'HIGH_LATENCY'         // 高延迟
+  | 'SERVICE_DOWN'         // 服务不可用
+  | 'RATE_LIMIT_EXCEEDED'  // 触发限流
+  | 'API_KEY_EXCEEDED'     // API Key使用超限
+  | 'CACHE_FAILURE'        // 缓存失败
+  | 'CUSTOM';              // 自定义告警
+
+// 告警信息接口
+export interface AlertInfo {
+  type: AlertType;
+  message: string;
+  details: {
+    value?: number;
+    threshold?: number;
+    timestamp: number;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 24 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    metadata?: Record<string, any>;
+  };
+}
+
+// Webhook配置存储
+let webhookConfigs: Map<string, WebhookConfig> = new Map();
+
+// 告警历史
+const alertHistory: AlertInfo[] = [];
+const MAX_HISTORY = 100;
+
+/**
+ * 配置Webhook
+ */
+export function configureWebhook(id: string, config: Partial<WebhookConfig>):...
+  const existing = webhookConfigs.get(id) || {
+    url: '',
+    enabled: false,
+    retryCount: 3,
+    retryDelay: 1000,
+  };
+  
+  webhookConfigs.set(id, {
+    ...existing,
+    ...config,
+  });
+  
+  console.log(`[Webhook] 配置更新: ${id} -> ${config.url || '(未设置URL)'}`);
+}
+
+/**
+ * 获取Webhook配置
+ */
+export function getWebhookConfig(id: string): WebhookConfig | undefined {
+  return webhookConfigs.get(id);
+}
+
+/**
+ * 获取所有Webhook配置
+ */
+export function getAllWebhookConfigs(): { id: string; config: WebhookConfig }...
+  return Array.from(webhookConfigs.entries()).map(([id, config]) => ({
+    id,
+    config,
+  }));
+}
+
+/**
+ * 删除Webhook配置
+ */
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 25 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export function deleteWebhook(id: string): boolean {
+  return webhookConfigs.delete(id);
+}
+
+/**
+ * 发送HTTP请求
+ */
+function sendHttpRequest(url: string, data: object): Promise<boolean> {
+  return new Promise((resolve) => {
+    const urlObj = new URL(url);
+    const isHttps = urlObj.protocol === 'https:';
+    const client = isHttps ? https : http;
+    
+    const postData = JSON.stringify(data);
+    
+    const options: http.RequestOptions = {
+      hostname: urlObj.hostname,
+      port: urlObj.port || (isHttps ? 443 : 80),
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+        'User-Agent': 'China-Regions-API-Webhook/1.0',
+        'X-Alert-Timestamp': new Date().toISOString(),
+      },
+      timeout: 10000,
+    };
+    
+    const req = client.request(options, (res) => {
+      let responseData = '';
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+      res.on('end', () => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          console.log(`[Webhook] 发送成功: ${url} [${res.statusCode}]`);
+          resolve(true);
+        } else {
+          console.error(`[Webhook] 发送失败: ${url} [${res.statusCode}] ${respons...
+          resolve(false);
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      console.error(`[Webhook] 请求错误: ${url} - ${error.message}`);
+      resolve(false);
+    });
+    
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 26 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    req.on('timeout', () => {
+      console.error(`[Webhook] 请求超时: ${url}`);
+      req.destroy();
+      resolve(false);
+    });
+    
+    req.write(postData);
+    req.end();
+  });
+}
+
+/**
+ * 发送告警通知
+ */
+export async function sendAlert(
+  webhookId: string,
+  alert: AlertInfo,
+  retryCount = 0
+): Promise<boolean> {
+  const config = webhookConfigs.get(webhookId);
+  
+  if (!config || !config.enabled || !config.url) {
+    return false;
+  }
+  
+  // 准备通知数据
+  const payload = {
+    event: 'alert',
+    type: alert.type,
+    message: alert.message,
+    timestamp: new Date(alert.details.timestamp).toISOString(),
+    details: alert.details,
+    metadata: {
+      service: 'China-Regions-API',
+      version: '2.0.0',
+    },
+  };
+  
+  // 发送请求
+  const success = await sendHttpRequest(config.url, payload);
+  
+  // 如果失败且还有重试次数
+  if (!success && retryCount < config.retryCount) {
+    await new Promise((resolve) => setTimeout(resolve, config.retryDelay));
+    return sendAlert(webhookId, alert, retryCount + 1);
+  }
+  
+  return success;
+}
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 27 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * 广播告警到所有启用的Webhook
+ */
+export async function broadcastAlert(alert: AlertInfo): Promise<void> {
+  const promises: Promise<boolean>[] = [];
+  
+  for (const [id, config] of webhookConfigs.entries()) {
+    if (config.enabled && config.url) {
+      promises.push(sendAlert(id, alert));
+    }
+  }
+  
+  await Promise.allSettled(promises);
+}
+
+/**
+ * 发送高错误率告警
+ */
+export async function alertHighErrorRate(
+  errorRate: number,
+  threshold: number,
+  recentRequests: number
+): Promise<void> {
+  const alert: AlertInfo = {
+    type: 'HIGH_ERROR_RATE',
+    message: `API错误率过高: ${errorRate.toFixed(2)}% (阈值: ${threshold}%)`,
+    details: {
+      value: errorRate,
+      threshold,
+      timestamp: Date.now(),
+      metadata: { recentRequests },
+    },
+  };
+  
+  // 添加到历史
+  addToHistory(alert);
+  
+  // 广播告警
+  await broadcastAlert(alert);
+}
+
+/**
+ * 发送高延迟告警
+ */
+export async function alertHighLatency(
+  avgLatency: number,
+  threshold: number,
+  slowRequests: number
+): Promise<void> {
+  const alert: AlertInfo = {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 28 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    type: 'HIGH_LATENCY',
+    message: `API响应延迟过高: ${avgLatency.toFixed(2)}ms (阈值: ${threshold}ms)`,
+    details: {
+      value: avgLatency,
+      threshold,
+      timestamp: Date.now(),
+      metadata: { slowRequests },
+    },
+  };
+  
+  addToHistory(alert);
+  await broadcastAlert(alert);
+}
+
+/**
+ * 发送API Key使用超限告警
+ */
+export async function alertApiKeyExceeded(
+  apiKey: string,
+  usageCount: number,
+  limit: number
+): Promise<void> {
+  const alert: AlertInfo = {
+    type: 'API_KEY_EXCEEDED',
+    message: `API Key使用量超限: ${usageCount}/${limit}`,
+    details: {
+      value: usageCount,
+      threshold: limit,
+      timestamp: Date.now(),
+      metadata: { apiKey: apiKey.substring(0, 8) + '...' },
+    },
+  };
+  
+  addToHistory(alert);
+  await broadcastAlert(alert);
+}
+
+/**
+ * 发送限流触发告警
+ */
+export async function alertRateLimitExceeded(
+  apiKey: string,
+  currentUsage: number
+): Promise<void> {
+  const alert: AlertInfo = {
+    type: 'RATE_LIMIT_EXCEEDED',
+    message: `API Key触发限流: ${apiKey.substring(0, 8)}...`,
+    details: {
+      value: currentUsage,
+      timestamp: Date.now(),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 29 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      metadata: { apiKey: apiKey.substring(0, 8) + '...' },
+    },
+  };
+  
+  addToHistory(alert);
+  await broadcastAlert(alert);
+}
+
+/**
+ * 添加告警到历史
+ */
+function addToHistory(alert: AlertInfo): void {
+  alertHistory.unshift(alert);
+  if (alertHistory.length > MAX_HISTORY) {
+    alertHistory.pop();
+  }
+}
+
+/**
+ * 获取告警历史
+ */
+export function getAlertHistory(limit = 50): AlertInfo[] {
+  return alertHistory.slice(0, limit);
+}
+
+/**
+ * 获取告警统计
+ */
+export function getAlertStats(): {
+  total: number;
+  byType: Record<AlertType, number>;
+  recent: AlertInfo[];
+} {
+  const byType: Record<AlertType, number> = {
+    HIGH_ERROR_RATE: 0,
+    HIGH_LATENCY: 0,
+    SERVICE_DOWN: 0,
+    RATE_LIMIT_EXCEEDED: 0,
+    API_KEY_EXCEEDED: 0,
+    CACHE_FAILURE: 0,
+    CUSTOM: 0,
+  };
+  
+  for (const alert of alertHistory) {
+    byType[alert.type]++;
+  }
+  
+  return {
+    total: alertHistory.length,
+    byType,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 30 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    recent: alertHistory.slice(0, 10),
+  };
+}
+
+/**
+ * 清除告警历史
+ */
+export function clearAlertHistory(): void {
+  alertHistory.length = 0;
+}
+
+// 默认配置：控制台输出
+configureWebhook('console', {
+  url: '',
+  enabled: true,
+  retryCount: 0,
+  retryDelay: 0,
+});
+
+console.log('[Webhook] 告警服务已初始化');
+
+export async function initAlertSystem(): Promise<void> { console.log('[AlertS...
+
+
+
+// ============================================================
+// 文件: index.ts
+// 路径: server/src/storage/database/index.ts
+// ============================================================
+// Re-export from shared
+export { db, users, posts, comments, likes, reports, sensitiveWords, collecti...
+
+
+
+// ============================================================
+// 文件: index.ts
+// 路径: server/src/storage/database/shared/index.ts
+// ============================================================
+// Database client
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool, { schema });
+
+// Export tables
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 31 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export * from "./schema";
+export * from "./schema-moderation";
+export * from "./relations";
+
+
+
+// ============================================================
+// 文件: relations.ts
+// 路径: server/src/storage/database/shared/relations.ts
+// ============================================================
+import { relations } from "drizzle-orm/relations";
+import { users, posts, likes, comments, reports, follows, friends, messages }...
+
+export const postsRelations = relations(posts, ({one, many}) => ({
+	user: one(users, {
+		fields: [posts.userId],
+		references: [users.id]
+	}),
+	likes: many(likes),
+	comments: many(comments),
+	reports: many(reports),
+}));
+
+export const usersRelations = relations(users, ({many}) => ({
+	posts: many(posts),
+	likes: many(likes),
+	comments: many(comments),
+	reports: many(reports),
+	follows_followerId: many(follows, {
+		relationName: "follows_followerId_users_id"
+	}),
+	follows_followingId: many(follows, {
+		relationName: "follows_followingId_users_id"
+	}),
+	friends_userId: many(friends, {
+		relationName: "friends_userId_users_id"
+	}),
+	friends_friendId: many(friends, {
+		relationName: "friends_friendId_users_id"
+	}),
+	messages_senderId: many(messages, {
+		relationName: "messages_senderId_users_id"
+	}),
+	messages_receiverId: many(messages, {
+		relationName: "messages_receiverId_users_id"
+	}),
+}));
+
+export const likesRelations = relations(likes, ({one}) => ({
+	user: one(users, {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 32 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+		fields: [likes.userId],
+		references: [users.id]
+	}),
+	post: one(posts, {
+		fields: [likes.postId],
+		references: [posts.id]
+	}),
+}));
+
+export const commentsRelations = relations(comments, ({one, many}) => ({
+	post: one(posts, {
+		fields: [comments.postId],
+		references: [posts.id]
+	}),
+	user: one(users, {
+		fields: [comments.userId],
+		references: [users.id]
+	}),
+	comment: one(comments, {
+		fields: [comments.parentId],
+		references: [comments.id],
+		relationName: "comments_parentId_comments_id"
+	}),
+	comments: many(comments, {
+		relationName: "comments_parentId_comments_id"
+	}),
+}));
+
+export const reportsRelations = relations(reports, ({one}) => ({
+	post: one(posts, {
+		fields: [reports.postId],
+		references: [posts.id]
+	}),
+	user: one(users, {
+		fields: [reports.userId],
+		references: [users.id]
+	}),
+}));
+
+export const followsRelations = relations(follows, ({one}) => ({
+	user_followerId: one(users, {
+		fields: [follows.followerId],
+		references: [users.id],
+		relationName: "follows_followerId_users_id"
+	}),
+	user_followingId: one(users, {
+		fields: [follows.followingId],
+		references: [users.id],
+		relationName: "follows_followingId_users_id"
+	}),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 33 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+}));
+
+export const friendsRelations = relations(friends, ({one}) => ({
+	user_userId: one(users, {
+		fields: [friends.userId],
+		references: [users.id],
+		relationName: "friends_userId_users_id"
+	}),
+	user_friendId: one(users, {
+		fields: [friends.friendId],
+		references: [users.id],
+		relationName: "friends_friendId_users_id"
+	}),
+}));
+
+export const messagesRelations = relations(messages, ({one}) => ({
+	user_senderId: one(users, {
+		fields: [messages.senderId],
+		references: [users.id],
+		relationName: "messages_senderId_users_id"
+	}),
+	user_receiverId: one(users, {
+		fields: [messages.receiverId],
+		references: [users.id],
+		relationName: "messages_receiverId_users_id"
+	}),
+}));
+
+
+// ============================================================
+// 文件: schema-moderation.ts
+// 路径: server/src/storage/database/shared/schema-moderation.ts
+// ============================================================
+import { pgTable, index, serial, varchar, integer, timestamp, text, boolean }...
+import { sql } from "drizzle-orm"
+
+// 敏感词表
+export const sensitiveWords = pgTable("sensitive_words", {
+  id: serial().primaryKey().notNull(),
+  word: varchar({ length: 100 }).notNull(),
+  category: varchar({ length: 50 }), // politics/sex/crime/advertisement/custom
+  level: integer().default(1), // 1: 低危 2: 中危 3: 高危 4: 违规
+  createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_...
+}, (table) => [
+  index("idx_sensitive_word").using("btree", table.word.asc()),
+  index("idx_sensitive_category").using("btree", table.category.asc()),
+]);
+
+// 用户违规记录表
+export const violations = pgTable("violations", {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 34 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  targetType: varchar("target_type", { length: 20 }), // post/comment/username
+  targetId: integer("target_id"),
+  reason: varchar({ length: 500 }).notNull(),
+  content: text(), // 违规内容摘要
+  violationType: varchar("violation_type", { length: 50 }), // sensitive_word...
+  status: integer().default(0), // 0: 待处理 1: 已警告 2: 已处罚 3: 已忽略
+  handledBy: integer("handled_by"), // 管理员ID
+  handleNote: text("handle_note"),
+  createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_...
+  handledAt: timestamp("handled_at", { mode: 'string' }),
+}, (table) => [
+  index("idx_violations_user").using("btree", table.userId.asc()),
+  index("idx_violations_status").using("btree", table.status.asc()),
+  index("idx_violations_created").using("btree", table.createdAt.desc()),
+]);
+
+// 用户封禁记录表
+export const bans = pgTable("bans", {
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  type: varchar({ length: 20 }).default('warning'), // warning/warn/post/logi...
+  reason: varchar({ length: 500 }).notNull(),
+  violationId: integer("violation_id"), // 关联的违规记录
+  adminId: integer("admin_id"),
+  expiredAt: timestamp("expired_at", { mode: 'string' }), // null 表示永久
+  liftedAt: timestamp("lifted_at", { mode: 'string' }), // 解封时间
+  liftReason: text("lift_reason"),
+  liftedBy: integer("lifted_by"),
+  createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_...
+}, (table) => [
+  index("idx_bans_user").using("btree", table.userId.asc()),
+  index("idx_bans_type").using("btree", table.type.asc()),
+]);
+
+// 待审核内容表
+export const pendingContent = pgTable("pending_content", {
+  id: serial().primaryKey().notNull(),
+  type: varchar({ length: 20 }).notNull(), // post/comment
+  targetId: integer("target_id").notNull(),
+  userId: integer("user_id").notNull(),
+  content: text().notNull(),
+  images: text(), // JSON array of image URLs
+  reason: varchar({ length: 200 }), // 审核不通过原因
+  aiResult: varchar("ai_result", { length: 20 }), // pass/suspicious/reject
+  aiScores: varchar("ai_scores"), // JSON scores from AI
+  status: integer().default(0), // 0: 待审核 1: 通过 2: 拒绝 3: 人工复审
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { mode: 'string' }),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 35 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_...
+}, (table) => [
+  index("idx_pending_status").using("btree", table.status.asc()),
+  index("idx_pending_type").using("btree", table.type.asc()),
+  index("idx_pending_created").using("btree", table.createdAt.desc()),
+]);
+
+
+
+// ============================================================
+// 文件: schema.ts
+// 路径: server/src/storage/database/shared/schema.ts
+// ============================================================
+import { pgTable, index, unique, serial, varchar, integer, timestamp, date, f...
+import { sql } from "drizzle-orm"
+
+
+
+export const regions = pgTable("regions", {
+	id: serial().primaryKey().notNull(),
+	code: varchar({ length: 20 }).notNull(),
+	name: varchar({ length: 100 }).notNull(),
+	parentCode: varchar("parent_code", { length: 20 }),
+	level: integer().notNull(),
+	sortOrder: integer("sort_order").default(0),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_regions_parent").using("btree", table.parentCode.asc().nullsLast(...
+	unique("regions_code_key").on(table.code),
+]);
+
+export const healthCheck = pgTable("health_check", {
+	id: serial().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).d...
+});
+
+export const users = pgTable("users", {
+	id: serial().primaryKey().notNull(),
+	phone: varchar({ length: 20 }).notNull(),
+	nickname: varchar({ length: 50 }).notNull(),
+	avatar: varchar({ length: 500 }),
+	passwordHash: varchar("password", { length: 255 }).notNull(),
+	provinceCode: varchar("province_code", { length: 20 }),
+	cityCode: varchar("city_code", { length: 20 }),
+	districtCode: varchar("district_code", { length: 20 }),
+	townCode: varchar("town_code", { length: 20 }),
+	memberLevel: integer("member_level").default(0),
+	memberExpireAt: timestamp("member_expire_at", { mode: 'string' }),
+	todayPostCount: integer("today_post_count").default(0),
+	lastPostDate: date("last_post_date"),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 36 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+	totalLikes: integer("total_likes").default(0),
+	totalPosts: integer("total_posts").default(0),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	unique("users_phone_key").on(table.phone),
+]);
+
+export const posts = pgTable("posts", {
+	id: serial().primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	content: text().notNull(),
+	images: jsonb().default([]),
+	regionCode: varchar("region_code", { length: 20 }).notNull(),
+	regionLevel: integer("region_level").notNull(),
+	likeCount: integer("like_count").default(0),
+	commentCount: integer("comment_count").default(0),
+	isPinned: boolean("is_pinned").default(false),
+	status: integer().default(1),
+	expireAt: timestamp("expire_at", { mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_posts_created").using("btree", table.createdAt.desc().nullsFirst(...
+	index("idx_posts_expire").using("btree", table.expireAt.asc().nullsLast().op...
+	index("idx_posts_region").using("btree", table.regionCode.asc().nullsLast()....
+	index("idx_posts_user").using("btree", table.userId.asc().nullsLast().op("in...
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "posts_user_id_fkey"
+		}),
+]);
+
+export const likes = pgTable("likes", {
+	id: serial().primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	postId: integer("post_id").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_likes_post").using("btree", table.postId.asc().nullsLast().op("in...
+	index("idx_likes_user").using("btree", table.userId.asc().nullsLast().op("in...
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "likes_user_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.postId],
+			foreignColumns: [posts.id],
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 37 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+			name: "likes_post_id_fkey"
+		}),
+	unique("likes_user_id_post_id_key").on(table.userId, table.postId),
+]);
+
+export const comments = pgTable("comments", {
+	id: serial().primaryKey().notNull(),
+	postId: integer("post_id").notNull(),
+	userId: integer("user_id").notNull(),
+	parentId: integer("parent_id"),
+	content: text().notNull(),
+	status: integer().default(1),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_comments_post").using("btree", table.postId.asc().nullsLast().op(...
+	foreignKey({
+			columns: [table.postId],
+			foreignColumns: [posts.id],
+			name: "comments_post_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "comments_user_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.parentId],
+			foreignColumns: [table.id],
+			name: "comments_parent_id_fkey"
+		}),
+]);
+
+export const reports = pgTable("reports", {
+	id: serial().primaryKey().notNull(),
+	postId: integer("post_id"),
+	userId: integer("user_id").notNull(),
+	reason: varchar({ length: 500 }).notNull(),
+	status: integer().default(0),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	foreignKey({
+			columns: [table.postId],
+			foreignColumns: [posts.id],
+			name: "reports_post_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "reports_user_id_fkey"
+		}),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 38 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+]);
+
+export const follows = pgTable("follows", {
+	id: serial().primaryKey().notNull(),
+	followerId: integer("follower_id").notNull(),
+	followingId: integer("following_id").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_follows_follower").using("btree", table.followerId.asc().nullsLas...
+	index("idx_follows_following").using("btree", table.followingId.asc().nullsL...
+	foreignKey({
+			columns: [table.followerId],
+			foreignColumns: [users.id],
+			name: "follows_follower_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.followingId],
+			foreignColumns: [users.id],
+			name: "follows_following_id_fkey"
+		}),
+	unique("follows_follower_id_following_id_key").on(table.followerId, table.fo...
+]);
+
+export const friends = pgTable("friends", {
+	id: serial().primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	friendId: integer("friend_id").notNull(),
+	status: integer().default(0),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => [
+	index("idx_friends_user").using("btree", table.userId.asc().nullsLast().op("...
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "friends_user_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.friendId],
+			foreignColumns: [users.id],
+			name: "friends_friend_id_fkey"
+		}),
+	unique("friends_user_id_friend_id_key").on(table.userId, table.friendId),
+]);
+
+// 短信验证码表
+export const smsCodes = pgTable("sms_codes", {
+	id: serial().primaryKey().notNull(),
+	phone: varchar({ length: 20 }).notNull(),
+	code: varchar({ length: 10 }).notNull(),
+	expireAt: timestamp("expire_at", { mode: 'string' }).notNull(),
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 39 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+	used: boolean().default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+});
+
+// 收藏表
+export const collections = pgTable("collections", {
+	id: serial("id").primaryKey(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: ...
+	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: ...
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => ({
+	userIdx: index("collections_user_id_idx").on(table.userId),
+	postIdx: index("collections_post_id_idx").on(table.postId),
+	userPostUnique: unique("collections_user_post_unique").on(table.userId, tabl...
+}));
+
+// 会话表
+export const conversations = pgTable("conversations", {
+	id: serial("id").primaryKey(),
+	userId1: integer("user_id_1").notNull(),
+	userId2: integer("user_id_2").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => ({
+	user1Idx: index("conversations_user_id_1_idx").on(table.userId1),
+	user2Idx: index("conversations_user_id_2_idx").on(table.userId2),
+}));
+
+// 消息表
+export const messages = pgTable("messages", {
+	id: serial("id").primaryKey(),
+	conversationId: integer("conversation_id").notNull().references(() => conver...
+	senderId: integer("sender_id").notNull(),
+	receiverId: integer("receiver_id").notNull(),
+	content: text("content").notNull(),
+	type: varchar("type", { length: 20 }).default("text"), // text, image, voice
+	isRead: boolean("is_read").default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_T...
+}, (table) => ({
+	conversationIdx: index("messages_conversation_id_idx").on(table.conversation...
+	senderIdx: index("messages_sender_id_idx").on(table.senderId),
+	receiverIdx: index("messages_receiver_id_idx").on(table.receiverId),
+}));
+
+
+
+// ============================================================
+// 文件: supabase-client.ts
+// 路径: server/src/storage/database/supabase-client.ts
+// ============================================================
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 40 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { execSync } from 'child_process';
+import { getReportBuffer, createWrappedFetch } from 'coze-coding-dev-sdk';
+
+let envLoaded = false;
+
+interface SupabaseCredentials {
+  url: string;
+  anonKey: string;
+}
+
+function loadEnv(): void {
+  if (envLoaded || (process.env.COZE_SUPABASE_URL && process.env.COZE_SUPABAS...
+    return;
+  }
+
+  try {
+    try {
+      require('dotenv').config();
+      if (process.env.COZE_SUPABASE_URL && process.env.COZE_SUPABASE_ANON_KEY) {
+        envLoaded = true;
+        return;
+      }
+    } catch {
+      // dotenv not available
+    }
+
+    const pythonCode = `
+import os
+import sys
+try:
+    from coze_workload_identity import Client
+    client = Client()
+    env_vars = client.get_project_env_vars()
+    client.close()
+    for env_var in env_vars:
+        print(f"{env_var.key}={env_var.value}")
+except Exception as e:
+    print(f"# Error: {e}", file=sys.stderr)
+`;
+
+    const output = execSync(`python3 -c '${pythonCode.replace(/'/g, "'\"'\"'"...
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    const lines = output.trim().split('\n');
+    for (const line of lines) {
+      if (line.startsWith('#')) continue;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 41 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      const eqIndex = line.indexOf('=');
+      if (eqIndex > 0) {
+        const key = line.substring(0, eqIndex);
+        let value = line.substring(eqIndex + 1);
+        if ((value.startsWith("'") && value.endsWith("'")) ||
+            (value.startsWith('"') && value.endsWith('"'))) {
+          value = value.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    }
+
+    envLoaded = true;
+  } catch {
+    // Silently fail
+  }
+}
+
+function getSupabaseCredentials(): SupabaseCredentials {
+  loadEnv();
+
+  const url = process.env.COZE_SUPABASE_URL;
+  const anonKey = process.env.COZE_SUPABASE_ANON_KEY;
+
+  if (!url) {
+    throw new Error('COZE_SUPABASE_URL is not set');
+  }
+  if (!anonKey) {
+    throw new Error('COZE_SUPABASE_ANON_KEY is not set');
+  }
+
+  return { url, anonKey };
+}
+
+function getSupabaseServiceRoleKey(): string | undefined {
+  loadEnv();
+  return process.env.COZE_SUPABASE_SERVICE_ROLE_KEY;
+}
+
+function getSupabaseClient(token?: string): SupabaseClient {
+  const { url, anonKey } = getSupabaseCredentials();
+
+  let key: string;
+  if (token) {
+    key = anonKey;
+  } else {
+    const serviceRoleKey = getSupabaseServiceRoleKey();
+    key = serviceRoleKey ?? anonKey;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 42 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  }
+
+  const globalOptions: Record<string, any> = {};
+  if (token) {
+    globalOptions.headers = { Authorization: `Bearer ${token}` };
+  }
+  try {
+    const buffer = getReportBuffer();
+    if (buffer) {
+      globalOptions.fetch = createWrappedFetch(buffer, 'supabase');
+    }
+  } catch {
+    // Silent — reporting setup failure should not block client creation
+  }
+
+  return createClient(url, key, {
+    global: globalOptions,
+    db: {
+      timeout: 60000,
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+export { loadEnv, getSupabaseCredentials, getSupabaseServiceRoleKey, getSupab...
+
+
+
+// ============================================================
+// 文件: ali-oss.d.ts
+// 路径: server/src/types/ali-oss.d.ts
+// ============================================================
+declare module 'ali-oss' {
+  interface OSSOptions {
+    region: string;
+    accessKeyId: string;
+    accessKeySecret: string;
+    bucket: string;
+  }
+
+  interface PutObjectResult {
+    url: string;
+    name: string;
+  }
+
+  class OSS {
+    constructor(options: OSSOptions);
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 43 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    put(name: string, file: Buffer): Promise<PutObjectResult>;
+    signatureUrl(name: string, options?: { expires?: number }): Promise<string>;
+  }
+
+  export default OSS;
+}
+
+
+
+// ============================================================
+// 文件: geoUtils.ts
+// 路径: server/src/utils/geoUtils.ts
+// ============================================================
+/**
+ * 地理计算工具
+ * 提供距离计算、经纬度转换等功能
+ */
+
+/**
+ * 地球平均半径（单位：米）
+ */
+const EARTH_RADIUS_M = 6371000;
+
+/**
+ * 距离单位枚举
+ */
+export type DistanceUnit = 'km' | 'm' | 'mile' | 'nautical_mile';
+
+/**
+ * 单位转换因子（转米）
+ */
+const UNIT_TO_METERS: Record<DistanceUnit, number> = {
+  km: 1000,
+  m: 1,
+  mile: 1609.344,
+  nautical_mile: 1852,
+};
+
+/**
+ * 经纬度坐标接口
+ */
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * 距离结果接口
+ */
+export interface DistanceResult {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 44 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  from: LatLng;
+  to: LatLng;
+  distance: number;
+  unit: DistanceUnit;
+  distanceKm: number;     // 始终以公里为单位
+  distanceM: number;     // 始终以米为单位
+  distanceMile: number;  // 始终以英里为单位
+}
+
+/**
+ * Haversine公式计算两点间的球面距离
+ * @param from 起点坐标
+ * @param to 终点坐标
+ * @param unit 返回距离的单位，默认为km
+ * @returns 距离值
+ */
+export function calculateDistance(
+  from: LatLng,
+  to: LatLng,
+  unit: DistanceUnit = 'km'
+): DistanceResult {
+  // 将角度转换为弧度
+  const lat1Rad = toRad(from.lat);
+  const lat2Rad = toRad(to.lat);
+  const deltaLat = toRad(to.lat - from.lat);
+  const deltaLng = toRad(to.lng - from.lng);
+
+  // Haversine公式
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1Rad) *
+      Math.cos(lat2Rad) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  // 计算距离（米）
+  const distanceM = EARTH_RADIUS_M * c;
+
+  // 转换为指定单位
+  const factor = UNIT_TO_METERS[unit];
+  const distance = distanceM / factor;
+
+  return {
+    from,
+    to,
+    distance: Math.round(distance * 1000) / 1000, // 保留3位小数
+    unit,
+    distanceKm: Math.round((distanceM / 1000) * 1000) / 1000,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 45 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    distanceM: Math.round(distanceM * 100) / 100,
+    distanceMile: Math.round((distanceM / 1609.344) * 1000) / 1000,
+  };
+}
+
+/**
+ * 角度转弧度
+ */
+function toRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+/**
+ * 弧度转角度
+ */
+export function toDeg(rad: number): number {
+  return (rad * 180) / Math.PI;
+}
+
+/**
+ * 计算多个点之间的总距离
+ * @param points 点列表（按顺序连接）
+ * @param unit 距离单位
+ * @returns 总距离
+ */
+export function calculateTotalDistance(
+  points: LatLng[],
+  unit: DistanceUnit = 'km'
+): number {
+  if (points.length < 2) {
+    return 0;
+  }
+
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const result = calculateDistance(points[i], points[i + 1], unit);
+    total += result.distance;
+  }
+
+  return Math.round(total * 1000) / 1000;
+}
+
+/**
+ * 计算点到线段的最短距离
+ * @param point 点
+ * @param lineStart 线段起点
+ * @param lineEnd 线段终点
+ * @param unit 距离单位
+ */
+export function pointToLineDistance(
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 46 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  point: LatLng,
+  lineStart: LatLng,
+  lineEnd: LatLng,
+  unit: DistanceUnit = 'km'
+): number {
+  // 将点投影到线段上
+  const a = point.lat - lineStart.lat;
+  const b = point.lng - lineStart.lng;
+  const c = lineEnd.lat - lineStart.lat;
+  const d = lineEnd.lng - lineStart.lng;
+
+  const dot = a * c + b * d;
+  const lenSq = c * c + d * d;
+  
+  let param = -1;
+  if (lenSq !== 0) {
+    param = dot / lenSq;
+  }
+
+  let nearestLat: number;
+  let nearestLng: number;
+
+  if (param < 0) {
+    nearestLat = lineStart.lat;
+    nearestLng = lineStart.lng;
+  } else if (param > 1) {
+    nearestLat = lineEnd.lat;
+    nearestLng = lineEnd.lng;
+  } else {
+    nearestLat = lineStart.lat + param * c;
+    nearestLng = lineStart.lng + param * d;
+  }
+
+  const distanceResult = calculateDistance(
+    point,
+    { lat: nearestLat, lng: nearestLng },
+    unit
+  );
+
+  return distanceResult.distance;
+}
+
+/**
+ * 判断点是否在多边形内（射线法）
+ * @param point 待判断的点
+ * @param polygon 多边形顶点列表
+ * @returns true如果在多边形内
+ */
+export function isPointInPolygon(
+  point: LatLng,
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 47 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  polygon: LatLng[]
+): boolean {
+  let inside = false;
+  const n = polygon.length;
+
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = polygon[i].lng;
+    const yi = polygon[i].lat;
+    const xj = polygon[j].lng;
+    const yj = polygon[j].lat;
+
+    if (
+      yi > point.lat !== yj > point.lat &&
+      point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi) + xi
+    ) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+}
+
+/**
+ * 计算多边形面积（使用球面近似）
+ * @param polygon 多边形顶点列表
+ * @returns 面积（平方米）
+ */
+export function calculatePolygonArea(polygon: LatLng[]): number {
+  if (polygon.length < 3) {
+    return 0;
+  }
+
+  let area = 0;
+  const n = polygon.length;
+
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const xi = toRad(polygon[i].lng);
+    const yi = toRad(polygon[i].lat);
+    const xj = toRad(polygon[j].lng);
+    const yj = toRad(polygon[j].lat);
+
+    area += xi * yj - xj * yi;
+  }
+
+  area = Math.abs(area / 2) * EARTH_RADIUS_M * EARTH_RADIUS_M;
+  return Math.round(area);
+}
+
+/**
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 48 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ * 获取方向方位角
+ * @param from 起点
+ * @param to 终点
+ * @returns 方位角（度，0-360，正北为0）
+ */
+export function getBearing(from: LatLng, to: LatLng): number {
+  const lat1 = toRad(from.lat);
+  const lat2 = toRad(to.lat);
+  const deltaLng = toRad(to.lng - from.lng);
+
+  const x = Math.sin(deltaLng) * Math.cos(lat2);
+  const y =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+
+  let bearing = toDeg(Math.atan2(x, y));
+  bearing = (bearing + 360) % 360;
+
+  return Math.round(bearing * 10) / 10;
+}
+
+/**
+ * 获取方向名称
+ * @param bearing 方位角
+ * @returns 方向名称
+ */
+export function getDirectionName(bearing: number): string {
+  const directions = [
+    { name: '北', min: 337.5, max: 360 },
+    { name: '东北', min: 292.5, max: 337.5 },
+    { name: '东', min: 247.5, max: 292.5 },
+    { name: '东南', min: 202.5, max: 247.5 },
+    { name: '南', min: 157.5, max: 202.5 },
+    { name: '西南', min: 112.5, max: 157.5 },
+    { name: '西', min: 67.5, max: 112.5 },
+    { name: '西北', min: 0, max: 67.5 },
+  ];
+
+  for (const dir of directions) {
+    if (bearing >= dir.min || bearing < dir.max) {
+      return dir.name;
+    }
+  }
+
+  return '北';
+}
+
+/**
+ * 格式化距离为人类可读字符串
+ */
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 49 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export function formatDistance(distance: number, unit: DistanceUnit): string {
+  switch (unit) {
+    case 'km':
+      if (distance < 1) {
+        return `${Math.round(distance * 1000)}米`;
+      }
+      return `${distance.toFixed(2)}公里`;
+    case 'm':
+      return `${Math.round(distance)}米`;
+    case 'mile':
+      return `${distance.toFixed(2)}英里`;
+    case 'nautical_mile':
+      return `${distance.toFixed(2)}海里`;
+    default:
+      return `${distance} ${unit}`;
+  }
+}
+
+
+
+// ============================================================
+// 文件: i18n.ts
+// 路径: server/src/utils/i18n.ts
+// ============================================================
+// 多语言支持 - 国际化配置文件
+export interface LocaleConfig {
+  code: string;      // 语言代码: zh, en, ja, ko
+  name: string;      // 显示名称: 中文, English, 日本語, 한국어
+  native: string;    // 本地名称
+  flag: string;      // 国旗emoji
+}
+
+// 支持的语言列表
+export const supportedLocales: LocaleConfig[] = [
+  { code: 'zh', name: '简体中文', native: '简体中文', flag: '🇨🇳' },
+  { code: 'en', name: 'English', native: 'English', flag: '🇺🇸' },
+  { code: 'ja', name: '日本語', native: '日本語', flag: '🇯🇵' },
+  { code: 'ko', name: '한국어', native: '한국어', flag: '🇰🇷' },
+];
+
+// 默认语言
+export const defaultLocale = 'zh';
+
+// 翻译键值对
+interface Translations {
+  [key: string]: string | Translations;
+}
+
+const translations: Record<string, Translations> = {
+  // 中文
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 50 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  zh: {
+    app: {
+      name: '流痕江湖',
+      slogan: '人海为江湖，留言皆流痕',
+      version: 'v1.0',
+    },
+    common: {
+      confirm: '确定',
+      cancel: '取消',
+      save: '保存',
+      delete: '删除',
+      edit: '编辑',
+      submit: '提交',
+      loading: '加载中...',
+      noData: '暂无数据',
+      success: '操作成功',
+      error: '操作失败',
+    },
+    auth: {
+      login: '登录',
+      logout: '退出登录',
+      register: '注册',
+      phone: '手机号',
+      code: '验证码',
+      sendCode: '发送验证码',
+    },
+    content: {
+      publish: '发布',
+      recall: '撤回',
+      featured: '加精',
+      pinned: '置顶',
+      comment: '评论',
+      like: '点赞',
+      share: '分享',
+    },
+    follow: {
+      follow: '关注',
+      following: '已关注',
+      mutual: '互相关注',
+      followers: '粉丝',
+    },
+    settings: {
+      title: '设置',
+      profile: '个人资料',
+      privacy: '隐私设置',
+      about: '关于',
+    },
+  },
+  // 英文
+  en: {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 51 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    app: {
+      name: 'LiuHen Jianghu',
+      slogan: 'Every trace tells a story',
+      version: 'v1.0',
+    },
+    common: {
+      confirm: 'Confirm',
+      cancel: 'Cancel',
+      save: 'Save',
+      delete: 'Delete',
+      edit: 'Edit',
+      submit: 'Submit',
+      loading: 'Loading...',
+      noData: 'No data',
+      success: 'Success',
+      error: 'Error',
+    },
+    auth: {
+      login: 'Login',
+      logout: 'Logout',
+      register: 'Register',
+      phone: 'Phone',
+      code: 'Code',
+      sendCode: 'Send Code',
+    },
+    content: {
+      publish: 'Publish',
+      recall: 'Recall',
+      featured: 'Feature',
+      pinned: 'Pin',
+      comment: 'Comment',
+      like: 'Like',
+      share: 'Share',
+    },
+    follow: {
+      follow: 'Follow',
+      following: 'Following',
+      mutual: 'Mutual',
+      followers: 'Followers',
+    },
+    settings: {
+      title: 'Settings',
+      profile: 'Profile',
+      privacy: 'Privacy',
+      about: 'About',
+    },
+  },
+  // 日文
+  ja: {
+    app: {
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 52 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      name: '流痕江湖',
+      slogan: '人の海が江湖、痕が物語る',
+      version: 'v1.0',
+    },
+    common: {
+      confirm: '確認',
+      cancel: 'キャンセル',
+      save: '保存',
+      delete: '削除',
+      edit: '編集',
+      submit: '提出',
+      loading: '読み込み中...',
+      noData: 'データなし',
+      success: '成功',
+      error: 'エラー',
+    },
+    auth: {
+      login: 'ログイン',
+      logout: 'ログアウト',
+      register: '登録',
+      phone: '電話番号',
+      code: 'コード',
+      sendCode: 'コード送信',
+    },
+    content: {
+      publish: '投稿',
+      recall: '撤回',
+      featured: '注目',
+      pinned: 'ピン留め',
+      comment: 'コメント',
+      like: 'いいね',
+      share: '共有',
+    },
+    follow: {
+      follow: 'フォロー',
+      following: 'フォロー中',
+      mutual: '相互フォロー',
+      followers: 'フォロワー',
+    },
+    settings: {
+      title: '設定',
+      profile: 'プロフィール',
+      privacy: 'プライバシー',
+      about: '概要',
+    },
+  },
+  // 韩文
+  ko: {
+    app: {
+      name: '유HEN 강호',
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 53 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+      slogan: '사람의 바다, 흔적이 이야기한다',
+      version: 'v1.0',
+    },
+    common: {
+      confirm: '확인',
+      cancel: '취소',
+      save: '저장',
+      delete: '삭제',
+      edit: '편집',
+      submit: '제출',
+      loading: '로딩 중...',
+      noData: '데이터 없음',
+      success: '성공',
+      error: '실패',
+    },
+    auth: {
+      login: '로그인',
+      logout: '로그아웃',
+      register: '회원가입',
+      phone: '전화번호',
+      code: '코드',
+      sendCode: '코드 발송',
+    },
+    content: {
+      publish: '게시',
+      recall: '철회',
+      featured: '注目',
+      pinned: '고정',
+      comment: '댓글',
+      like: '좋아요',
+      share: '공유',
+    },
+    follow: {
+      follow: '팔로우',
+      following: '팔로잉',
+      mutual: '맞팔로우',
+      followers: '팔로워',
+    },
+    settings: {
+      title: '설정',
+      profile: '프로필',
+      privacy: '개인정보',
+      about: '정보',
+    },
+  },
+};
+
+/**
+ * 获取翻译文本
+ * @param key 翻译键，如 'common.confirm' 或 'app.name'
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 54 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+ * @param locale 语言代码，默认为 'zh'
+ */
+export function t(key: string, locale: string = defaultLocale): string {
+  const lang = translations[locale] || translations[defaultLocale];
+  const keys = key.split('.');
+  
+  let value: any = lang;
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      // 回退到中文
+      value = translations[defaultLocale];
+      for (const k2 of keys) {
+        if (value && typeof value === 'object' && k2 in value) {
+          value = value[k2];
+        } else {
+          return key; // 返回原始键
+        }
+      }
+      break;
+    }
+  }
+  
+  return typeof value === 'string' ? value : key;
+}
+
+/**
+ * 检测浏览器语言
+ */
+export function detectLocale(acceptLanguage: string | undefined): string {
+  if (!acceptLanguage) return defaultLocale;
+  
+  const lang = acceptLanguage.toLowerCase();
+  
+  if (lang.includes('zh')) return 'zh';
+  if (lang.includes('en')) return 'en';
+  if (lang.includes('ja')) return 'ja';
+  if (lang.includes('ko')) return 'ko';
+  
+  return defaultLocale;
+}
+
+export default {
+  supportedLocales,
+  defaultLocale,
+  t,
+  detectLocale,
+};
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 55 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+// ============================================================
+// 文件: theme.ts
+// 路径: server/src/utils/theme.ts
+// ============================================================
+// 主题配置 - 暗黑模式
+export interface ThemeColors {
+  primary: string;
+  background: string;
+  surface: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  success: string;
+  warning: string;
+  error: string;
+}
+
+// 亮色主题
+export const lightTheme: ThemeColors = {
+  primary: '#2563eb',       // 蓝色
+  background: '#ffffff',    // 白色
+  surface: '#f5f5f5',       // 浅灰
+  text: '#1f2937',          // 深灰
+  textSecondary: '#6b7280', // 中灰
+  border: '#e5e7eb',        // 边框灰
+  success: '#10b981',       // 绿色
+  warning: '#f59e0b',       // 橙色
+  error: '#ef4444',         // 红色
+};
+
+// 暗色主题
+export const darkTheme: ThemeColors = {
+  primary: '#60a5fa',       // 亮蓝色
+  background: '#111827',   // 深黑
+  surface: '#1f2937',       // 深灰
+  text: '#f9fafb',          // 白色
+  textSecondary: '#9ca3af', // 浅灰
+  border: '#374151',        // 边框灰
+  success: '#34d399',       // 亮绿
+  warning: '#fbbf24',       // 亮橙
+  error: '#f87171',         // 亮红
+};
+
+// 跟随系统
+export const systemTheme = {
+  light: lightTheme,
+  dark: darkTheme,
+};
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 56 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+// 主题类型
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+// 主题配置
+export interface ThemeConfig {
+  mode: ThemeMode;
+  colors: ThemeColors;
+}
+
+// 获取主题配置
+export function getTheme(mode: ThemeMode, systemIsDark: boolean = false): The...
+  switch (mode) {
+    case 'light':
+      return lightTheme;
+    case 'dark':
+      return darkTheme;
+    case 'system':
+      return systemIsDark ? darkTheme : lightTheme;
+    default:
+      return lightTheme;
+  }
+}
+
+// 检测系统主题偏好
+export function detectSystemTheme(secChUa: string | undefined, secChUaMobile:...
+  // 简化检测：检查user-agent中是否包含dark模式标识
+  if (!secChUa) return false;
+  
+  // 检查是否 prefers-color-schema: dark
+  // 实际应该从CSS媒体查询获取，这里做简化处理
+  const ua = secChUa.toLowerCase();
+  return ua.includes('mac os') || ua.includes('windows');
+}
+
+// CSS变量模板
+export function generateCSSVariables(colors: ThemeColors): string {
+  return `
+    :root {
+      --color-primary: ${colors.primary};
+      --color-background: ${colors.background};
+      --color-surface: ${colors.surface};
+      --color-text: ${colors.text};
+      --color-text-secondary: ${colors.textSecondary};
+      --color-border: ${colors.border};
+      --color-success: ${colors.success};
+      --color-warning: ${colors.warning};
+      --color-error: ${colors.error};
+    }
+  `;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 57 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+}
+
+export default {
+  lightTheme,
+  darkTheme,
+  systemTheme,
+  getTheme,
+  detectSystemTheme,
+  generateCSSVariables,
+};
+
+
+
+// ============================================================
+// 文件: wechatPay.ts
+// 路径: server/src/utils/wechatPay.ts
+// ============================================================
+/**
+ * 微信支付工具函数
+ */
+import crypto from 'crypto';
+import WECHAT_PAY_CONFIG from '../config/wechat';
+
+/**
+ * 生成随机字符串
+ */
+export function generateNonceStr(length: number = 32): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567...
+  let str = '';
+  for (let i = 0; i < length; i++) {
+    str += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return str;
+}
+
+/**
+ * 生成订单号
+ * 格式：MCHID + 时间戳 + 随机数
+ */
+export function generateOrderId(): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+  return `${WECHAT_PAY_CONFIG.MCHID}${timestamp}${random}`;
+}
+
+/**
+ * 生成签名
+ * @param params 要签名的参数对象
+ * @param key API密钥
+ */
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 58 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export function generateSign(params: Record<string, string | number>, key: st...
+  // 1. 按字典序排序参数
+  const sortedKeys = Object.keys(params).sort();
+  
+  // 2. 拼接字符串
+  let signStr = '';
+  for (const k of sortedKeys) {
+    if (params[k] !== '' && params[k] !== undefined && params[k] !== null) {
+      signStr += `${k}=${params[k]}&`;
+    }
+  }
+  
+  // 3. 拼接API密钥
+  signStr += `key=${key}`;
+  
+  // 4. MD5签名并转大写
+  return crypto
+    .createHash('md5')
+    .update(signStr, 'utf8')
+    .digest('hex')
+    .toUpperCase();
+}
+
+/**
+ * 验证签名
+ */
+export function verifySign(params: Record<string, string>, sign: string, key:...
+  const calculatedSign = generateSign(params, key);
+  return calculatedSign === sign;
+}
+
+/**
+ * 将对象转换为XML
+ */
+export function objectToXml(obj: Record<string, string>): string {
+  let xml = '<xml>';
+  for (const [key, value] of Object.entries(obj)) {
+    xml += `<${key}><![CDATA[${value}]]></${key}>`;
+  }
+  xml += '</xml>';
+  return xml;
+}
+
+/**
+ * 将XML转换为对象
+ */
+export function xmlToObject(xml: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const regex = /<(\w+)><!\[CDATA\[([^\]]*)\]\]><\/\1>/g;
+  let match;
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 59 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  while ((match = regex.exec(xml)) !== null) {
+    result[match[1]] = match[2];
+  }
+  return result;
+}
+
+/**
+ * 生成预支付订单参数（App端调起支付需要）
+ */
+export function generateAppPayParams(prepayId: string): {
+  appid: string;
+  partnerid: string;
+  prepayid: string;
+  package: string;
+  noncestr: string;
+  timestamp: string;
+  sign: string;
+} {
+  const nonceStr = generateNonceStr();
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  
+  const params: Record<string, string> = {
+    appid: WECHAT_PAY_CONFIG.APPID,
+    partnerid: WECHAT_PAY_CONFIG.MCHID,
+    prepayid: prepayId,
+    package: 'Sign=WXPay',
+    noncestr: nonceStr,
+    timestamp,
+  };
+  
+  const sign = generateSign(params, WECHAT_PAY_CONFIG.API_KEY);
+  
+  return {
+    ...params,
+    sign,
+  };
+}
+
+export default {
+  generateNonceStr,
+  generateOrderId,
+  generateSign,
+  verifySign,
+  objectToXml,
+  xmlToObject,
+  generateAppPayParams,
+};
+
+
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                           第 60 页
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
