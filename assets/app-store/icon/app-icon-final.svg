@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 背景渐变：纯黑到金黄 -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 水痕图形的渐变 -->
+    <linearGradient id="waterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.9" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:0.8" />
+    </linearGradient>
+    
+    <!-- 发光效果 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bgGradient)"/>
+  
+  <!-- 水痕/墨迹图形 - 流动的曲线 -->
+  <g transform="translate(512, 450)" filter="url(#glow)">
+    <!-- 主曲线 - 类似书法笔触 -->
+    <path d="M -200,-50 
+             C -150,-100 -50,-80 0,-30
+             C 50,20 100,60 180,40
+             C 220,30 250,0 260,-30"
+          stroke="url(#waterGradient)" 
+          stroke-width="45" 
+          fill="none" 
+          stroke-linecap="round"
+          opacity="0.95"/>
+    
+    <!-- 辅助曲线 - 增加流动感 -->
+    <path d="M -180,30 
+             C -120,-10 -40,10 20,50
+             C 80,90 140,100 200,80"
+          stroke="#FFD700" 
+          stroke-width="25" 
+          fill="none" 
+          stroke-linecap="round"
+          opacity="0.7"/>
+    
+    <!-- 小点缀 - 墨滴效果 -->
+    <circle cx="-220" cy="-40" r="15" fill="#FFD700" opacity="0.8"/>
+    <circle cx="280" cy="-35" r="12" fill="#FFA500" opacity="0.7"/>
+    <circle cx="-150" cy="60" r="8" fill="#FFD700" opacity="0.6"/>
+  </g>
+  
+  <!-- 底部装饰线 -->
+  <path d="M 300,750 Q 512,780 724,750" 
+        stroke="#FFD700" 
+        stroke-width="3" 
+        fill="none" 
+        opacity="0.4"/>
+</svg>
