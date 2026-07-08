@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>应用图标预览 - 登录页风格</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #1a1a1a;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #FFD700;
+      margin-bottom: 10px;
+    }
+    .info {
+      color: #888;
+      margin-bottom: 30px;
+    }
+    .preview-area {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .icon-preview {
+      background: #000;
+      padding: 20px;
+      border-radius: 20px;
+    }
+    .icon-preview img {
+      width: 512px;
+      height: 512px;
+      display: block;
+    }
+    .comparison {
+      background: #0D0D15;
+      padding: 40px;
+      border-radius: 20px;
+      flex: 1;
+      min-width: 300px;
+    }
+    .comparison h3 {
+      color: #FFD700;
+      margin-top: 0;
+    }
+    .login-preview {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(180deg, #0D0D15 0%, #0A0A10 50%, #080810 100%);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-preview::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: 10%;
+      width: 200px;
+      height: 150px;
+      background: radial-gradient(ellipse, rgba(255,215,0,0.15) 0%, transparent 70%);
+      filter: blur(40px);
+    }
+    .login-title {
+      font-size: 42px;
+      font-weight: bold;
+      color: #FFD700;
+      letter-spacing: 8px;
+      text-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+      position: relative;
+      z-index: 1;
+    }
+    .login-subtitle {
+      color: #D4A574;
+      font-size: 14px;
+      letter-spacing: 4px;
+      margin-top: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .buttons {
+      margin-top: 30px;
+    }
+    button {
+      background: #FFD700;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #FFC000;
+    }
+    .specs {
+      margin-top: 30px;
+      padding: 20px;
+      background: #222;
+      border-radius: 12px;
+    }
+    .specs h4 {
+      color: #FFD700;
+      margin-top: 0;
+    }
+    .specs ul {
+      list-style: none;
+      padding: 0;
+    }
+    .specs li {
+      padding: 5px 0;
+      color: #aaa;
+    }
+    .specs li span {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>应用图标预览</h1>
+    <p class="info">参考登录页风格设计的 SVG 矢量图标</p>
+    
+    <div class="preview-area">
+      <div>
+        <h3>生成的图标</h3>
+        <div class="icon-preview">
+          <img id="iconImage" src="app-icon-login-style.svg" alt="应用图标">
+        </div>
+        <div class="buttons">
+          <button onclick="downloadSVG()">下载 SVG</button>
+          <button onclick="downloadPNG()">下载 PNG</button>
+        </div>
+      </div>
+      
+      <div class="comparison">
+        <h3>登录页参考</h3>
+        <div class="login-preview">
+          <div class="login-title">流痕江湖</div>
+          <div class="login-subtitle">◀ 人海为江湖，留言皆流痕 ▶</div>
+        </div>
+        
+        <div class="specs">
+          <h4>设计参数</h4>
+          <ul>
+            <li>背景渐变：<span>#0D0D15 → #0A0A10 → #080810</span></li>
+            <li>文字颜色：<span>#FFD700（金黄色）</span></li>
+            <li>字体：<span>系统默认粗体</span></li>
+            <li>字间距：<span>8px</span></li>
+            <li>发光效果：<span>rgba(255,215,0,0.9), 25px</span></li>
+            <li>装饰：<span>金色光点 + 光斑</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function downloadSVG() {
+      const link = document.createElement('a');
+      link.href = 'app-icon-login-style.svg';
+      link.download = 'app-icon-login-style.svg';
+      link.click();
+    }
+    
+    function downloadPNG() {
+      const svg = document.querySelector('img');
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+      
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, 1024, 1024);
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'app-icon-login-style.png';
+          link.click();
+        }, 'image/png');
+      };
+      img.src = svg.src;
+    }
+  </script>
+</body>
+</html>
