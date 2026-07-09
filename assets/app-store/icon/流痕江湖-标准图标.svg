@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- 背景渐变 -->
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- 文字发光效果 -->
+    <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur2"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="25" result="blur3"/>
+      <feMerge>
+        <feMergeNode in="blur3"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 光斑效果 -->
+    <radialGradient id="glowSpot1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FDD835;stop-opacity:0.15" />
+      <stop offset="100%" style="stop-color:#FDD835;stop-opacity:0" />
+    </radialGradient>
+    <radialGradient id="glowSpot2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FDD835;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#FDD835;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1024" height="1024" fill="url(#bgGradient)"/>
+  
+  <!-- 光斑装饰 -->
+  <ellipse cx="250" cy="300" rx="150" ry="150" fill="url(#glowSpot1)"/>
+  <ellipse cx="750" cy="400" rx="120" ry="120" fill="url(#glowSpot2)"/>
+  <ellipse cx="500" cy="700" rx="180" ry="180" fill="url(#glowSpot2)"/>
+  
+  <!-- 左上角波浪线条装饰 -->
+  <g transform="translate(60, 120)" opacity="0.6">
+    <!-- 小圆点 -->
+    <circle cx="10" cy="0" r="4" fill="#795548"/>
+    <!-- 三条波浪线 -->
+    <path d="M0,20 Q20,10 40,20 T80,20 T120,20 T160,20" 
+          stroke="#795548" stroke-width="2" fill="none"/>
+    <path d="M0,35 Q20,25 40,35 T80,35 T120,35 T160,35" 
+          stroke="#795548" stroke-width="2" fill="none"/>
+    <path d="M0,50 Q20,40 40,50 T80,50 T120,50 T160,50" 
+          stroke="#795548" stroke-width="2" fill="none"/>
+  </g>
+  
+  <!-- 散点装饰 -->
+  <circle cx="120" cy="850" r="6" fill="#795548" opacity="0.7"/>
+  <circle cx="880" cy="180" r="6" fill="#795548" opacity="0.7"/>
+  <circle cx="900" cy="820" r="6" fill="#795548" opacity="0.7"/>
+  
+  <!-- 主标题：流痕江湖 -->
+  <text x="512" y="480" 
+        font-family="'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif" 
+        font-size="120" 
+        font-weight="bold" 
+        fill="#FDD835" 
+        text-anchor="middle" 
+        dominant-baseline="middle"
+        filter="url(#textGlow)"
+        letter-spacing="8">流痕江湖</text>
+  
+  <!-- 副标题装饰箭头（左） -->
+  <text x="280" y="580" 
+        font-family="sans-serif" 
+        font-size="24" 
+        fill="#FDD835" 
+        text-anchor="middle">◀</text>
+  
+  <!-- 副标题：人海为江湖，留言皆流痕 -->
+  <text x="512" y="580" 
+        font-family="'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif" 
+        font-size="28" 
+        font-weight="normal" 
+        fill="#F5F5F5" 
+        text-anchor="middle"
+        letter-spacing="3">人海为江湖，留言皆流痕</text>
+  
+  <!-- 副标题装饰箭头（右） -->
+  <text x="744" y="580" 
+        font-family="sans-serif" 
+        font-size="24" 
+        fill="#FDD835" 
+        text-anchor="middle">▶</text>
+</svg>
