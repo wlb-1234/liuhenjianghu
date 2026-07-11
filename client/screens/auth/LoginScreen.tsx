@@ -163,6 +163,13 @@ export default function LoginScreen() {
                   </View>
                 </View>
 
+                {/* 忘记密码 */}
+                <View style={styles.forgotPasswordRow}>
+                  <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+                    <Text style={styles.forgotPasswordLink}>忘记密码？</Text>
+                  </TouchableOpacity>
+                </View>
+
                 {/* 登录按钮 */}
                 <TouchableOpacity
                   style={styles.loginButton}
@@ -360,6 +367,16 @@ const styles = StyleSheet.create({
     color: '#D4AF37',
     marginLeft: 6,
     fontWeight: 'bold',
+  },
+  forgotPasswordRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: -8,
+    marginBottom: 10,
+  },
+  forgotPasswordLink: {
+    fontSize: 13,
+    color: '#B8860B',
   },
   waterWave: {
     position: 'absolute',

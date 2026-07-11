@@ -322,4 +322,78 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response) 
   }
 });
 
+// 忘记密码 - 通过手机验证码重置密码
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { phone, code, newPassword } = req.body;
+
+    if (!phone || !code || !newPassword) {
+      return res.status(400).json({ error: '请填写完整信息' });
+    }
+
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({ error: '手机号格式不正确' });
+    }
+
+    if (code.length !== 6) {
+      return res.status(400).json({ error: '验证码为6位数字' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: '新密码长度不能少于6位' });
+    }
+
+    // 验证短信验证码
+    const pool = getPool();
+    const codeResult = await pool.query(
+      `SELECT * FROM verification_codes 
+       WHERE phone = $1 AND code = $2 AND is_used = false AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [phone, code]
+    );
+
+    if (codeResult.rows.length === 0) {
+      return res.status(400).json({ error: '验证码无效或已过期' });
+    }
+
+    // 标记验证码已使用
+    await pool.query(
+      'UPDATE verification_codes SET is_used = true WHERE id = $1',
+      [codeResult.rows[0].id]
+    );
+
+    // 查找用户
+    const userResult = await pool.query(
+      'SELECT id FROM users WHERE phone = $1',
+      [phone]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: '该手机号未注册' });
+    }
+
+    const userId = userResult.rows[0].id;
+
+    // 加密新密码
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 更新密码
+    await pool.query(
+      'UPDATE users SET password = $1 WHERE id = $2',
+      [hashedPassword, userId]
+    );
+
+    // 发送密码修改通知
+    sendPasswordChangeNotification(userId);
+
+    res.json({ 
+      success: true,
+      message: '密码重置成功'
+    });
+  } catch (error) {
+    console.error('忘记密码错误:', error);
+    res.status(500).json({ error: '密码重置失败' });
+  }
+});
+
 export default router;

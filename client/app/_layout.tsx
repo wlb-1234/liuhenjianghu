@@ -56,13 +56,14 @@ export default function RootLayout() {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       const isLoginRoute = segments.includes('login');
       const isRegisterRoute = segments.includes('register');
+      const isForgotPasswordRoute = segments.includes('forgot-password');
 
       console.log('>>> [Layout] 当前路由:', segments);
       console.log('>>> [Layout] token:', token);
       console.log('>>> [Layout] isLoginRoute:', isLoginRoute);
 
-      // 如果当前不在登录页或注册页，且没有 token，则跳转
-      if (!token && !isLoginRoute && !isRegisterRoute) {
+      // 如果当前不在登录页、注册页或忘记密码页，且没有 token，则跳转
+      if (!token && !isLoginRoute && !isRegisterRoute && !isForgotPasswordRoute) {
         console.log('>>> [Layout] 无 token，跳转到登录页');
         // 使用 setTimeout 确保在渲染周期后跳转
         setTimeout(() => {
@@ -108,6 +109,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ title: "" }} />
           <Stack.Screen name="login" options={{ title: "" }} />
           <Stack.Screen name="register" options={{ title: "" }} />
+          <Stack.Screen name="forgot-password" options={{ title: "" }} />
           <Stack.Screen name="post" options={{ title: "" }} />
           <Stack.Screen name="chat" options={{ title: "" }} />
           <Stack.Screen name="settings" options={{ title: "" }} />
