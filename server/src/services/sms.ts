@@ -55,6 +55,7 @@ export async function sendVerificationSMS(phone: string, code: string): Promise<
       SignatureVersion: '1.0',
       TemplateCode: SMS_TEMPLATE_CODE,
       TemplateParam: JSON.stringify({ code }),
+      Timestamp: timestamp,
       Version: '2017-05-25',
     };
 
