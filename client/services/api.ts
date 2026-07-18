@@ -125,9 +125,9 @@ class ApiService {
     return this.request(`/regions/districts/${cityCode}`, { requireAuth: false });
   }
 
-  // 获取乡镇
+  // 获取乡镇/街道
   async getTowns(districtCode: string): Promise<{ data: any[] }> {
-    return this.request(`/regions/towns/${districtCode}`, { requireAuth: false });
+    return this.request(`/regions/streets/${districtCode}`, { requireAuth: false });
   }
 
   // 获取区域信息

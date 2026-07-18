@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -37,6 +36,8 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
   const [loading, setLoading] = useState(false);
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeCooldown, setCodeCooldown] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [cities, setCities] = useState<Region[]>([]);
@@ -58,6 +59,18 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
       return () => clearTimeout(timer);
     }
   }, [codeCooldown]);
+
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setSuccessMsg('');
+    setTimeout(() => setErrorMsg(''), 4000);
+  };
+
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setErrorMsg('');
+    setTimeout(() => setSuccessMsg(''), 4000);
+  };
 
   const loadProvinces = async () => {
     try {
@@ -97,7 +110,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
 
   const handleSendCode = async () => {
     if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
-      Alert.alert('提示', '请输入正确的手机号');
+      showError('请输入正确的手机号');
       return;
     }
 
@@ -105,11 +118,13 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
     try {
       const result = await api.sendCode(phone);
       if (result.code) {
-        Alert.alert('验证码', `验证码: ${result.code}`);
+        showSuccess(`验证码已发送: ${result.code}`);
+      } else {
+        showSuccess('验证码已发送');
       }
       setCodeCooldown(60);
     } catch (error: any) {
-      Alert.alert('发送失败', error.message);
+      showError(error.message || '发送验证码失败');
     } finally {
       setCodeLoading(false);
     }
@@ -117,23 +132,23 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
 
   const validateStep1 = () => {
     if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
-      Alert.alert('提示', '请输入正确的手机号');
+      showError('请输入正确的手机号');
       return false;
     }
     if (!code || code.length !== 6) {
-      Alert.alert('提示', '请输入6位验证码');
+      showError('请输入6位验证码');
       return false;
     }
     if (!password || password.length < 6) {
-      Alert.alert('提示', '密码至少6位');
+      showError('密码至少6位');
       return false;
     }
     if (password !== confirmPassword) {
-      Alert.alert('提示', '两次密码不一致');
+      showError('两次密码不一致');
       return false;
     }
     if (!nickname || nickname.length < 2 || nickname.length > 20) {
-      Alert.alert('提示', '昵称长度为2-20个字符');
+      showError('昵称长度为2-20个字符');
       return false;
     }
     return true;
@@ -147,11 +162,12 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
 
   const handleRegister = async () => {
     if (!selectedTown && !selectedDistrict) {
-      Alert.alert('提示', '请至少选择区县');
+      showError('请至少选择到区县');
       return;
     }
 
     setLoading(true);
+    setErrorMsg('');
     try {
       await register({
         phone,
@@ -164,7 +180,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
         town_code: selectedTown?.code,
       });
     } catch (error: any) {
-      Alert.alert('注册失败', error.message);
+      showError(error.message || '注册失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -271,6 +287,18 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
               <Text style={styles.stepTitle}>
                 {step === 1 ? '江湖注册' : '选择你的江湖'}
               </Text>
+
+              {/* 错误/成功提示 */}
+              {errorMsg ? (
+                <View style={styles.messageBox}>
+                  <Text style={styles.errorText}>{errorMsg}</Text>
+                </View>
+              ) : null}
+              {successMsg ? (
+                <View style={[styles.messageBox, styles.successBox]}>
+                  <Text style={styles.successText}>{successMsg}</Text>
+                </View>
+              ) : null}
 
               {step === 1 ? (
                 <>
@@ -680,5 +708,27 @@ const styles = StyleSheet.create({
     color: '#E8C97D',
     fontSize: 13,
     fontWeight: '500',
+  },
+  messageBox: {
+    backgroundColor: 'rgba(220, 53, 69, 0.15)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(220, 53, 69, 0.3)',
+  },
+  successBox: {
+    backgroundColor: 'rgba(40, 167, 69, 0.15)',
+    borderColor: 'rgba(40, 167, 69, 0.3)',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  successText: {
+    color: '#51CF66',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
