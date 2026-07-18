@@ -1813,7 +1813,22 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-07-16 22:55
+> 最后更新：2026-07-18 21:00
+
+### v1.0.18 (2026-07-18 21:00)
+
+**注册页面修复：**
+
+1. **省市区选择器修复**
+   - 问题：前端 API 端点 `/regions/towns/:code` 与后端 `/regions/streets/:code` 不匹配，导致选择区县后无法加载乡镇/街道
+   - 修复：将前端 `api.getTowns()` 端点从 `/regions/towns/` 改为 `/regions/streets/`
+   - 文件：`client/services/api.ts`
+
+2. **创建按钮无响应修复**
+   - 问题：`Alert.alert()` 在 Web 端不会显示弹窗，导致表单校验失败时用户看不到任何提示
+   - 修复：替换所有 `Alert.alert()` 为内联错误/成功消息显示组件
+   - 新增 `errorMsg` 和 `successMsg` 状态，4秒后自动消失
+   - 文件：`client/screens/auth/RegisterScreen.tsx`
 
 ### v1.0.17 (2026-07-16 22:55)
 
