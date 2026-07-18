@@ -1,6 +1,7 @@
 // API 服务层
 // 生产环境通过 server.js 代理 /api/* 到后端，使用相对路径即可
 // 开发环境通过 EXPO_PUBLIC_BACKEND_BASE_URL 指定后端地址
+// 构建时间戳：2026-07-18T21:45:00+08:00
 const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL ?? '';
 
 interface RequestOptions {
