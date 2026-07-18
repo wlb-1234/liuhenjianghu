@@ -1813,9 +1813,9 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-07-18 21:00
+> 最后更新：2026-07-18 21:15
 
-### v1.0.18 (2026-07-18 21:00)
+### v1.0.18 (2026-07-18 21:15)
 
 **注册页面修复：**
 
@@ -1829,6 +1829,11 @@ const logout = async () => {
    - 修复：替换所有 `Alert.alert()` 为内联错误/成功消息显示组件
    - 新增 `errorMsg` 和 `successMsg` 状态，4秒后自动消失
    - 文件：`client/screens/auth/RegisterScreen.tsx`
+
+3. **生产环境 API 地址修复**
+   - 问题：`EXPO_PUBLIC_BACKEND_BASE_URL` 为空时回退到 `http://localhost:9091`，导致生产环境 API 调用失败
+   - 修复：将默认值改为空字符串（相对路径），通过 server.js 代理 `/api/*` 到后端
+   - 文件：`client/services/api.ts`
 
 ### v1.0.17 (2026-07-16 22:55)
 
