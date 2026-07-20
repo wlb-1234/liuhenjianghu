@@ -2052,3 +2052,260 @@ API 代理：server.js 将 /api/* 代理到后端服务
 - 首页帖子列表、发布留言、点赞/评论
 - 会员系统、个人中心
 
+
+---
+
+## 阿里云基础设施配置
+
+> 更新时间：2026-07-20 21:00
+
+### 一、服务器配置
+
+#### ECS 云服务器
+| 配置项 | 值 |
+|--------|-----|
+| **实例 ID** | i-uf6j7tyxwbxf5695eoul |
+| **公网 IP** | 47.116.142.121 |
+| **内网 IP** | 172.29.17.179 |
+| **规格** | 2 核 4GiB |
+| **系统盘** | 40GB ESSD |
+| **地域** | 华东 2（上海） |
+| **可用区** | 上海 C |
+| **操作系统** | Ubuntu 22.04 LTS |
+| **VPC** | vpc-uf6y1l0uofp9o638g6gk6 |
+| **安全组** | sg-uf6hn4hb74v3ynxzaax4 |
+| **购买时间** | 2026-07-20 |
+| **到期时间** | 2027-07-21 |
+| **自动续费** | 关闭 |
+
+#### RDS PostgreSQL
+| 配置项 | 值 |
+|--------|-----|
+| **实例 ID** | pgm-uf6sc0v55a1p3r7m |
+| **内网地址** | pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com |
+| **端口** | 5432 |
+| **数据库名** | liuhenjianghu |
+| **账号** | liuhenjianghu |
+| **密码** | Liuhen2026App |
+| **规格** | 通用型 pg.n1e.2c.1m（2 核 2GB） |
+| **存储空间** | 20GB ESSD |
+| **地域** | 华东 2（上海） |
+| **可用区** | 上海 C |
+| **VPC** | vpc-uf6y1l0uofp9o638g6gk6 |
+| **白名单** | 172.29.17.179（ECS 内网 IP） |
+| **购买时间** | 2026-07-20 |
+| **到期时间** | 2027-07-21 |
+| **自动续费** | 关闭 |
+
+#### Redis 缓存
+| 配置项 | 值 |
+|--------|-----|
+| **实例 ID** | r-uf61g3n5d2vxfnqtj1 |
+| **实例名称** | liuhen-jianghu-redis |
+| **内网地址** | r-uf61g3n5d2vxfnqtj1.redis.rds.aliyuncs.com |
+| **端口** | 6379 |
+| **密码** | Liuhen2026App |
+| **版本** | Redis 7.0 (7.0.2.14) |
+| **规格** | 1GB 内存版 |
+| **架构** | 标准版（主从，不启用集群） |
+| **地域** | 华东 2（上海） |
+| **可用区** | 上海 C |
+| **VPC** | vpc-uf6y1l0uofp9o638g6gk6 |
+| **白名单** | 172.29.17.179（ECS 内网 IP） |
+| **购买时间** | 2026-07-20 |
+| **到期时间** | 2027-07-21 |
+| **自动续费** | 关闭 |
+
+### 二、网络配置
+
+#### VPC 专有网络
+| 配置项 | 值 |
+|--------|-----|
+| **VPC ID** | vpc-uf6y1l0uofp9o638g6gk6 |
+| **地域** | 华东 2（上海） |
+| **网段** | 172.29.0.0/16 |
+
+#### 安全组规则
+| 方向 | 协议 | 端口 | 源/目标 | 说明 |
+|------|------|------|---------|------|
+| 入方向 | TCP | 22 | 0.0.0.0/0 | SSH 远程连接 |
+| 入方向 | TCP | 80 | 0.0.0.0/0 | HTTP 访问 |
+| 入方向 | TCP | 443 | 0.0.0.0/0 | HTTPS 访问 |
+| 出方向 | 全部 | 全部 | 0.0.0.0/0 | 允许所有出站 |
+
+### 三、域名配置
+
+| 配置项 | 值 |
+|--------|-----|
+| **域名** | liuhenjianghu.com |
+| **DNS 解析** | 待配置 |
+| **A 记录** | 47.116.142.121 |
+| **SSL 证书** | 待配置 |
+| **ICP 备案** | 已完成 |
+
+### 四、部署架构
+
+```
+用户 → 域名 (liuhenjianghu.com)
+         ↓
+      Nginx (80/443)
+         ↓
+    ┌────────┐
+    ↓         ↓
+前端静态文件  反向代理 /api/*
+              ↓
+         Node.js (8080)
+              ↓
+    ┌────────────────┐
+    ↓        ↓        ↓
+  RDS     Redis     OSS
+ PostgreSQL  缓存   对象存储
+```
+
+### 五、环境变量配置
+
+#### 后端环境变量（ECS 部署时配置）
+```env
+NODE_ENV=production
+PORT=8080
+
+# 数据库配置
+DATABASE_URL=postgresql://liuhenjianghu:Liuhen2026App@pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com:5432/liuhenjianghu
+
+# Redis 配置
+REDIS_HOST=r-uf61g3n5d2vxfnqtj1.redis.rds.aliyuncs.com
+REDIS_PORT=6379
+REDIS_PASSWORD=Liuhen2026App
+
+# Supabase 配置（保留用于本地开发）
+COZE_SUPABASE_URL=https://hmlqsbhbbclbzfuutrie.supabase.co
+COZE_SUPABASE_ANON_KEY=<your-anon-key>
+COZE_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+# 阿里云 OSS
+ALIYUN_ACCESS_KEY_ID=<your-access-key-id>
+ALIYUN_ACCESS_KEY_SECRET=<your-access-key-secret>
+OSS_BUCKET=liuhenjianghu
+OSS_REGION=oss-cn-beijing
+
+# 阿里云短信
+SMS_SIGN_NAME=迁安市建昌营镇流痕营软件
+SMS_TEMPLATE_CODE=SMS_335900024
+
+# JWT
+JWT_SECRET=<your-jwt-secret>
+JWT_EXPIRES_IN=7d
+```
+
+#### 前端环境变量（构建时注入）
+```env
+EXPO_PUBLIC_BACKEND_BASE_URL=
+```
+
+### 六、自动部署配置
+
+#### GitHub Actions 工作流
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build frontend
+        run: cd client && pnpm build
+      
+      - name: Build backend
+        run: cd server && pnpm build
+      
+      - name: Deploy to ECS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 47.116.142.121
+          username: root
+          key: ${{ secrets.ECS_SSH_KEY }}
+          script: |
+            cd /opt/liuhenjianghu
+            git pull origin main
+            pnpm install
+            pnpm build
+            pm2 restart all
+```
+
+### 七、费用明细
+
+| 产品 | 规格 | 年费 | 月均 |
+|------|------|------|------|
+| ECS 云服务器 | 2 核 4G + 40GB ESSD + 3Mbps | ~¥2,400 | ~¥200 |
+| RDS PostgreSQL | 2 核 2GB + 20GB ESSD | ~¥403 | ~¥34 |
+| Redis 缓存 | 1GB 内存版 | ~¥554 | ~¥46 |
+| **合计** | - | **~¥3,357** | **~¥280** |
+
+### 八、运维计划
+
+#### 日常维护
+- [ ] 每日检查服务状态
+- [ ] 每周查看日志和性能指标
+- [ ] 每月备份数据库
+
+#### 监控告警
+- [ ] 配置 CPU/内存使用率告警（>80%）
+- [ ] 配置磁盘空间告警（>85%）
+- [ ] 配置服务可用性监控
+
+#### 安全加固
+- [ ] 配置 SSH 密钥登录（禁用密码）
+- [ ] 配置防火墙规则
+- [ ] 定期更新系统补丁
+- [ ] 配置 SSL 证书（HTTPS）
+
+### 九、迁移检查清单
+
+#### 数据库迁移（Supabase → RDS）
+- [ ] 导出 Supabase 数据库结构
+- [ ] 导出 Supabase 数据
+- [ ] 在 RDS 创建数据库
+- [ ] 导入数据库结构
+- [ ] 导入数据
+- [ ] 验证数据完整性
+- [ ] 更新后端数据库连接配置
+
+#### 应用部署
+- [ ] 配置 ECS 环境（Node.js 24、Nginx）
+- [ ] 配置 PM2 进程管理
+- [ ] 配置 Nginx 反向代理
+- [ ] 部署前端静态文件
+- [ ] 部署后端服务
+- [ ] 配置环境变量
+- [ ] 测试 API 接口
+- [ ] 测试前端访问
+
+#### 域名配置
+- [ ] 添加 A 记录（liuhenjianghu.com → 47.116.142.121）
+- [ ] 添加 www A 记录（www.liuhenjianghu.com → 47.116.142.121）
+- [ ] 配置 SSL 证书
+- [ ] 配置 HTTPS 重定向
+
+#### 切换流量
+- [ ] 测试新环境功能
+- [ ] 切换 DNS 解析
+- [ ] 验证生产环境
+- [ ] 停止 Railway 服务
