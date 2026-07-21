@@ -1,5 +1,7 @@
 # 流痕江湖 - 项目文档
 
+**最后更新：2026-07-21 17:30 (北京时间)**
+
 ## 项目概述
 
 江湖社交平台，支持帖子发布、会员系统、用户运营等核心功能。
@@ -10,8 +12,156 @@
 |------|------|
 | 前端 | React Native (Expo 54) + Expo Router |
 | 后端 | Express.js (Node.js) |
-| 数据库 | PostgreSQL (Supabase) |
-| 部署 | Railway + GitHub 自动部署 |
+| 数据库 | PostgreSQL (阿里云 RDS) |
+| 缓存 | Redis (阿里云 Redis) |
+| 对象存储 | 阿里云 OSS |
+| 短信服务 | 阿里云 SMS |
+| 服务器 | 阿里云 ECS (CentOS 8) |
+| Web 服务器 | Nginx 1.24 |
+| 进程管理 | PM2 |
+| 域名 | liuhenjianghu.com |
+| SSL 证书 | WoSign RSA_2048 (2026-07-21 ~ 2027-02-05) |
+
+## 国内平台部署配置
+
+### 服务器信息
+
+| 项目 | 配置 |
+|------|------|
+| 云服务器 | 阿里云 ECS |
+| 操作系统 | CentOS 8 |
+| 公网 IP | 47.116.142.121 |
+| 内网 IP | 172.17.212.20 |
+| 域名 | liuhenjianghu.com / www.liuhenjianghu.com |
+| SSL 证书 | WoSign RSA_2048 |
+| 证书有效期 | 2026-07-21 ~ 2027-02-05 |
+| Web 服务器 | Nginx 1.24 |
+| 应用端口 | 8080 (HTTP) |
+| HTTPS 端口 | 443 |
+| 进程管理 | PM2 |
+| 项目路径 | /opt/liuhenjianghu |
+
+### 数据库配置 (阿里云 RDS PostgreSQL)
+
+| 项目 | 配置 |
+|------|------|
+| 数据库类型 | PostgreSQL 14 |
+| 主机 | pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com |
+| 端口 | 5432 |
+| 数据库名 | liuhenjianghu |
+| 用户名 | liuhenjianghu |
+| 连接池 | 已配置 |
+| SSL 模式 | disable |
+
+### Redis 配置 (阿里云 Redis)
+
+| 项目 | 配置 |
+|------|------|
+| 主机 | r-uf61g3n5d2vxfnqtj1.redis.rds.aliyuncs.com |
+| 端口 | 6379 |
+| 密码 | 已配置 (环境变量) |
+| 连接状态 | ✅ 已连接 |
+| 缓存类型 | 分布式缓存 |
+
+### 对象存储配置 (阿里云 OSS)
+
+| 项目 | 配置 |
+|------|------|
+| 服务 | 阿里云 OSS |
+| Bucket | 已配置 |
+| 访问域名 | 已配置 |
+| 用途 | 图片、文件存储 |
+
+### 短信服务配置 (阿里云 SMS)
+
+| 项目 | 配置 |
+|------|------|
+| 服务 | 阿里云 SMS |
+| 签名 | 已配置 |
+| 模板 | 验证码模板已配置 |
+
+### Nginx 配置
+
+**配置文件：** `/etc/nginx/conf.d/liuhen.conf`
+
+```nginx
+# HTTP 自动跳转 HTTPS
+server {
+    listen 80;
+    server_name liuhenjianghu.com www.liuhenjianghu.com;
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS 配置
+server {
+    listen 443 ssl;
+    server_name liuhenjianghu.com www.liuhenjianghu.com;
+    
+    ssl_certificate /etc/nginx/ssl/liuhenjianghu.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/liuhenjianghu.com.key;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### PM2 配置
+
+**配置文件：** `/opt/liuhenjianghu/server/ecosystem.config.cjs`
+
+```javascript
+module.exports = {
+  apps: [{
+    name: 'liuhen-api',
+    script: './dist/index.js',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '500M',
+    env_file: './.env',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 8080
+    }
+  }]
+};
+```
+
+### 环境变量配置
+
+**配置文件：** `/opt/liuhenjianghu/server/.env`
+
+```env
+# 数据库
+DATABASE_URL=postgresql://liuhenjianghu:****@pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com:5432/liuhenjianghu?sslmode=disable
+
+# Redis
+REDIS_HOST=r-uf61g3n5d2vxfnqtj1.redis.rds.aliyuncs.com
+REDIS_PORT=6379
+REDIS_PASSWORD=****
+
+# JWT
+JWT_SECRET=****
+
+# 阿里云 OSS
+OSS_ACCESS_KEY_ID=****
+OSS_ACCESS_KEY_SECRET=****
+OSS_BUCKET=****
+OSS_ENDPOINT=****
+
+# 阿里云 SMS
+SMS_ACCESS_KEY_ID=****
+SMS_ACCESS_KEY_SECRET=****
+SMS_SIGN_NAME=****
+SMS_TEMPLATE_CODE=****
+```
+
+---
 
 ## 数据库结构
 
