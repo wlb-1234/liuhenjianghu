@@ -9,7 +9,6 @@ import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
 import { startMembershipExpiryReminder } from './services/membershipExpiryService.js';
-import { getSupabaseClient } from './storage/database/supabase-client.js';
 import { query } from './config/database.js';
 import crypto from 'crypto';
 import regionsRouter from './routes/regions.js';
@@ -171,12 +170,11 @@ app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
     }
     
     // 查询用户 - 支持数字4或字符串'L4'
-    const supabase = getSupabaseClient();
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, phone, nickname, member_level, user_rank')
-      .eq('phone', phone)
-      .single();
+    const result = await query(
+      'SELECT id, phone, nickname, member_level, user_rank FROM users WHERE phone = $1',
+      [phone]
+    );
+    const user = result.rows[0];
     
     console.log('[Admin Login] 查询结果:', { user, error, member_level: user?.member_level });
     
@@ -184,7 +182,7 @@ app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
     const isAdmin = user && (user.member_level === 4 || user.member_level === 'L4');
     console.log('[Admin Login] isAdmin:', isAdmin);
     
-    if (error || !user || !isAdmin) {
+    if (!user || !isAdmin) {
       console.log('[Admin Login] 登录失败: 该账号不是管理员');
       return res.json({ success: false, error: '该账号不是管理员' });
     }

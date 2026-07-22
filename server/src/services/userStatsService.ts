@@ -1,14 +1,10 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// 使用与 auth 相同的数据库连接
+// 使用与 auth 相同的数据库连接（阿里云 RDS）
 const pool = new Pool({
-  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'Liuhen2026App',
-  ssl: false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,

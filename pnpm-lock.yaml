@@ -277,9 +277,6 @@ importers:
       '@pinata/sdk':
         specifier: ^2.1.0
         version: 2.1.0
-      '@supabase/supabase-js':
-        specifier: 2.95.3
-        version: 2.95.3
       ali-oss:
         specifier: ^6.23.0
         version: 6.23.0

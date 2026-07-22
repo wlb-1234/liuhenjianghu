@@ -3,31 +3,14 @@
  * 处理内容审核队列
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.COZE_SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.COZE_SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
-
-// 直接使用 pg 连接（Railway 兼容）
+// 使用 pg 连接阿里云 RDS
 import pg from 'pg';
 const { Pool } = pg;
 
-const pgConfig = {
-  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'Liuhen2026App',
-  ssl: false,
-};
-
-let pool: pg.Pool | null = null;
-
-function getPool(): pg.Pool {
-  if (!pool) {
-    pool = new Pool(pgConfig);
-  }
-  return pool;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 }
 
 export interface ReviewItem {

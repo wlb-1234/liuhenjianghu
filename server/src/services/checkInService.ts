@@ -6,14 +6,10 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// 创建连接池
+// 创建连接池（使用 .env 中的 DATABASE_URL）
 const pool = new Pool({
-  host: 'db.hmlqsbhbbclbzfuutrie.supabase.co',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'Liuhen2026App',
-  ssl: false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
