@@ -3,8 +3,8 @@
  */
 import crypto from 'crypto';
 
-const ALIYUN_ACCESS_KEY_ID = process.env.ALIYUN_ACCESS_KEY_ID || '';
-const ALIYUN_ACCESS_KEY_SECRET = process.env.ALIYUN_ACCESS_KEY_SECRET || '';
+const ALIYUN_ACCESS_KEY_ID = process.env.SMS_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID || '';
+const ALIYUN_ACCESS_KEY_SECRET = process.env.SMS_ACCESS_KEY_SECRET || process.env.ALIYUN_ACCESS_KEY_SECRET || '';
 const SMS_SIGN_NAME = process.env.SMS_SIGN_NAME || '';
 const SMS_TEMPLATE_CODE = process.env.SMS_TEMPLATE_CODE || '';
 
