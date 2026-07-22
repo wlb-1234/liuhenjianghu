@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-21 17:30 (北京时间)**
+**最后更新：2026-07-22 15:30 (北京时间)**
 
 ## 项目概述
 
@@ -777,11 +777,128 @@ client/
 ## 待完善功能
 
 1. 图片内容审核（需集成第三方 API）
-2. Redis 缓存
+2. ~~Redis 缓存~~ ✅ 已配置 (2026-07-22)
 3. 前端错误上报（Sentry）
 4. 推送通知
 5. 用户反馈入口
 6. 数据库索引优化
+
+---
+
+## 部署配置 (2026-07-22 更新)
+
+### 部署方式
+
+#### 方式 1：GitHub Actions 自动部署（推荐）
+
+**触发条件**：推送代码到 main 分支
+
+**工作流文件**：`.github/workflows/deploy.yml`
+
+**配置 Secrets**（GitHub → Settings → Secrets and variables → Actions）：
+
+| Secret 名称 | 值 | 说明 |
+|------------|-----|------|
+| SSH_HOST | 47.116.142.121 | 服务器 IP |
+| SSH_USER | root | 登录用户 |
+| SSH_KEY | -----BEGIN OPENSSH PRIVATE KEY-----... | SSH 私钥 |
+| DEPLOY_PATH | /opt/liuhenjianghu | 项目路径 |
+
+**部署流程**：
+1. 开发者推送代码到 GitHub main 分支
+2. GitHub Actions 自动触发
+3. SSH 连接服务器
+4. 执行 `git pull` → `pnpm install` → `pnpm run build` → `pm2 restart`
+5. 部署完成
+
+**优点**：全自动，无需人工干预
+
+---
+
+#### 方式 2：手动部署（备用）
+
+**适用场景**：GitHub 访问异常时
+
+**部署命令**：
+```bash
+ssh root@47.116.142.121
+cd /opt/liuhenjianghu
+deploy
+```
+
+**部署脚本**：`/opt/liuhenjianghu/deploy.sh`
+
+```bash
+#!/bin/bash
+echo "=== 开始部署 ==="
+cd /opt/liuhenjianghu
+git pull origin main || echo "⚠️ Git pull 失败，使用现有代码继续部署"
+cd server
+pnpm install
+pnpm run build
+pm2 restart liuhen-api
+echo "=== 部署完成 $(date) ==="
+```
+
+**优点**：简单直接，一条命令搞定
+
+---
+
+### 服务器环境
+
+| 项目 | 配置 |
+|------|------|
+| 操作系统 | CentOS 8 |
+| Node.js | 24.x |
+| pnpm | 最新版 |
+| PM2 | 最新版 |
+| Nginx | 1.24 |
+| 项目路径 | /opt/liuhenjianghu |
+| 服务名称 | liuhen-api |
+
+---
+
+### PM2 管理命令
+
+```bash
+# 查看状态
+pm2 status
+
+# 重启服务
+pm2 restart liuhen-api
+
+# 查看日志
+pm2 logs liuhen-api
+
+# 停止服务
+pm2 stop liuhen-api
+
+# 开机自启
+pm2 startup
+pm2 save
+```
+
+---
+
+### Nginx 配置
+
+**配置文件**：`/etc/nginx/conf.d/liuhen.conf`
+
+- HTTP (80) → 自动跳转 HTTPS
+- HTTPS (443) → 反向代理到 localhost:8080
+- SSL 证书：`/etc/nginx/ssl/liuhenjianghu.com.pem`
+
+---
+
+### 部署历史
+
+| 日期 | 操作 | 说明 |
+|------|------|------|
+| 2026-07-22 | 配置 GitHub Actions | 自动部署工作流 |
+| 2026-07-22 | 配置手动部署脚本 | deploy 命令 |
+| 2026-07-22 | 配置 Redis 缓存 | 阿里云 Redis |
+| 2026-07-22 | 配置 HTTPS | SSL 证书 |
+| 2026-07-21 | 国内平台部署 | 阿里云 ECS + RDS |
 
 ---
 
