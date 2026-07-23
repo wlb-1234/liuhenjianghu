@@ -153,7 +153,6 @@ router.get('/', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员列表失败' });
   }
-});
 
 /**
  * 获取单个会员详情
@@ -203,7 +202,6 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员详情失败' });
   }
-});
 
 /**
  * 修改会员等级
@@ -260,7 +258,6 @@ router.put('/:id/level', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '修改会员等级失败' });
   }
-});
 
 /**
  * 批量修改会员等级
@@ -300,7 +297,6 @@ router.put('/batch-level', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '批量修改会员等级失败' });
   }
-});
 
 /**
  * 获取会员等级统计
@@ -348,7 +344,6 @@ router.get('/stats/summary', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员统计失败' });
   }
-});
 
 /**
  * 获取会员等级定义
@@ -359,7 +354,6 @@ router.get('/config/levels', async (req, res) => {
     success: true,
     data: MEMBER_LEVELS
   });
-});
 
 /**
  * 导出会员列表
@@ -415,23 +409,32 @@ router.get('/export/list', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '导出会员列表失败' });
   }
-});
 
-export default router;
 
 /**
  * 会员等级配置（别名，支持 /levels）
  * GET /api/v1/members/levels
  */
-router.get('/levels', (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      { level: 'L0', name: '免费用户', price: 0, color: '#9CA3AF' },
-      { level: 'L1', name: '基础会员', price: 9.9, color: '#10B981' },
-      { level: 'L2', name: '高级会员', price: 29.9, color: '#3B82F6' },
-      { level: 'L3', name: 'VIP会员', price: 99.9, color: '#8B5CF6' },
-      { level: 'L4', name: '管理员', price: 0, color: '#EF4444' }
-    ]
-  });
-});
+router.get('/levels', async (req, res) => {
+  try {
+    const { getAllMemberLevels } = await import('../services/memberService.js');
+    const levels = await getAllMemberLevels();
+    
+    res.json({
+      success: true,
+      data: levels.map(level => ({
+        level: 'L' + level.level,
+        name: level.name,
+        price: level.price,
+        color: level.level === 0 ? '#9CA3AF' : level.level === 1 ? '#10B981' : level.level === 2 ? '#3B82F6' : level.level === 3 ? '#8B5CF6' : '#EF4444'
+      }))
+    });
+  } catch (error) {
+    console.error('获取会员等级失败:', error);
+    res.status(500).json({ success: false, error: '获取会员等级失败' });
+  }
+
+export default router;
+
+
+
