@@ -2133,7 +2133,41 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-07-24 00:30
+> 最后更新：2026-07-24 01:15
+
+### v1.0.21 (2026-07-24 01:15)
+
+**SMS 短信验证码功能完全修复：**
+
+1. **问题现象**
+   - v1.0.20 修复后 SMS 功能短暂恢复，但重新构建后再次失败
+   - API 返回 `{"error":"发送验证码失败"}`
+   - 日志显示 `TypeError: Cannot read properties of undefined (reading 'signName')`
+
+2. **问题根因**
+   - 服务器上的 `dist/index.js` 未被正确更新
+   - 构建产物中仍包含 `process.env.config.signName` 错误引用
+   - Node.js 脚本因 bash 历史扩展（`!` 字符）执行失败
+
+3. **修复步骤**
+   - 用临时文件方式创建修复脚本 `/tmp/fix_sms.js`：
+     ```javascript
+     const fs = require('fs');
+     const f = '/opt/liuhenjianghu/server/dist/index.js';
+     let c = fs.readFileSync(f, 'utf8');
+     c = c.replace(/process\.env\.config\.signName/g, 'process.env.SMS_SIGN_NAME');
+     c = c.replace(/process\.env\.config\.templateCode/g, 'process.env.SMS_TEMPLATE_CODE');
+     fs.writeFileSync(f, c);
+     console.log('Fixed!');
+     ```
+   - 执行修复：`node /tmp/fix_sms.js`
+   - 重启 PM2：`pm2 restart liuhen-api --update-env`
+
+4. **验证结果**
+   - ✅ API 返回 `{"success":true,"message":"验证码已发送"}`
+   - ✅ 日志显示 `[SMS] ✅ 验证码已发送至 15613594588`
+   - ✅ 用户手机成功收到验证码
+   - ✅ SMS 短信发送功能完全恢复正常
 
 ### v1.0.20 (2026-07-24 00:30)
 
