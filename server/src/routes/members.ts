@@ -9,7 +9,7 @@ const router = express.Router();
  */
 const MEMBER_LEVELS = {
   free: { 
-    name: '免费用户', 
+    name: '江湖散人', 
     color: '#9CA3AF', 
     price: 0,
     scope: '镇/乡级',           // 覆盖范围：仅本人所在镇/乡
@@ -19,9 +19,9 @@ const MEMBER_LEVELS = {
     description: '基础功能永久免费，覆盖本人所在镇/乡'
   },
   L1: { 
-    name: 'L1·县级', 
+    name: '县帮帮主', 
     color: '#10B981', 
-    price: 9,
+    price: 20,
     scope: '县级',            // 覆盖范围：本县
     dailyPosts: 30,           // 每日发布：30条
     retentionDays: 15,        // 留言留存：15天
@@ -29,9 +29,9 @@ const MEMBER_LEVELS = {
     description: '适合本地社交'
   },
   L2: { 
-    name: 'L2·市级', 
+    name: '市盟盟主', 
     color: '#3B82F6', 
-    price: 50,
+    price: 100,
     scope: '市级',            // 覆盖范围：本市的
     dailyPosts: 80,           // 每日发布：80条
     retentionDays: 30,        // 留言留存：30天
@@ -39,9 +39,9 @@ const MEMBER_LEVELS = {
     description: '适合城市社交'
   },
   L3: { 
-    name: 'L3·省级', 
+    name: '省派掌门', 
     color: '#8B5CF6', 
-    price: 200,
+    price: 500,
     scope: '省级',            // 覆盖范围：本省
     dailyPosts: 200,          // 每日发布：200条
     retentionDays: 60,        // 留言留存：60天
@@ -49,7 +49,7 @@ const MEMBER_LEVELS = {
     description: '适合省内社交'
   },
   L4: { 
-    name: 'L4·全国级', 
+    name: '天下会主', 
     color: '#F59E0B', 
     price: 2000,
     scope: '全国',            // 覆盖范围：全国
@@ -440,3 +440,27 @@ export default router;
 
 
 
+
+/**
+ * 会员等级配置（别名，支持 /levels）
+ * GET /api/v1/members/levels
+ */
+router.get('/levels', async (req, res) => {
+  try {
+    const { getAllMemberLevels } = await import('../services/memberService.js');
+    const levels = await getAllMemberLevels();
+    
+    res.json({
+      success: true,
+      data: levels.map(level => ({
+        level: 'L' + level.level,
+        name: level.name,
+        price: level.price,
+        color: level.level === 0 ? '#9CA3AF' : level.level === 1 ? '#10B981' : level.level === 2 ? '#3B82F6' : level.level === 3 ? '#8B5CF6' : '#EF4444'
+      }))
+    });
+  } catch (error) {
+    console.error('获取会员等级失败:', error);
+    res.status(500).json({ success: false, error: '获取会员等级失败' });
+  }
+});
