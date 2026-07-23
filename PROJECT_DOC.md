@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-23 15:17 (北京时间)**
+**最后更新：2026-07-23 18:30 (北京时间)**
 
 ## 项目概述
 
@@ -941,6 +941,9 @@ pm2 save
 
 | 日期 | 操作 | 说明 |
 |------|------|------|
+| 2026-07-23 18:30 | 修复 Redis 客户端打包错误 | 将 redis 添加到 build.js 的 external 列表，修复 Dynamic require of node:crypto 错误 |
+| 2026-07-23 18:20 | 数据库字段补充 | 添加 member_expire_at、total_likes、total_posts、last_sign_in_at 字段 |
+| 2026-07-23 18:10 | .env 配置迁移 | 从 Supabase 迁移到阿里云 RDS 配置 |
 | 2026-07-23 15:17 | 调整会员价格 | Lv.1 ¥20/月、Lv.2 ¥100/月、Lv.3 ¥500/月、Lv.4 ¥2000/月，清除测试数据 |
 | 2026-07-23 10:30 | 补全镇级数据 | 补充 306 个区县镇级数据，实现全国全覆盖 |
 | 2026-07-23 09:46 | 修复短信服务 | 环境变量名称兼容 SMS_ACCESS_KEY_ID |
@@ -2130,7 +2133,27 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-07-18 21:15
+> 最后更新：2026-07-23 18:30
+
+### v1.0.19 (2026-07-23 18:30)
+
+**服务器部署修复：**
+
+1. **.env 配置迁移**
+   - 问题：.env 文件仍指向已停用的 Supabase 数据库
+   - 修复：更新 DATABASE_URL 为阿里云 RDS 连接字符串
+   - 文件：`server/.env`
+
+2. **数据库字段补充**
+   - 问题：users 表缺少 member_expire_at、total_likes、total_posts、last_sign_in_at 字段
+   - 修复：执行 4 条 ALTER TABLE 语句添加缺失字段
+   - 影响：会员系统、用户统计功能恢复正常
+
+3. **Redis 客户端打包错误修复**
+   - 问题：esbuild 打包时 Redis 客户端未被正确 external，导致 `Dynamic require of "node:crypto" is not supported` 错误
+   - 修复：将 'redis' 添加到 build.js 的 external 列表
+   - 文件：`server/build.js`
+   - 验证：API 正常返回会员等级价格（20、100、500、2000）
 
 ### v1.0.18 (2026-07-18 21:15)
 
