@@ -51,7 +51,7 @@ router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Respons
     // 验证密码
     const pool = getPool();
     const userResult = await pool.query(
-      'SELECT password FROM users WHERE id = $1',
+      'SELECT password_hash FROM users WHERE id = $1',
       [userId]
     );
     
@@ -63,20 +63,20 @@ router.post('/delete', authMiddlewareWithUser, async (req: Request, res: Respons
       return;
     }
 
-    const user = userResult.rows[0] as { password?: string };
+    const user = userResult.rows[0] as { password_hash?: string };
     
     // 验证密码（支持新旧格式）
     let isValidPassword = false;
-    if (user.password) {
-      if (user.password.startsWith('$2')) {
+    if (user.password_hash) {
+      if (user.password_hash.startsWith('$2')) {
         // bcrypt 格式
         const bcrypt = await import('bcryptjs');
-        isValidPassword = bcrypt.compareSync(password, user.password);
-      } else if (user.password.length === 64) {
+        isValidPassword = bcrypt.compareSync(password, user.password_hash);
+      } else if (user.password_hash.length === 64) {
         // SHA256 格式（旧）
         const crypto = await import('crypto');
         const hash = crypto.createHash('sha256').update(password).digest('hex');
-        isValidPassword = hash === user.password;
+        isValidPassword = hash === user.password_hash;
       }
     }
 

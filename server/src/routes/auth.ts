@@ -147,7 +147,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // 验证密码
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       // 记录登录失败
       recordLoginFailure(phone, ip);
@@ -294,7 +294,7 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response) 
     }
     
     // 验证原密码
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
     if (!isMatch) {
       return res.status(400).json({ error: '原密码错误' });
     }
@@ -305,7 +305,7 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response) 
     // 更新密码
     const pool = getPool();
     await pool.query(
-      'UPDATE users SET password = $1 WHERE id = $2',
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
       [hashedPassword, req.userId]
     );
     
@@ -379,7 +379,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
 
     // 更新密码
     await pool.query(
-      'UPDATE users SET password = $1 WHERE id = $2',
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
       [hashedPassword, userId]
     );
 
