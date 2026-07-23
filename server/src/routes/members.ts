@@ -155,6 +155,31 @@ router.get('/', async (req, res) => {
   }
 
 /**
+ * 会员等级配置（别名，支持 /levels）
+ * GET /api/v1/members/levels
+ */
+router.get('/levels', async (req, res) => {
+  try {
+    const { getAllMemberLevels } = await import('../services/memberService.js');
+    const levels = await getAllMemberLevels();
+    
+    res.json({
+      success: true,
+      data: levels.map(level => ({
+        level: 'L' + level.level,
+        name: level.name,
+        price: level.price,
+        color: level.level === 0 ? '#9CA3AF' : level.level === 1 ? '#10B981' : level.level === 2 ? '#3B82F6' : level.level === 3 ? '#8B5CF6' : '#EF4444'
+      }))
+    });
+  } catch (error) {
+    console.error('获取会员等级失败:', error);
+    res.status(500).json({ success: false, error: '获取会员等级失败' });
+  }
+});
+
+
+/**
  * 获取单个会员详情
  * GET /api/v1/members/:id
  */
@@ -410,29 +435,6 @@ router.get('/export/list', async (req, res) => {
     res.status(500).json({ success: false, error: '导出会员列表失败' });
   }
 
-
-/**
- * 会员等级配置（别名，支持 /levels）
- * GET /api/v1/members/levels
- */
-router.get('/levels', async (req, res) => {
-  try {
-    const { getAllMemberLevels } = await import('../services/memberService.js');
-    const levels = await getAllMemberLevels();
-    
-    res.json({
-      success: true,
-      data: levels.map(level => ({
-        level: 'L' + level.level,
-        name: level.name,
-        price: level.price,
-        color: level.level === 0 ? '#9CA3AF' : level.level === 1 ? '#10B981' : level.level === 2 ? '#3B82F6' : level.level === 3 ? '#8B5CF6' : '#EF4444'
-      }))
-    });
-  } catch (error) {
-    console.error('获取会员等级失败:', error);
-    res.status(500).json({ success: false, error: '获取会员等级失败' });
-  }
 
 export default router;
 
