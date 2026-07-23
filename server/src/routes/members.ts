@@ -434,6 +434,6 @@ router.get('/export/list', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '导出会员列表失败' });
   }
-
+});
 
 export default router;
