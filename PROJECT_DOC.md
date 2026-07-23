@@ -2133,7 +2133,48 @@ const logout = async () => {
 
 ## 更新记录
 
-> 最后更新：2026-07-23 18:30
+> 最后更新：2026-07-24 00:30
+
+### v1.0.20 (2026-07-24 00:30)
+
+**SMS 短信验证码功能修复：**
+
+1. **问题现象**
+   - 用户注册时无法发送短信验证码
+   - API 返回 `{"error":"发送验证码失败"}`
+   - 日志显示 `[SMS] 阿里云 AccessKey 未配置`
+
+2. **问题根因**
+   - **环境变量名称不匹配**：代码使用 `SMS_ACCESS_KEY_ID`，但 `.env` 文件中配置的是 `ALIYUN_ACCESS_KEY_ID`
+   - **构建产物错误**：esbuild 将 `process.env.SMS_SIGN_NAME` 错误替换为 `process.env.config.signName`，导致签名和模板代码读取失败
+   - **PM2 环境变量加载问题**：`env_file` 配置未正确加载 `.env` 文件
+
+3. **修复步骤**
+   - 在 `.env` 文件中添加正确的环境变量：
+     ```env
+     SMS_ACCESS_KEY_ID=<your-access-key-id>
+     SMS_ACCESS_KEY_SECRET=<your-access-key-secret>
+     ```
+   - 用 Node.js 脚本修复 `dist/index.js` 中的环境变量读取逻辑：
+     ```javascript
+     // 修复前
+     signName: process.env.config.signName || ""
+     templateCode: process.env.config.templateCode || ""
+     
+     // 修复后
+     signName: process.env.SMS_SIGN_NAME || process.env.config.signName || ""
+     templateCode: process.env.SMS_TEMPLATE_CODE || process.env.config.templateCode || ""
+     ```
+   - 重启 PM2 服务：`pm2 restart liuhen-api`
+
+4. **验证结果**
+   - ✅ 用户手机成功收到验证码
+   - ✅ 短信发送功能恢复正常
+
+5. **待办事项**
+   - [ ] 修改源码 `server/src/services/sms.ts` 确保构建正确
+   - [ ] 检查 `server/build.js` 配置，防止 esbuild 错误替换环境变量
+   - [ ] 重新构建并部署到服务器
 
 ### v1.0.19 (2026-07-23 18:30)
 
