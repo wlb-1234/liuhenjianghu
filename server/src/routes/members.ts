@@ -153,6 +153,7 @@ router.get('/', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员列表失败' });
   }
+});
 
 /**
  * 会员等级配置（别名，支持 /levels）
@@ -227,6 +228,7 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员详情失败' });
   }
+});
 
 /**
  * 修改会员等级
@@ -283,6 +285,7 @@ router.put('/:id/level', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '修改会员等级失败' });
   }
+});
 
 /**
  * 批量修改会员等级
@@ -322,6 +325,7 @@ router.put('/batch-level', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '批量修改会员等级失败' });
   }
+});
 
 /**
  * 获取会员等级统计
@@ -369,6 +373,7 @@ router.get('/stats/summary', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: '获取会员统计失败' });
   }
+});
 
 /**
  * 获取会员等级定义
@@ -379,6 +384,7 @@ router.get('/config/levels', async (req, res) => {
     success: true,
     data: MEMBER_LEVELS
   });
+});
 
 /**
  * 导出会员列表
