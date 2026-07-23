@@ -1,10 +1,57 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-23 09:46 (北京时间)**
+**最后更新：2026-07-23 10:15 (北京时间)**
 
 ## 项目概述
 
 江湖社交平台，支持帖子发布、会员系统、用户运营等核心功能。
+
+---
+
+## 快速开始
+
+> 新会话开始时，复制以下信息即可快速了解项目状态。
+
+### 关键地址
+
+| 项目 | 地址 |
+|------|------|
+| **GitHub 仓库** | https://github.com/wlb-1234/liuhenjianghu |
+| **项目文档** | `/workspace/projects/PROJECT_DOC.md` |
+| **前端访问** | https://liuhenjianghu.com |
+| **API 地址** | https://liuhenjianghu.com/api/v1 |
+| **健康检查** | https://liuhenjianghu.com/api/v1/health |
+
+### 服务器信息
+
+| 项目 | 配置 |
+|------|------|
+| **服务器 IP** | 47.116.142.121 |
+| **登录方式** | `ssh root@47.116.142.121` |
+| **项目路径** | `/opt/liuhenjianghu` |
+| **服务名称** | `liuhen-api` (PM2) |
+
+### 常用命令
+
+```bash
+# 手动部署（SSH 登录后执行）
+deploy
+
+# 查看服务状态
+pm2 status
+
+# 重启服务
+pm2 restart liuhen-api
+
+# 查看日志
+pm2 logs liuhen-api
+```
+
+### 自动部署
+
+推送代码到 GitHub `main` 分支，GitHub Actions 自动部署到服务器。
+
+---
 
 ## 技术栈
 
