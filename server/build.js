@@ -25,6 +25,7 @@ const externalList = [
   'oss-sdk',
   'pg',
   'pinata-web3',
+  'redis',
   'uuid',
   'zod',
 ];
