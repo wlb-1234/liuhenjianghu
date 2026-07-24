@@ -6,20 +6,12 @@ let poolInstance: Pool | null = null;
 function getDatabaseUrl(): string {
   // 直接使用 .env 中的 DATABASE_URL
   const envUrl = process.env.DATABASE_URL;
-  console.log('🔍 process.env.DATABASE_URL:', envUrl ? '已设置' : '未设置');
-  if (envUrl) {
-    console.log('🔍 使用 .env DATABASE_URL 配置:', envUrl.replace(/:[^:@]+@/, ':****@'));
-    return envUrl;
+  if (!envUrl) {
+    throw new Error('DATABASE_URL 环境变量未设置，请在 .env 文件中配置数据库连接地址');
   }
   
-  console.log('🔍 .env DATABASE_URL 未设置，使用默认值');
-  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-  const customHost = process.env.DB_HOST || 'db.hmlqsbhbbclbzfuutrie.supabase.co';
-  const dbUser = process.env.DB_USER || 'postgres';
-  
-  console.log(`🔍 使用数据库地址: ${customHost}, 用户: ${dbUser}`);
-  
-  return `postgresql://${dbUser}:${dbPassword}@${customHost}:5432/postgres`;
+  console.log('🔍 使用 DATABASE_URL 配置:', envUrl.replace(/:[^:@]+@/, ':****@'));
+  return envUrl;
 }
 
 export function getPool(): Pool {
