@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-24 21:30 (北京时间)**
+**最后更新：2026-07-24 23:45 (北京时间)**
 
 ## 项目概述
 
@@ -124,8 +124,9 @@ pm2 logs liuhen-api
 | 项目 | 配置 |
 |------|------|
 | 服务 | 阿里云 SMS |
-| 签名 | 已配置 |
+| 签名 | **迁安市建昌营镇流痕营软件** (2026-07-24 确认) |
 | 模板 | 验证码模板已配置 |
+| 环境变量 | SMS_ACCESS_KEY_ID, SMS_ACCESS_KEY_SECRET, SMS_SIGN_NAME, SMS_TEMPLATE_CODE |
 
 ### Nginx 配置
 
@@ -570,118 +571,28 @@ SMS_TEMPLATE_CODE=****
 NODE_ENV=production
 PORT=8080
 
-# Supabase 配置
-COZE_SUPABASE_URL=https://hmlqsbhbbclbzfuutrie.supabase.co
-COZE_SUPABASE_ANON_KEY=<your-anon-key>
-COZE_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+# 数据库 (阿里云 RDS PostgreSQL)
+DATABASE_URL=postgresql://liuhenjianghu:****@pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com:5432/liuhenjianghu?sslmode=disable
 
-## Railway 连接 Supabase 主库（IPv6 方案）
+# Redis (阿里云 Redis)
+REDIS_HOST=r-uf61g3n5d2vxfnqtj1.redis.rds.aliyuncs.com
+REDIS_PORT=6379
+REDIS_PASSWORD=****
 
-### 问题背景
-Railway 容器默认禁用 Outbound IPv6，无法连接 Supabase 主库（IPv6 only）。
+# JWT
+JWT_SECRET=****
 
-### 解决方案
-1. **Railway 控制台**：Settings → Networking → Enable Outbound IPv6 → ON
-2. **代码配置**：使用 Supabase 直连域名
+# 阿里云 OSS
+OSS_ACCESS_KEY_ID=****
+OSS_ACCESS_KEY_SECRET=****
+OSS_BUCKET=****
+OSS_ENDPOINT=****
 
-### Railway IPv6 配置步骤（2026-06-25 更新）
-
-#### 步骤 1：启用 Outbound IPv6
-1. 登录 Railway 控制台
-2. 进入 **server** 项目（后端）
-3. 点击 **Settings** 标签
-4. 找到 **Networking** 部分
-5. 将 **Enable Outbound IPv6** 开关设为 **ON**
-6. 点击 **Redeploy** 重新部署服务
-
-#### 步骤 2：配置数据库连接
-数据库连接字符串格式：
-```
-postgresql://postgres:<密码>@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres
-```
-
-当前配置：
-- 主机：`db.hmlqsbhbbclbzfuutrie.supabase.co`
-- 端口：`5432`
-- 用户名：`postgres`
-- 数据库：`postgres`
-
-### Railway 部署数据库配置（2026-06-25 更新）
-
-```typescript
-// server/src/config/database.ts
-import { Pool } from 'pg';
-
-function getDatabaseUrl(): string {
-  const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Liuhen2026App';
-  
-  // Supabase 直连地址（IPv6 已启用）
-  const supabaseHost = 'db.hmlqsbhbbclbzfuutrie.supabase.co';
-  
-  // Supabase 用户名是 "postgres"
-  return `postgresql://postgres:${dbPassword}@${supabaseHost}:5432/postgres?sslmode=require`;
-}
-```
-
-### Railway 环境变量
-
-| 变量名 | 值 | 说明 |
-|--------|-----|------|
-| `DATABASE_URL` | `postgresql://postgres:Liuhen2026App@db.hmlqsbhbbclbzfuutrie.supabase.co:5432/postgres` | 完整数据库连接字符串 |
-| `SUPABASE_DB_PASSWORD` | `Liuhen2026App` | 数据库密码（可选，代码中有默认值） |
-
-### ⚠️ 重要注意事项
-
-1. **Railway IPv6 配置**
-   - Settings → Networking → Enable Outbound IPv6 = ON
-   - 启用后需要 Redeploy 服务才能生效
-   - 配置位置：server 项目的 Settings 页面
-
-2. **Railway 静态出口 IP（可选）**
-   - 可启用 Static Outbound IPs 获得固定 IP
-   - 适用于需要 IP 白名单的场景
-
-3. **PostgreSQL vs MySQL 语法**
-   - 参数占位符：`$1, $2`（不是 `?`）
-   - 结果访问：`result.rows[0]`（不是 `result[0]`）
-   - `pooler.supabase.com` → 需要用 IP `13.114.6.6`
-   - `db.hmlqsbhbbclbzfuutrie.supabase.co` → 需要启用 IPv6
-
-4. **数据库字段差异**
-   - 主库（通过 exec_sql 访问）和 Railway 读副本字段可能不同
-   - 当前代码已适配 Railway 数据库（使用 `password` 而非 `password_hash`，无 `exp` 列）
-
-### 本地开发数据库连接
-
-本地开发环境直接使用 Supabase Pooler：
-
-```typescript
-// 使用 Supabase 官方客户端
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-```
-
-### 恢复数据库表结构
-
-如果需要在新 Supabase 项目初始化表结构，执行：
-
-```sql
--- users 表（基础字段）
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  phone VARCHAR(20) UNIQUE NOT NULL,
-  nickname VARCHAR(50),
-  avatar VARCHAR(500),
-  password VARCHAR(255),
-  region_code VARCHAR(10),
-  vip_level INTEGER DEFAULT 0,
-  vip_expires_at TIMESTAMP,
-  status VARCHAR(20) DEFAULT 'active',
-  last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 其他表结构参考 PROJECT_DOC.md 完整列表
+# 阿里云 SMS
+SMS_ACCESS_KEY_ID=****
+SMS_ACCESS_KEY_SECRET=****
+SMS_SIGN_NAME=迁安市建昌营镇流痕营软件
+SMS_TEMPLATE_CODE=****
 ```
 
 ---
@@ -749,20 +660,23 @@ const limitCheck = checkContentLimit(content, existingPosts, 2);
 
 ## 部署配置
 
-### Railway
-- 项目: https://railway.app/project/liuhenjianghu
-- 域名: https://server-production-64d28.up.railway.app
-- 区域: US West (California)
+### 阿里云 ECS
+- 服务器 IP: 47.116.142.121
+- 项目路径：/opt/liuhenjianghu
+- 服务名称：liuhen-api (PM2)
+- 应用端口：8080
+- Web 服务器：Nginx 1.24
 
 ### 构建配置
-- Builder: Dockerfile
-- Start Command: `node dist/index.js`
-- Root Directory: (空，使用项目根目录)
+- 构建工具：esbuild (build.js)
+- 启动命令：`node dist/index.js`
+- 外部依赖：redis (在 build.js 的 external 列表中)
 
 ### 重要说明
-1. Railway 项目级 PostgreSQL 插件会覆盖 DATABASE_URL
-2. 需要在代码中硬编码 Supabase 直连 IP
-3. 当前使用 IP: `13.114.6.6` (sslmode=disable)
+1. 使用阿里云 RDS PostgreSQL 数据库
+2. 使用阿里云 Redis 缓存
+3. 使用阿里云 SMS 短信服务（签名：迁安市建昌营镇流痕营软件）
+4. Redis 已添加到 build.js 的 external 列表，避免打包错误
 
 ## 前端页面结构
 
@@ -941,6 +855,7 @@ pm2 save
 
 | 日期 | 操作 | 说明 |
 |------|------|------|
+| 2026-07-24 23:45 | 修复 SMS 验证码发送 | 确认 SMS 签名为"迁安市建昌营镇流痕营软件"，删除 Supabase 配置，使用 DATABASE_URL 环境变量 |
 | 2026-07-24 21:30 | 修复 CI/CD 自动部署 | 修复 GitHub Actions deploy.yml 配置，使用 SSH_HOST/SSH_USER/SSH_KEY/DEPLOY_PATH Secrets，验证自动部署成功 |
 | 2026-07-23 18:30 | 修复 Redis 客户端打包错误 | 将 redis 添加到 build.js 的 external 列表，修复 Dynamic require of node:crypto 错误 |
 | 2026-07-23 18:20 | 数据库字段补充 | 添加 member_expire_at、total_likes、total_posts、last_sign_in_at 字段 |
