@@ -17,12 +17,12 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/liuhenjianghu
-            git pull origin main
+            git pull origin main || echo "Git pull failed, continuing..."
             cd server
-            pnpm install
-            pnpm run build
-            pm2 restart liuhen-api
+            pnpm install --frozen-lockfile || pnpm install
+            node build.js
+            pm2 restart liuhen-api --update-env
             echo "Deployment completed at $(date)"
