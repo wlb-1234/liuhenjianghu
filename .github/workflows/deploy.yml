@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /opt/liuhenjianghu
+            cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main || echo "Git pull failed, continuing..."
             cd server
             pnpm install --frozen-lockfile || pnpm install
