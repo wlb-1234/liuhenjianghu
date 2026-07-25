@@ -20,7 +20,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main || echo "Git pull failed, continuing..."
+            git fetch origin
+            git reset --hard origin/main
             cd server
             pnpm install --frozen-lockfile || pnpm install
             node build.js
