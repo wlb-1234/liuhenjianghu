@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-24 23:45 (北京时间)**
+**最后更新：2026-07-25 22:30 (北京时间)**
 
 ## 项目概述
 
@@ -746,7 +746,7 @@ client/
 
 ---
 
-## 部署配置 (2026-07-22 更新)
+## 部署配置 (2026-07-25 22:30 更新)
 
 ### 部署方式
 
@@ -769,10 +769,10 @@ client/
 1. 开发者推送代码到 GitHub main 分支
 2. GitHub Actions 自动触发
 3. SSH 连接服务器
-4. 执行 `git pull` → `pnpm install` → `pnpm run build` → `pm2 restart`
+4. 执行 `git fetch origin` → `git reset --hard origin/main` → `pnpm install` → `node build.js` → `pm2 restart`
 5. 部署完成
 
-**优点**：全自动，无需人工干预
+**优点**：全自动，无需人工干预，使用 `git fetch + git reset --hard` 避免分支分叉问题
 
 ---
 
@@ -855,6 +855,7 @@ pm2 save
 
 | 日期 | 操作 | 说明 |
 |------|------|------|
+| 2026-07-25 22:30 | 优化自动部署脚本 | 使用 `git fetch + git reset --hard` 替代 `git pull`，避免分支分叉问题 |
 | 2026-07-24 23:45 | 修复 SMS 验证码发送 | 确认 SMS 签名为"迁安市建昌营镇流痕营软件"，删除 Supabase 配置，使用 DATABASE_URL 环境变量 |
 | 2026-07-24 21:30 | 修复 CI/CD 自动部署 | 修复 GitHub Actions deploy.yml 配置，使用 SSH_HOST/SSH_USER/SSH_KEY/DEPLOY_PATH Secrets，验证自动部署成功 |
 | 2026-07-23 18:30 | 修复 Redis 客户端打包错误 | 将 redis 添加到 build.js 的 external 列表，修复 Dynamic require of node:crypto 错误 |
