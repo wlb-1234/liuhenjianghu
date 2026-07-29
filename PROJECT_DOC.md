@@ -2641,3 +2641,22 @@ jobs:
 - [ ] 切换 DNS 解析
 - [ ] 验证生产环境
 - [ ] 停止 Railway 服务
+
+## 2026-07-29 20:50 登录问题修复
+
+### 问题描述
+- 登录成功后 token 未存储到 AsyncStorage
+- AuthContext 状态未更新
+- 页面无法跳转到首页
+
+### 修复内容
+1. LoginScreen 添加 useAuth 导入
+2. handleLogin 函数改用 AuthContext 的 login 方法
+3. 删除直接调用 fetch 的旧代码
+
+### 修改文件
+- client/screens/auth/LoginScreen.tsx
+
+### 测试结果
+- ✅ 电脑浏览器登录成功
+- ✅ 手机浏览器登录成功（需清除缓存）
