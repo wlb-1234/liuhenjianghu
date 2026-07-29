@@ -2660,3 +2660,47 @@ jobs:
 ### 测试结果
 - ✅ 电脑浏览器登录成功
 - ✅ 手机浏览器登录成功（需清除缓存）
+
+## 2026-07-29 20:50 登录问题修复
+
+### 问题现象
+- 登录成功后 token 为 null
+- 页面无法跳转到首页
+- 手机浏览器报错"找不到变量:useAuth"
+
+### 问题根因
+LoginScreen 组件没有使用 AuthContext 的 login 方法，而是直接调用 fetch API，导致：
+1. token 只存储到 AsyncStorage，未更新 AuthContext 状态
+2. setToken 和 setUser 未被调用
+3. 应用状态未识别为已登录
+
+### 修复步骤
+1. **添加 useAuth 导入**
+   ```typescript
+   import { useAuth } from '@/contexts/AuthContext';
+   ```
+
+2. **调用 useAuth hook**
+   ```typescript
+   const { login } = useAuth();
+   ```
+
+3. **修改 handleLogin 函数**
+   - 删除直接调用 fetch 的代码
+   - 改用 `await login(phone, password)`
+   - login 方法内部会处理：setToken、setUser、AsyncStorage.setItem
+
+### 修改文件
+- `client/screens/auth/LoginScreen.tsx`
+
+### 测试结果
+- ✅ 电脑浏览器登录成功
+- ✅ 手机浏览器登录成功（需清除缓存）
+- ✅ token 正确存储到 AsyncStorage
+- ✅ AuthContext 状态正确更新
+- ✅ 页面正常跳转到首页
+
+### 部署说明
+- 前端需要重新构建：`npx expo export --platform web --clear`
+- 重启 PM2 服务：`pm2 restart liuhen-client`
+- 手机浏览器需清除缓存或使用无痕模式
