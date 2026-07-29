@@ -13,9 +13,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
   const router = useSafeRouter();
+  const { login } = useAuth();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,19 +29,10 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        router.replace('/');
-      } else {
-        alert(data.error || '登录失败');
-      }
+      await login(phone, password);
+      router.replace('/');
     } catch (error) {
-      alert('网络错误');
+      alert('登录失败');
     } finally {
       setLoading(false);
     }
