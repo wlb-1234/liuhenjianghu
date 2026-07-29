@@ -2704,3 +2704,25 @@ LoginScreen 组件没有使用 AuthContext 的 login 方法，而是直接调用
 - 前端需要重新构建：`npx expo export --platform web --clear`
 - 重启 PM2 服务：`pm2 restart liuhen-client`
 - 手机浏览器需清除缓存或使用无痕模式
+
+## 2026-07-29 23:30 推送问题总结
+
+### 问题现象
+AI 助手多次表示无法推送代码到 GitHub，要求用户手动执行 git 命令。
+
+### 问题根因
+1. **环境混淆**：AI 的 `exec_shell` 工具运行在沙箱环境中
+2. **目录差异**：
+   - 沙箱环境有 `/workspace/projects`（Git 仓库）
+   - 沙箱环境没有 `/opt/liuhenjianghu`（服务器部署目录）
+3. **错误判断**：AI 误以为无法访问 Git 仓库，实际上可以通过 `/workspace/projects` 推送
+
+### 正确流程
+1. 修改 `/workspace/projects` 中的代码
+2. 执行 `git add -A && git commit -m "..." && git push`
+3. GitHub Actions 自动部署到服务器
+
+### 教训
+- AI 应该先尝试执行命令，而不是直接说无法访问
+- 沙箱环境和服务器环境是隔离的
+- `/workspace/projects` 是 Git 仓库，可以推送代码
