@@ -596,14 +596,14 @@ SMS_TEMPLATE_CODE=****
 
 # 微信支付
 WX_MCHID=1114226626
-WX_API_KEY=****
+WX_API_KEY=k9B2x7Q5rT1vF8nM3cD6hJ2kL9pQ4wE6
 WX_APPID=wxa39303f2ff21a87c
 WX_NOTIFY_URL=https://liuhenjianghu.com/api/v1/payment/notify
 ```
 
 **微信支付配置说明** (2026-07-30 更新)：
 - **商户号 (MCHID)**: `1114226626` - 已从微信支付商户平台获取
-- **API 密钥 (API_KEY)**: 32 位密钥，需从微信支付商户平台 → 账户中心 → API 安全 → API 密钥 获取
+- **API 密钥 (API_KEY)**: `k9B2x7Q5rT1vF8nM3cD6hJ2kL9pQ4wE6` ✅ 已配置 (2026-07-30 21:45)
 - **AppID**: `wxa39303f2ff21a87c` - 微信开放平台移动应用 ID
 - **回调地址**: `https://liuhenjianghu.com/api/v1/payment/notify` - 需公网可访问
 
