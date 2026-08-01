@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-07-25 22:30 (北京时间)**
+**最后更新：2026-08-01 23:58 (北京时间)**
 
 ## 项目概述
 
@@ -83,7 +83,7 @@ pm2 logs liuhen-api
 | SSL 证书 | WoSign RSA_2048 |
 | 证书有效期 | 2026-07-21 ~ 2027-02-05 |
 | Web 服务器 | Nginx 1.24 |
-| 应用端口 | 8080 (HTTP) |
+| 应用端口 | 9091 (HTTP) |
 | HTTPS 端口 | 443 |
 | 进程管理 | PM2 |
 | 项目路径 | /opt/liuhenjianghu |
@@ -125,8 +125,35 @@ pm2 logs liuhen-api
 |------|------|
 | 服务 | 阿里云 SMS |
 | 签名 | **迁安市建昌营镇流痕营软件** (2026-07-24 确认) |
-| 模板 | 验证码模板已配置 |
+| 模板 ID | **SMS_335900024** (验证码模板) |
+| AccessKey ID | **LTAI5t9zc8LEPguSLYoBcnY4** (服务器 .env 配置) |
+| AccessKey Secret | **qHbJYjM4TOOjc9GxHQcYyzprxcUk7l** (服务器 .env 配置) |
 | 环境变量 | SMS_ACCESS_KEY_ID, SMS_ACCESS_KEY_SECRET, SMS_SIGN_NAME, SMS_TEMPLATE_CODE |
+| 配置文件 | `/opt/liuhenjianghu/server/ecosystem.config.cjs` |
+
+⚠️ **安全提示**: AccessKey 信息仅存储在服务器 `/opt/liuhenjianghu/server/.env` 和 `ecosystem.config.cjs` 中，请勿提交到代码仓库。
+
+**短信发送 API**:
+```bash
+POST https://liuhenjianghu.com/api/v1/auth/send-code
+Content-Type: application/json
+
+{
+  "phone": "手机号",
+  "type": "login"  // login=登录，register=注册
+}
+
+响应:
+{
+  "success": true,
+  "message": "验证码已发送"
+}
+```
+
+**注意事项**:
+- 使用 ecosystem.config.cjs 配置文件（.cjs 强制 CommonJS，避免 ES Module 问题）
+- 通过 `--env production` 传递环境变量
+- PM2 cluster 模式下必须使用配置文件传递环境变量
 
 ### Nginx 配置
 
@@ -149,7 +176,7 @@ server {
     ssl_certificate_key /etc/nginx/ssl/liuhenjianghu.com.key;
     
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:9091;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -167,18 +194,26 @@ module.exports = {
   apps: [{
     name: 'liuhen-api',
     script: './dist/index.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '500M',
-    env_file: './.env',
-    env: {
+    instances: 'max',
+    exec_mode: 'cluster',
+    env_production: {
       NODE_ENV: 'production',
-      PORT: 8080
+      DATABASE_URL: 'postgresql://liuhenjianghu:****@pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com:5432/liuhenjianghu',
+      JWT_SECRET: '****',
+      PORT: 9091,
+      SMS_ACCESS_KEY_ID: '****',
+      SMS_ACCESS_KEY_SECRET: '****',
+      SMS_SIGN_NAME: '迁安市建昌营镇流痕营软件',
+      SMS_TEMPLATE_CODE: 'SMS_335900024'
     }
   }]
 };
 ```
+
+**重要说明**:
+- 使用 `.cjs` 扩展名强制 CommonJS 模式（避免 ES Module 问题）
+- 通过 `--env production` 传递环境变量
+- cluster 模式下环境变量必须通过配置文件传递
 
 ### 环境变量配置
 
@@ -454,10 +489,48 @@ SMS_TEMPLATE_CODE=****
 ### 认证相关 `/auth`
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
+| POST | /auth/send-code | 发送短信验证码 | 否 |
 | POST | /auth/register | 用户注册 | 否 |
 | POST | /auth/login | 用户登录 | 否 |
 | POST | /auth/logout | 登出 | 是 |
 | GET | /auth/me | 获取当前用户 | 是 |
+
+**短信验证码发送** (2026-08-01 更新):
+```bash
+POST /auth/send-code
+Content-Type: application/json
+
+{
+  "phone": "15613594588",
+  "type": "login"  // login=登录，register=注册
+}
+
+响应:
+{
+  "success": true,
+  "message": "验证码已发送"
+}
+```
+
+**用户登录**:
+```bash
+POST /auth/login
+Content-Type: application/json
+
+{
+  "phone": "手机号",
+  "code": "验证码"
+}
+
+响应:
+{
+  "success": true,
+  "data": {
+    "token": "JWT Token",
+    "user": { ... }
+  }
+}
+```
 
 ### 用户相关 `/users`
 | 方法 | 路径 | 说明 | 认证 |
@@ -569,7 +642,7 @@ SMS_TEMPLATE_CODE=****
 ### 后端必需
 ```env
 NODE_ENV=production
-PORT=8080
+PORT=9091
 
 # 数据库 (阿里云 RDS PostgreSQL)
 DATABASE_URL=postgresql://liuhenjianghu:****@pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com:5432/liuhenjianghu?sslmode=disable
@@ -592,7 +665,7 @@ OSS_ENDPOINT=****
 SMS_ACCESS_KEY_ID=****
 SMS_ACCESS_KEY_SECRET=****
 SMS_SIGN_NAME=迁安市建昌营镇流痕营软件
-SMS_TEMPLATE_CODE=****
+SMS_TEMPLATE_CODE=SMS_335900024
 
 # 微信支付
 WX_MCHID=1114226626
@@ -676,8 +749,9 @@ const limitCheck = checkContentLimit(content, existingPosts, 2);
 - 服务器 IP: 47.116.142.121
 - 项目路径：/opt/liuhenjianghu
 - 服务名称：liuhen-api (PM2)
-- 应用端口：8080
+- 应用端口：9091
 - Web 服务器：Nginx 1.24
+- 配置文件：ecosystem.config.cjs
 
 ### 构建配置
 - 构建工具：esbuild (build.js)
@@ -687,8 +761,10 @@ const limitCheck = checkContentLimit(content, existingPosts, 2);
 ### 重要说明
 1. 使用阿里云 RDS PostgreSQL 数据库
 2. 使用阿里云 Redis 缓存
-3. 使用阿里云 SMS 短信服务（签名：迁安市建昌营镇流痕营软件）
+3. 使用阿里云 SMS 短信服务（签名：迁安市建昌营镇流痕营软件，模板：SMS_335900024）
 4. Redis 已添加到 build.js 的 external 列表，避免打包错误
+5. 行政区划数据从数据库读取（44706 条记录），不再使用硬编码
+6. 使用 ecosystem.config.cjs 配置文件传递环境变量（避免 ES Module 问题）
 
 ## 前端页面结构
 
@@ -858,7 +934,7 @@ pm2 save
 **配置文件**：`/etc/nginx/conf.d/liuhen.conf`
 
 - HTTP (80) → 自动跳转 HTTPS
-- HTTPS (443) → 反向代理到 localhost:8080
+- HTTPS (443) → 反向代理到 localhost:9091
 - SSL 证书：`/etc/nginx/ssl/liuhenjianghu.com.pem`
 
 ---
@@ -867,6 +943,7 @@ pm2 save
 
 | 日期 | 操作 | 说明 |
 |------|------|------|
+| 2026-08-01 23:58 | 行政区划数据迁移 | 从 48000+ 行硬编码迁移到数据库（44706 条记录），修复 SMS 配置，更新端口为 9091 |
 | 2026-07-25 22:30 | 优化自动部署脚本 | 使用 `git fetch + git reset --hard` 替代 `git pull`，避免分支分叉问题 |
 | 2026-07-24 23:45 | 修复 SMS 验证码发送 | 确认 SMS 签名为"迁安市建昌营镇流痕营软件"，删除 Supabase 配置，使用 DATABASE_URL 环境变量 |
 | 2026-07-24 21:30 | 修复 CI/CD 自动部署 | 修复 GitHub Actions deploy.yml 配置，使用 SSH_HOST/SSH_USER/SSH_KEY/DEPLOY_PATH Secrets，验证自动部署成功 |
@@ -890,12 +967,19 @@ pm2 save
 
 ## 一、数据概览
 
-| 级别 | 数量 | 数据来源 |
-|------|------|----------|
-| 省级 | 34个 | 中华人民共和国民政部标准 |
-| 城市 | 364个 | 中华人民共和国民政部标准 |
-| 区县 | 2843个 | 中华人民共和国民政部标准 |
-| 乡级 | 38721个 | 中华人民共和国民政部标准 |
+| 级别 | 数量 | 数据来源 | 存储方式 |
+|------|------|----------|----------|
+| 省级 | 34个 | 中华人民共和国民政部标准 | 数据库 (regions表) |
+| 地级 | 342个 | 中华人民共和国民政部标准 | 数据库 (regions表) |
+| 县级 | 2978个 | 中华人民共和国民政部标准 | 数据库 (regions表) |
+| 镇级 | 41352个 | 中华人民共和国民政部标准 | 数据库 (regions表) |
+| **总计** | **44706条** | - | - |
+
+**数据迁移记录** (2026-08-01):
+- 从 48000+ 行硬编码数据迁移到阿里云 RDS 数据库
+- 保留缓存机制（1 小时）
+- API 接口保持不变
+- 数据来源：民政部官方行政区划数据（含港澳台）
 
 ### 乡级数据明细
 | 类型 | 数量 |
@@ -986,8 +1070,9 @@ interface Street {
 ## 四、API接口详情
 
 ### 基础信息
+- **Base URL**: `https://liuhenjianghu.com/api/v1` (生产)
 - **Base URL**: `http://localhost:9091/api/v1` (本地)
-- **认证方式**: `x-api-key: sk_dev_key_abc123`
+- **认证方式**: `Authorization: Bearer <token>` (用户认证)
 - **限流**: 100次/分钟
 
 ### 4.1 省级列表
