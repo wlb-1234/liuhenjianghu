@@ -332,6 +332,9 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [newPostCount, setNewPostCount] = useState(0);
   const prevPostsCount = useRef(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedRegionCode, setSelectedRegionCode] = useState<string>('');
+  const [selectedRegionName, setSelectedRegionName] = useState<string>('');
+  const [showRegionModal, setShowRegionModal] = useState(false);
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -341,10 +344,20 @@ export default function HomeScreen({ onPostPress }: Props) {
     { code: 'other', name: '其他' },
   ];
 
+  // 初始化默认区域（用户的注册区域）
+  useEffect(() => {
+    if (user) {
+      const defaultRegionCode = user.town_code || user.district_code || user.city_code || user.province_code || '';
+      const defaultRegionName = user.town_name || user.district_name || user.city_name || user.province_name || '全部';
+      setSelectedRegionCode(defaultRegionCode);
+      setSelectedRegionName(defaultRegionName);
+    }
+  }, [user]);
+
   const loadPosts = async (refresh = false) => {
     try {
       const newPage = refresh ? 1 : page;
-      const result = await api.getPosts(newPage, 20);
+      const result = await api.getPosts(newPage, 20, selectedRegionCode);
 
       if (refresh) {
         // 检查是否有新帖子
@@ -370,7 +383,7 @@ export default function HomeScreen({ onPostPress }: Props) {
   useFocusEffect(
     useCallback(() => {
       loadPosts(true);
-    }, [])
+    }, [selectedRegionCode])
   );
 
   // 检测新帖子
@@ -434,6 +447,18 @@ export default function HomeScreen({ onPostPress }: Props) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>流痕江湖</Text>
         <Text style={styles.headerSlogan}>人海为江湖，留言皆流痕</Text>
+      </View>
+
+      {/* 区域选择 */}
+      <View style={styles.regionSelectorContainer}>
+        <TouchableOpacity
+          style={styles.regionSelector}
+          onPress={() => setShowRegionModal(true)}
+        >
+          <Text style={styles.regionSelectorIcon}>📍</Text>
+          <Text style={styles.regionSelectorText}>{selectedRegionName || '选择区域'}</Text>
+          <Text style={styles.regionSelectorArrow}>▼</Text>
+        </TouchableOpacity>
       </View>
 
       {/* 分类筛选 */}
@@ -502,6 +527,90 @@ export default function HomeScreen({ onPostPress }: Props) {
         onEndReachedThreshold={0.3}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* 区域选择 Modal */}
+      {showRegionModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>选择查看区域</Text>
+              <TouchableOpacity onPress={() => setShowRegionModal(false)}>
+                <Text style={styles.modalClose}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              <TouchableOpacity
+                style={[styles.regionOption, !selectedRegionCode && styles.regionOptionActive]}
+                onPress={() => {
+                  setSelectedRegionCode('');
+                  setSelectedRegionName('全部');
+                  setShowRegionModal(false);
+                }}
+              >
+                <Text style={[styles.regionOptionText, !selectedRegionCode && styles.regionOptionTextActive]}>
+                  全部区域
+                </Text>
+              </TouchableOpacity>
+              {user?.province_name && (
+                <TouchableOpacity
+                  style={[styles.regionOption, selectedRegionCode === user.province_code && styles.regionOptionActive]}
+                  onPress={() => {
+                    setSelectedRegionCode(user.province_code || '');
+                    setSelectedRegionName(user.province_name || '');
+                    setShowRegionModal(false);
+                  }}
+                >
+                  <Text style={[styles.regionOptionText, selectedRegionCode === user.province_code && styles.regionOptionTextActive]}>
+                    {user.province_name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {user?.city_name && (
+                <TouchableOpacity
+                  style={[styles.regionOption, selectedRegionCode === user.city_code && styles.regionOptionActive]}
+                  onPress={() => {
+                    setSelectedRegionCode(user.city_code || '');
+                    setSelectedRegionName(user.city_name || '');
+                    setShowRegionModal(false);
+                  }}
+                >
+                  <Text style={[styles.regionOptionText, selectedRegionCode === user.city_code && styles.regionOptionTextActive]}>
+                    {user.city_name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {user?.district_name && (
+                <TouchableOpacity
+                  style={[styles.regionOption, selectedRegionCode === user.district_code && styles.regionOptionActive]}
+                  onPress={() => {
+                    setSelectedRegionCode(user.district_code || '');
+                    setSelectedRegionName(user.district_name || '');
+                    setShowRegionModal(false);
+                  }}
+                >
+                  <Text style={[styles.regionOptionText, selectedRegionCode === user.district_code && styles.regionOptionTextActive]}>
+                    {user.district_name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {user?.town_name && (
+                <TouchableOpacity
+                  style={[styles.regionOption, selectedRegionCode === user.town_code && styles.regionOptionActive]}
+                  onPress={() => {
+                    setSelectedRegionCode(user.town_code || '');
+                    setSelectedRegionName(user.town_name || '');
+                    setShowRegionModal(false);
+                  }}
+                >
+                  <Text style={[styles.regionOptionText, selectedRegionCode === user.town_code && styles.regionOptionTextActive]}>
+                    {user.town_name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -798,5 +907,89 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: '#8B7355',
+  },
+  regionSelectorContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  regionSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E0D0',
+  },
+  regionSelectorIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  regionSelectorText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#2C2C2C',
+    fontWeight: '500',
+  },
+  regionSelectorArrow: {
+    fontSize: 12,
+    color: '#8B7355',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '85%',
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E0D0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2C2C2C',
+  },
+  modalClose: {
+    fontSize: 28,
+    color: '#8B7355',
+    lineHeight: 28,
+  },
+  modalBody: {
+    maxHeight: 400,
+  },
+  regionOption: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F0E6',
+  },
+  regionOptionActive: {
+    backgroundColor: '#F5F0E6',
+  },
+  regionOptionText: {
+    fontSize: 16,
+    color: '#2C2C2C',
+  },
+  regionOptionTextActive: {
+    color: '#8B4513',
+    fontWeight: '600',
   },
 });

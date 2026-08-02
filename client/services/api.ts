@@ -151,14 +151,18 @@ class ApiService {
   }
 
   // 获取帖子列表
-  async getPosts(page = 1, pageSize = 20): Promise<{
+  async getPosts(page = 1, pageSize = 20, regionCode?: string): Promise<{
     posts: any[];
     total: number;
     page: number;
     pageSize: number;
     totalPages: number;
   }> {
-    return this.request(`/posts?page=${page}&pageSize=${pageSize}`);
+    let url = `/posts?page=${page}&pageSize=${pageSize}`;
+    if (regionCode) {
+      url += `&region_code=${regionCode}`;
+    }
+    return this.request(url);
   }
 
   // 获取帖子详情
