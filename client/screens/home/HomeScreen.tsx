@@ -334,6 +334,7 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedRegionCode, setSelectedRegionCode] = useState<string>('');
   const [selectedRegionName, setSelectedRegionName] = useState<string>('');
+  const [selectedRegionLevel, setSelectedRegionLevel] = useState<number>(4); // 1=省, 2=市, 3=县, 4=镇
   const [showRegionModal, setShowRegionModal] = useState(false);
   const categories = [
     { code: '', name: '全部' },
@@ -344,13 +345,44 @@ export default function HomeScreen({ onPostPress }: Props) {
     { code: 'other', name: '其他' },
   ];
 
-  // 初始化默认区域（用户的注册区域）
+  // 初始化默认区域（根据会员等级）
   useEffect(() => {
     if (user) {
-      const defaultRegionCode = user.town_code || user.district_code || user.city_code || user.province_code || '';
-      const defaultRegionName = user.town_name || user.district_name || user.city_name || user.province_name || '全部';
+      // 会员等级：0=散人, 1=县帮, 2=市盟, 3=省派, 4=会主
+      // 会员等级对应的区域级别：会员显示最高等级，非会员显示镇级
+      let defaultRegionCode = '';
+      let defaultRegionName = '';
+      let defaultRegionLevel = 4; // 默认镇级
+
+      if (user.member_level && user.member_level > 0) {
+        // 会员：显示最高等级对应的区域
+        if (user.member_level >= 4 && user.province_code) {
+          defaultRegionCode = user.province_code;
+          defaultRegionName = user.province_name || '';
+          defaultRegionLevel = 1;
+        } else if (user.member_level >= 3 && user.city_code) {
+          defaultRegionCode = user.city_code;
+          defaultRegionName = user.city_name || '';
+          defaultRegionLevel = 2;
+        } else if (user.member_level >= 2 && user.district_code) {
+          defaultRegionCode = user.district_code;
+          defaultRegionName = user.district_name || '';
+          defaultRegionLevel = 3;
+        } else if (user.member_level >= 1 && user.town_code) {
+          defaultRegionCode = user.town_code;
+          defaultRegionName = user.town_name || '';
+          defaultRegionLevel = 4;
+        }
+      } else {
+        // 非会员：显示镇级
+        defaultRegionCode = user.town_code || '';
+        defaultRegionName = user.town_name || '';
+        defaultRegionLevel = 4;
+      }
+
       setSelectedRegionCode(defaultRegionCode);
       setSelectedRegionName(defaultRegionName);
+      setSelectedRegionLevel(defaultRegionLevel);
     }
   }, [user]);
 
@@ -449,16 +481,67 @@ export default function HomeScreen({ onPostPress }: Props) {
         <Text style={styles.headerSlogan}>人海为江湖，留言皆流痕</Text>
       </View>
 
-      {/* 区域选择 */}
-      <View style={styles.regionSelectorContainer}>
+      {/* 区域级别选择 */}
+      <View style={styles.regionLevelContainer}>
+        <View style={styles.regionLevelButtons}>
+          {[
+            { level: 1, name: '省' },
+            { level: 2, name: '市' },
+            { level: 3, name: '县' },
+            { level: 4, name: '镇' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.level}
+              style={[
+                styles.regionLevelButton,
+                selectedRegionLevel === item.level && styles.regionLevelButtonActive,
+              ]}
+              onPress={() => {
+                // 根据用户信息获取对应级别的区域代码
+                let code = '';
+                let name = '';
+                if (item.level === 1 && user?.province_code) {
+                  code = user.province_code;
+                  name = user.province_name || '';
+                } else if (item.level === 2 && user?.city_code) {
+                  code = user.city_code;
+                  name = user.city_name || '';
+                } else if (item.level === 3 && user?.district_code) {
+                  code = user.district_code;
+                  name = user.district_name || '';
+                } else if (item.level === 4 && user?.town_code) {
+                  code = user.town_code;
+                  name = user.town_name || '';
+                }
+                setSelectedRegionCode(code);
+                setSelectedRegionName(name);
+                setSelectedRegionLevel(item.level);
+              }}
+            >
+              <Text
+                style={[
+                  styles.regionLevelText,
+                  selectedRegionLevel === item.level && styles.regionLevelTextActive,
+                ]}
+              >
+                {item.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         <TouchableOpacity
-          style={styles.regionSelector}
+          style={styles.otherRegionButton}
           onPress={() => setShowRegionModal(true)}
         >
-          <Text style={styles.regionSelectorIcon}>📍</Text>
-          <Text style={styles.regionSelectorText}>{selectedRegionName || '选择区域'}</Text>
-          <Text style={styles.regionSelectorArrow}>▼</Text>
+          <Text style={styles.otherRegionText}>其他留言</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* 当前区域显示 */}
+      <View style={styles.currentRegionContainer}>
+        <Text style={styles.currentRegionText}>
+          当前查看：{selectedRegionName || '未选择区域'}
+        </Text>
       </View>
 
       {/* 分类筛选 */}
@@ -533,79 +616,86 @@ export default function HomeScreen({ onPostPress }: Props) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>选择查看区域</Text>
+              <Text style={styles.modalTitle}>选择其他区域</Text>
               <TouchableOpacity onPress={() => setShowRegionModal(false)}>
                 <Text style={styles.modalClose}>×</Text>
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
-              <TouchableOpacity
-                style={[styles.regionOption, !selectedRegionCode && styles.regionOptionActive]}
-                onPress={() => {
-                  setSelectedRegionCode('');
-                  setSelectedRegionName('全部');
-                  setShowRegionModal(false);
-                }}
-              >
-                <Text style={[styles.regionOptionText, !selectedRegionCode && styles.regionOptionTextActive]}>
-                  全部区域
-                </Text>
-              </TouchableOpacity>
+              {/* 省级选择 */}
               {user?.province_name && (
-                <TouchableOpacity
-                  style={[styles.regionOption, selectedRegionCode === user.province_code && styles.regionOptionActive]}
-                  onPress={() => {
-                    setSelectedRegionCode(user.province_code || '');
-                    setSelectedRegionName(user.province_name || '');
-                    setShowRegionModal(false);
-                  }}
-                >
-                  <Text style={[styles.regionOptionText, selectedRegionCode === user.province_code && styles.regionOptionTextActive]}>
-                    {user.province_name}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.regionSection}>
+                  <Text style={styles.regionSectionTitle}>省级</Text>
+                  <TouchableOpacity
+                    style={styles.regionOption}
+                    onPress={() => {
+                      setSelectedRegionCode(user.province_code || '');
+                      setSelectedRegionName(user.province_name || '');
+                      setSelectedRegionLevel(1);
+                      setShowRegionModal(false);
+                    }}
+                  >
+                    <Text style={styles.regionOptionText}>{user.province_name}</Text>
+                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                  </TouchableOpacity>
+                </View>
               )}
+
+              {/* 市级选择 */}
               {user?.city_name && (
-                <TouchableOpacity
-                  style={[styles.regionOption, selectedRegionCode === user.city_code && styles.regionOptionActive]}
-                  onPress={() => {
-                    setSelectedRegionCode(user.city_code || '');
-                    setSelectedRegionName(user.city_name || '');
-                    setShowRegionModal(false);
-                  }}
-                >
-                  <Text style={[styles.regionOptionText, selectedRegionCode === user.city_code && styles.regionOptionTextActive]}>
-                    {user.city_name}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.regionSection}>
+                  <Text style={styles.regionSectionTitle}>市级</Text>
+                  <TouchableOpacity
+                    style={styles.regionOption}
+                    onPress={() => {
+                      setSelectedRegionCode(user.city_code || '');
+                      setSelectedRegionName(user.city_name || '');
+                      setSelectedRegionLevel(2);
+                      setShowRegionModal(false);
+                    }}
+                  >
+                    <Text style={styles.regionOptionText}>{user.city_name}</Text>
+                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                  </TouchableOpacity>
+                </View>
               )}
+
+              {/* 县级选择 */}
               {user?.district_name && (
-                <TouchableOpacity
-                  style={[styles.regionOption, selectedRegionCode === user.district_code && styles.regionOptionActive]}
-                  onPress={() => {
-                    setSelectedRegionCode(user.district_code || '');
-                    setSelectedRegionName(user.district_name || '');
-                    setShowRegionModal(false);
-                  }}
-                >
-                  <Text style={[styles.regionOptionText, selectedRegionCode === user.district_code && styles.regionOptionTextActive]}>
-                    {user.district_name}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.regionSection}>
+                  <Text style={styles.regionSectionTitle}>县级</Text>
+                  <TouchableOpacity
+                    style={styles.regionOption}
+                    onPress={() => {
+                      setSelectedRegionCode(user.district_code || '');
+                      setSelectedRegionName(user.district_name || '');
+                      setSelectedRegionLevel(3);
+                      setShowRegionModal(false);
+                    }}
+                  >
+                    <Text style={styles.regionOptionText}>{user.district_name}</Text>
+                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                  </TouchableOpacity>
+                </View>
               )}
+
+              {/* 镇级选择 */}
               {user?.town_name && (
-                <TouchableOpacity
-                  style={[styles.regionOption, selectedRegionCode === user.town_code && styles.regionOptionActive]}
-                  onPress={() => {
-                    setSelectedRegionCode(user.town_code || '');
-                    setSelectedRegionName(user.town_name || '');
-                    setShowRegionModal(false);
-                  }}
-                >
-                  <Text style={[styles.regionOptionText, selectedRegionCode === user.town_code && styles.regionOptionTextActive]}>
-                    {user.town_name}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.regionSection}>
+                  <Text style={styles.regionSectionTitle}>镇级</Text>
+                  <TouchableOpacity
+                    style={styles.regionOption}
+                    onPress={() => {
+                      setSelectedRegionCode(user.town_code || '');
+                      setSelectedRegionName(user.town_name || '');
+                      setSelectedRegionLevel(4);
+                      setShowRegionModal(false);
+                    }}
+                  >
+                    <Text style={styles.regionOptionText}>{user.town_name}</Text>
+                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </ScrollView>
           </View>
@@ -936,6 +1026,61 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B7355',
   },
+  regionLevelContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  regionLevelButtons: {
+    flexDirection: 'row',
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#E8E0D0',
+  },
+  regionLevelButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  regionLevelButtonActive: {
+    backgroundColor: '#8B4513',
+  },
+  regionLevelText: {
+    fontSize: 14,
+    color: '#8B7355',
+    fontWeight: '500',
+  },
+  regionLevelTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  otherRegionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F5F0E6',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E0D0',
+  },
+  otherRegionText: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontWeight: '500',
+  },
+  currentRegionContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  currentRegionText: {
+    fontSize: 13,
+    color: '#8B7355',
+  },
   modalOverlay: {
     position: 'absolute',
     top: 0,
@@ -974,12 +1119,27 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     maxHeight: 400,
+    paddingHorizontal: 8,
+  },
+  regionSection: {
+    marginBottom: 16,
+  },
+  regionSectionTitle: {
+    fontSize: 14,
+    color: '#8B7355',
+    fontWeight: '600',
+    paddingHorizontal: 12,
+    marginBottom: 8,
   },
   regionOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F0E6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#F9F6F0',
+    borderRadius: 10,
+    marginHorizontal: 4,
   },
   regionOptionActive: {
     backgroundColor: '#F5F0E6',
@@ -987,9 +1147,19 @@ const styles = StyleSheet.create({
   regionOptionText: {
     fontSize: 16,
     color: '#2C2C2C',
+    flex: 1,
   },
   regionOptionTextActive: {
     color: '#8B4513',
     fontWeight: '600',
+  },
+  regionOptionConfirm: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontWeight: '600',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#F5F0E6',
+    borderRadius: 6,
   },
 });
