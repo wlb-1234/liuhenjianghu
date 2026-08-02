@@ -27,7 +27,7 @@ export function getPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,
-    ssl: { rejectUnauthorized: false }
+    ssl: false
   });
   
   poolInstance.on('error', (err) => {
