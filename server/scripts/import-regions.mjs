@@ -37,19 +37,27 @@ async function importRegions() {
     const placeholders = [];
     
     batch.forEach((item, idx) => {
-      const base = idx * 5;
+      const base = idx * 6;
+      // 根据 level 设置 type
+      let type = '';
+      if (item.level === 1) type = '省';
+      else if (item.level === 2) type = '市';
+      else if (item.level === 3) type = '县';
+      else if (item.level === 4) type = '镇';
+      
       values.push(
         item.code,
         item.name,
         item.parent_code || null,
         item.level,
+        type,
         new Date()
       );
-      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`);
+      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`);
     });
     
     const query = `
-      INSERT INTO regions (code, name, parent_code, level, created_at)
+      INSERT INTO regions (code, name, parent_code, level, type, created_at)
       VALUES ${placeholders.join(', ')}
     `;
     
