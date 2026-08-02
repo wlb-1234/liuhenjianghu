@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,13 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
-import { buildAssetUrl, createFormDataFile } from '@/utils';
-
-interface Region {
-  code: string;
-  name: string;
-  level: number;
-}
+import { createFormDataFile } from '@/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   onClose: () => void;
@@ -30,64 +25,10 @@ interface Props {
 }
 
 export default function PostScreen({ onClose, onSuccess }: Props) {
+  const { user } = useAuth();
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  // 区域选择
-  const [showRegionPicker, setShowRegionPicker] = useState(true); // 默认展开
-  const [regions, setRegions] = useState<{ provinces: Region[]; cities: Region[]; districts: Region[]; towns: Region[] }>({
-    provinces: [],
-    cities: [],
-    districts: [],
-    towns: [],
-  });
-  const [selectedRegion, setSelectedRegion] = useState<{ province: Region | null; city: Region | null; district: Region | null; town: Region | null }>({
-    province: null,
-    city: null,
-    district: null,
-    town: null,
-  });
-
-  useEffect(() => {
-    loadProvinces();
-  }, []);
-
-  const loadProvinces = async () => {
-    try {
-      const { data } = await api.getProvinces();
-      setRegions(prev => ({ ...prev, provinces: data }));
-    } catch (error) {
-      console.error('加载省份失败:', error);
-    }
-  };
-
-  const loadCities = async (provinceCode: string) => {
-    try {
-      const { data } = await api.getCities(provinceCode);
-      setRegions(prev => ({ ...prev, cities: data }));
-    } catch (error) {
-      console.error('加载城市失败:', error);
-    }
-  };
-
-  const loadDistricts = async (cityCode: string) => {
-    try {
-      const { data } = await api.getDistricts(cityCode);
-      setRegions(prev => ({ ...prev, districts: data }));
-    } catch (error) {
-      console.error('加载区县失败:', error);
-    }
-  };
-
-  const loadTowns = async (districtCode: string) => {
-    try {
-      const { data } = await api.getTowns(districtCode);
-      setRegions(prev => ({ ...prev, towns: data }));
-    } catch (error) {
-      console.error('加载乡镇失败:', error);
-    }
-  };
 
   const handleSelectImage = async () => {
     if (images.length >= 9) {
@@ -116,11 +57,6 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       return;
     }
 
-    if (!selectedRegion.district && !selectedRegion.town) {
-      Alert.alert('提示', '请选择发布区域');
-      return;
-    }
-
     setLoading(true);
     try {
       // 上传图片
@@ -135,9 +71,9 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
         uploadedImages = uploadResult.files.map((f: any) => f.url);
       }
 
-      // 创建帖子
-      const regionCode = selectedRegion.town?.code || selectedRegion.district?.code || '';
-      const regionLevel = selectedRegion.town ? 4 : selectedRegion.district ? 3 : 2;
+      // 使用用户的注册区域（自动从用户信息中获取）
+      const regionCode = user.town_code || user.district_code || user.city_code || user.province_code || '';
+      const regionLevel = user.town_code ? 4 : user.district_code ? 3 : user.city_code ? 2 : 1;
 
       await api.createPost({
         content: content.trim(),
@@ -152,33 +88,6 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       Alert.alert('发布失败', error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getRegionText = () => {
-    const parts = [];
-    if (selectedRegion.province) parts.push(selectedRegion.province.name);
-    if (selectedRegion.city) parts.push(selectedRegion.city.name);
-    if (selectedRegion.district) parts.push(selectedRegion.district.name);
-    if (selectedRegion.town) parts.push(selectedRegion.town.name);
-    return parts.length > 0 ? parts.join('') : '选择发布区域';
-  };
-
-  const handleRegionSelect = (level: 'province' | 'city' | 'district' | 'town', region: Region | null) => {
-    setSelectedRegion(prev => ({
-      ...prev,
-      [level]: region,
-      ...(level === 'province' ? { city: null, district: null, town: null } : {}),
-      ...(level === 'city' ? { district: null, town: null } : {}),
-      ...(level === 'district' ? { town: null } : {}),
-    }));
-
-    if (level === 'province' && region) {
-      loadCities(region.code);
-    } else if (level === 'city' && region) {
-      loadDistricts(region.code);
-    } else if (level === 'district' && region) {
-      loadTowns(region.code);
     }
   };
 
@@ -254,106 +163,14 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
               </View>
             </View>
 
-          {/* 区域选择 */}
+          {/* 区域显示（只读，显示用户的注册区域） */}
           <View style={styles.regionSection}>
             <Text style={styles.sectionTitle}>发布区域</Text>
-            <TouchableOpacity
-              style={styles.regionSelector}
-              onPress={() => setShowRegionPicker(!showRegionPicker)}
-            >
-              <Text style={[styles.regionText, !selectedRegion.district && styles.regionPlaceholder]}>
-                {getRegionText()}
+            <View style={styles.regionDisplay}>
+              <Text style={styles.regionText}>
+                {user.town_name || user.district_name || user.city_name || user.province_name || '未设置区域'}
               </Text>
-              <Text style={styles.arrow}>{showRegionPicker ? '▲' : '▼'}</Text>
-            </TouchableOpacity>
-
-            {showRegionPicker && (
-              <View style={styles.regionPicker}>
-                {regions.provinces.length > 0 && (
-                  <View style={styles.pickerRow}>
-                    <Text style={styles.pickerLabel}>省:</Text>
-                    <View style={styles.pickerScrollContainer}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {regions.provinces.map(p => (
-                        <TouchableOpacity
-                          key={p.code}
-                          style={[styles.pickerItem, selectedRegion.province?.code === p.code && styles.pickerItemActive]}
-                          onPress={() => handleRegionSelect('province', p)}
-                        >
-                          <Text style={[styles.pickerText, selectedRegion.province?.code === p.code && styles.pickerTextActive]}>
-                            {p.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                    </View>
-                  </View>
-                )}
-
-                {regions.cities.length > 0 && (
-                  <View style={styles.pickerRow}>
-                    <Text style={styles.pickerLabel}>市:</Text>
-                    <View style={styles.pickerScrollContainer}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {regions.cities.map(c => (
-                        <TouchableOpacity
-                          key={c.code}
-                          style={[styles.pickerItem, selectedRegion.city?.code === c.code && styles.pickerItemActive]}
-                          onPress={() => handleRegionSelect('city', c)}
-                        >
-                          <Text style={[styles.pickerText, selectedRegion.city?.code === c.code && styles.pickerTextActive]}>
-                            {c.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                    </View>
-                  </View>
-                )}
-
-                {regions.districts.length > 0 && (
-                  <View style={styles.pickerRow}>
-                    <Text style={styles.pickerLabel}>县:</Text>
-                    <View style={styles.pickerScrollContainer}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {regions.districts.map(d => (
-                        <TouchableOpacity
-                          key={d.code}
-                          style={[styles.pickerItem, selectedRegion.district?.code === d.code && styles.pickerItemActive]}
-                          onPress={() => handleRegionSelect('district', d)}
-                        >
-                          <Text style={[styles.pickerText, selectedRegion.district?.code === d.code && styles.pickerTextActive]}>
-                            {d.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                    </View>
-                  </View>
-                )}
-
-                {regions.towns.length > 0 && (
-                  <View style={styles.pickerRow}>
-                    <Text style={styles.pickerLabel}>镇:</Text>
-                    <View style={styles.pickerScrollContainer}>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {regions.towns.map(t => (
-                        <TouchableOpacity
-                          key={t.code}
-                          style={[styles.pickerItem, selectedRegion.town?.code === t.code && styles.pickerItemActive]}
-                          onPress={() => handleRegionSelect('town', t)}
-                        >
-                          <Text style={[styles.pickerText, selectedRegion.town?.code === t.code && styles.pickerTextActive]}>
-                            {t.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                    </View>
-                  </View>
-                )}
-              </View>
-            )}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
