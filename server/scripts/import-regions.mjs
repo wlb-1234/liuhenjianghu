@@ -37,20 +37,19 @@ async function importRegions() {
     const placeholders = [];
     
     batch.forEach((item, idx) => {
-      const base = idx * 6;
+      const base = idx * 5;
       values.push(
         item.code,
         item.name,
         item.parent_code || null,
         item.level,
-        item.sort_order || 0,
         new Date()
       );
-      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`);
+      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`);
     });
     
     const query = `
-      INSERT INTO regions (code, name, parent_code, level, sort_order, created_at)
+      INSERT INTO regions (code, name, parent_code, level, created_at)
       VALUES ${placeholders.join(', ')}
     `;
     
