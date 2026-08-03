@@ -72,8 +72,9 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       }
 
       // 使用用户的注册区域（自动从用户信息中获取）
+      // region_level: 1=镇, 2=县, 3=市, 4=省（与后端保持一致）
       const regionCode = user.town_code || user.district_code || user.city_code || user.province_code || '';
-      const regionLevel = user.town_code ? 4 : user.district_code ? 3 : user.city_code ? 2 : 1;
+      const regionLevel = user.town_code ? 1 : user.district_code ? 2 : user.city_code ? 3 : 4;
 
       await api.createPost({
         content: content.trim(),
