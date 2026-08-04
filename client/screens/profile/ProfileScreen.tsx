@@ -51,12 +51,11 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
 
   const getMemberInfo = (level: number) => {
     const info = [
-      { name: '江湖散人', region: '本镇', daily: '10条/天', retention: '7天', price: '免费' },
-      { name: '门派弟子', region: '本镇', daily: '10条/天', retention: '14天', price: '9元/月' },
-      { name: '江湖侠客', region: '本县', daily: '30条/天', retention: '30天', price: '19元/月' },
-      { name: '一派掌门', region: '本市', daily: '100条/天', retention: '90天', price: '39元/月' },
-      { name: '武林盟主', region: '本省', daily: '999条/天', retention: '365天', price: '69元/月' },
-      { name: '天下共主', region: '全国', daily: '999条/天', retention: '999天', price: '99元/月' },
+      { name: '江湖散人', region: '本镇', daily: '3条/天', retention: '7天', price: '免费' },
+      { name: '县级会员', region: '本县', daily: '30条/天', retention: '15天', price: '20元/月' },
+      { name: '市级会员', region: '本市', daily: '80条/天', retention: '30天', price: '100元/月' },
+      { name: '省级会员', region: '本省', daily: '200条/天', retention: '90天', price: '500元/月' },
+      { name: '全国会员', region: '全国', daily: '999条/天', retention: '365天', price: '2000元/月' },
     ];
     return info[level] || info[0];
   };
