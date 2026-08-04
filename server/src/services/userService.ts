@@ -15,16 +15,20 @@ export async function createUser(data: {
   nickname: string;
   password: string;
   province_code?: string;
+  province_name?: string;
   city_code?: string;
+  city_name?: string;
   district_code?: string;
+  district_name?: string;
   town_code?: string;
+  town_name?: string;
 }) {
   const p = getPool();
   const result = await p.query(
-    `INSERT INTO users (phone, nickname, password_hash, province_code, city_code, district_code, town_code, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `INSERT INTO users (phone, nickname, password_hash, province_code, province_name, city_code, city_name, district_code, district_name, town_code, town_name, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
      RETURNING *`,
-    [data.phone, data.nickname, data.password, data.province_code || null, data.city_code || null, data.district_code || null, data.town_code || null]
+    [data.phone, data.nickname, data.password, data.province_code || null, data.province_name || null, data.city_code || null, data.city_name || null, data.district_code || null, data.district_name || null, data.town_code || null, data.town_name || null]
   );
   return result.rows[0];
 }
