@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,79 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // 区域选择状态
+  // 会员等级对应的可发布区域：
+  // 0=散人: 只能发布到镇级(1)
+  // 1=镇派: 只能发布到镇级(1)
+  // 2=县派: 可发布到镇级(1)、县级(2)
+  // 3=市派: 可发布到镇级(1)、县级(2)、市级(3)
+  // 4=省派: 可发布到镇级(1)、县级(2)、市级(3)、省级(4)
+  
+  // 计算可选区域列表
+  const availableRegions = useMemo(() => {
+    const maxLevel = user?.membership_level || 0;
+    const regions: { level: number; name: string; code: string; displayName: string }[] = [];
+    
+    // 始终包含镇级
+    if (user?.town_code) {
+      regions.push({
+        level: 1,
+        name: '镇级',
+        code: user.town_code,
+        displayName: user.town_name || '镇级',
+      });
+    }
+    
+    // 县派及以上可以发布到县级
+    if (maxLevel >= 2 && user?.district_code) {
+      regions.push({
+        level: 2,
+        name: '县级',
+        code: user.district_code,
+        displayName: user.district_name || '县级',
+      });
+    }
+    
+    // 市派及以上可以发布到市级
+    if (maxLevel >= 3 && user?.city_code) {
+      regions.push({
+        level: 3,
+        name: '市级',
+        code: user.city_code,
+        displayName: user.city_name || '市级',
+      });
+    }
+    
+    // 省派可以发布到省级
+    if (maxLevel >= 4 && user?.province_code) {
+      regions.push({
+        level: 4,
+        name: '省级',
+        code: user.province_code,
+        displayName: user.province_name || '省级',
+      });
+    }
+    
+    return regions;
+  }, [user]);
+  
+  // 默认选择最高等级区域
+  const [selectedRegionLevel, setSelectedRegionLevel] = useState(() => {
+    const maxLevel = user?.membership_level || 0;
+    if (maxLevel >= 4 && user?.province_code) return 4;
+    if (maxLevel >= 3 && user?.city_code) return 3;
+    if (maxLevel >= 2 && user?.district_code) return 2;
+    return 1;
+  });
+  
+  // 当前选中的区域
+  const selectedRegion = useMemo(() => {
+    return availableRegions.find(r => r.level === selectedRegionLevel) || availableRegions[0];
+  }, [selectedRegionLevel, availableRegions]);
+  
+  // 显示区域选择器
+  const [showRegionPicker, setShowRegionPicker] = useState(false);
 
   const handleSelectImage = async () => {
     if (images.length >= 9) {
@@ -57,6 +130,11 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       return;
     }
 
+    if (!selectedRegion) {
+      Alert.alert('提示', '请选择发布区域');
+      return;
+    }
+
     setLoading(true);
     try {
       // 上传图片
@@ -71,16 +149,12 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
         uploadedImages = uploadResult.files.map((f: any) => f.url);
       }
 
-      // 使用用户的注册区域（自动从用户信息中获取）
-      // region_level: 1=镇, 2=县, 3=市, 4=省（与后端保持一致）
-      const regionCode = user.town_code || user.district_code || user.city_code || user.province_code || '';
-      const regionLevel = user.town_code ? 1 : user.district_code ? 2 : user.city_code ? 3 : 4;
-
+      // 使用用户选择的区域
       await api.createPost({
         content: content.trim(),
         images: uploadedImages,
-        region_code: regionCode,
-        region_level: regionLevel,
+        region_code: selectedRegion.code,
+        region_level: selectedRegion.level,
       });
 
       Alert.alert('成功', '留言已发布');
@@ -164,15 +238,67 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
               </View>
             </View>
 
-          {/* 区域显示（只读，显示用户的注册区域） */}
+          {/* 区域选择 */}
           <View style={styles.regionSection}>
             <Text style={styles.sectionTitle}>发布区域</Text>
-            <View style={styles.regionDisplay}>
-              <Text style={styles.regionText}>
-                {user.town_name || user.district_name || user.city_name || user.province_name || '未设置区域'}
+            <TouchableOpacity
+              style={styles.regionSelector}
+              onPress={() => setShowRegionPicker(true)}
+              disabled={availableRegions.length <= 1}
+            >
+              <Text style={styles.regionSelectorText}>
+                {selectedRegion?.displayName || '未设置区域'}
               </Text>
-            </View>
+              {availableRegions.length > 1 && (
+                <Text style={styles.regionSelectorArrow}>▼</Text>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.regionHint}>
+              {user.membership_level >= 4 ? '省派会员' : 
+               user.membership_level >= 3 ? '市派会员' :
+               user.membership_level >= 2 ? '县派会员' : '镇派/散人会员'}
+              ，可在 {availableRegions.length} 个级别区域发布
+            </Text>
           </View>
+          
+          {/* 区域选择弹窗 */}
+          {showRegionPicker && (
+            <View style={styles.regionPickerOverlay}>
+              <View style={styles.regionPickerModal}>
+                <View style={styles.regionPickerHeader}>
+                  <Text style={styles.regionPickerTitle}>选择发布区域</Text>
+                  <TouchableOpacity onPress={() => setShowRegionPicker(false)}>
+                    <Text style={styles.regionPickerClose}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.regionPickerContent}>
+                  {availableRegions.map((region) => (
+                    <TouchableOpacity
+                      key={region.level}
+                      style={[
+                        styles.regionPickerItem,
+                        selectedRegionLevel === region.level && styles.regionPickerItemSelected,
+                      ]}
+                      onPress={() => {
+                        setSelectedRegionLevel(region.level);
+                        setShowRegionPicker(false);
+                      }}
+                    >
+                      <Text style={[
+                        styles.regionPickerItemText,
+                        selectedRegionLevel === region.level && styles.regionPickerItemTextSelected,
+                      ]}>
+                        {region.displayName}
+                      </Text>
+                      <Text style={styles.regionPickerItemLevel}>
+                        {region.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -367,5 +493,85 @@ const styles = StyleSheet.create({
   pickerScrollContainer: {
     flexGrow: 0,
     paddingVertical: 8,
+  },
+  regionSelectorText: {
+    fontSize: 16,
+    color: '#2C2C2C',
+    fontWeight: '500',
+  },
+  regionSelectorArrow: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginLeft: 8,
+  },
+  regionHint: {
+    fontSize: 12,
+    color: '#8B7355',
+    marginTop: 8,
+  },
+  regionPickerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  regionPickerModal: {
+    backgroundColor: '#FDFBF7',
+    borderRadius: 16,
+    width: '85%',
+    maxWidth: 400,
+    maxHeight: '70%',
+  },
+  regionPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E0D0',
+  },
+  regionPickerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2C2C2C',
+  },
+  regionPickerClose: {
+    fontSize: 20,
+    color: '#8B7355',
+    padding: 4,
+  },
+  regionPickerContent: {
+    padding: 16,
+  },
+  regionPickerItem: {
+    backgroundColor: '#EDE8DC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  regionPickerItemSelected: {
+    backgroundColor: '#8B4513',
+  },
+  regionPickerItemText: {
+    fontSize: 16,
+    color: '#2C2C2C',
+    fontWeight: '500',
+  },
+  regionPickerItemTextSelected: {
+    color: '#FDFBF7',
+  },
+  regionPickerItemLevel: {
+    fontSize: 13,
+    color: '#8B7355',
   },
 });
