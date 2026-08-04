@@ -54,8 +54,8 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
       { name: '江湖散人', region: '本镇', daily: '3条/天', retention: '7天', price: '免费' },
       { name: '县级会员', region: '本县', daily: '30条/天', retention: '15天', price: '20元/月' },
       { name: '市级会员', region: '本市', daily: '80条/天', retention: '30天', price: '100元/月' },
-      { name: '省级会员', region: '本省', daily: '200条/天', retention: '90天', price: '500元/月' },
-      { name: '全国会员', region: '全国', daily: '999条/天', retention: '365天', price: '2000元/月' },
+      { name: '省级会员', region: '本省', daily: '200条/天', retention: '40天', price: '500元/月' },
+      { name: '全国会员', region: '全国', daily: '300条/天', retention: '50天', price: '2000元/月' },
     ];
     return info[level] || info[0];
   };
