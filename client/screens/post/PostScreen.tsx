@@ -83,12 +83,23 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       });
     }
     
+    // 全国派可以发布到全国
+    if (maxLevel >= 5) {
+      regions.push({
+        level: 0,
+        name: '全国',
+        code: '0000000000',
+        displayName: '全国',
+      });
+    }
+    
     return regions;
   }, [user]);
   
   // 默认选择最高等级区域
   const [selectedRegionLevel, setSelectedRegionLevel] = useState(() => {
     const maxLevel = user?.membership_level || 0;
+    if (maxLevel >= 5) return 0;  // 全国派默认全国
     if (maxLevel >= 4 && user?.province_code) return 4;
     if (maxLevel >= 3 && user?.city_code) return 3;
     if (maxLevel >= 2 && user?.district_code) return 2;
@@ -254,7 +265,8 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
               )}
             </TouchableOpacity>
             <Text style={styles.regionHint}>
-              {user.membership_level >= 4 ? '省派会员' : 
+              {user.membership_level >= 5 ? '全国派会员' :
+               user.membership_level >= 4 ? '省派会员' : 
                user.membership_level >= 3 ? '市派会员' :
                user.membership_level >= 2 ? '县派会员' : '镇派/散人会员'}
               ，可在 {availableRegions.length} 个级别区域发布
