@@ -180,7 +180,17 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
         town_code: selectedTown?.code,
       });
     } catch (error: any) {
-      showError(error.message || '注册失败，请稍后重试');
+      const errorMsg = error.message || '注册失败，请稍后重试';
+      showError(errorMsg);
+      
+      // 如果手机号已注册，自动跳转到登录页面
+      if (errorMsg.includes('已注册')) {
+        setTimeout(() => {
+          if (onSwitchToLogin) {
+            onSwitchToLogin();
+          }
+        }, 1500);
+      }
     } finally {
       setLoading(false);
     }
