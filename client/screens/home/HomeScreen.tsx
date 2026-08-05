@@ -622,6 +622,25 @@ export default function HomeScreen({ onPostPress }: Props) {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
+              {/* 全国选择 */}
+              {user?.member_level >= 4 && (
+                <View style={styles.regionSection}>
+                  <Text style={styles.regionSectionTitle}>全国</Text>
+                  <TouchableOpacity
+                    style={styles.regionOption}
+                    onPress={() => {
+                      setSelectedRegionCode('0000000000');
+                      setSelectedRegionName('全国');
+                      setSelectedRegionLevel(0);
+                      setShowRegionModal(false);
+                    }}
+                  >
+                    <Text style={styles.regionOptionText}>全国</Text>
+                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* 省级选择 */}
               {user?.province_name && (
                 <View style={styles.regionSection}>
