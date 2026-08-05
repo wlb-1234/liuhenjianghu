@@ -265,10 +265,10 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
               )}
             </TouchableOpacity>
             <Text style={styles.regionHint}>
-              {user.member_level >= 5 ? '全国派会员' :
-               user.member_level >= 4 ? '省派会员' : 
-               user.member_level >= 3 ? '市派会员' :
-               user.member_level >= 2 ? '县派会员' : '镇派/散人会员'}
+              {user.member_level === 4 ? '全国会员' :
+               user.member_level === 3 ? '省级会员' : 
+               user.member_level === 2 ? '市级会员' :
+               user.member_level === 1 ? '县级会员' : '江湖散人'}
               ，可在 {availableRegions.length} 个级别区域发布
             </Text>
           </View>
