@@ -33,6 +33,7 @@ router.get('/', async (req: any, res: Response) => {
         like_count: post.like_count || 0,
         comment_count: post.comment_count || 0,
         created_at: post.created_at,
+        expire_at: post.expire_at,
         is_liked: liked,
         author: {
           id: post.user_id,
