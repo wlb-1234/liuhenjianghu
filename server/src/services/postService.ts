@@ -60,7 +60,7 @@ export async function createPost(data: {
 }) {
   const p = getPool();
   
-  // 获取用户信息及区域
+  // 获取用户信息及会员等级
   const userResult = await p.query(`
     SELECT u.*, ml.level as member_level, ml.region_limit
     FROM users u
@@ -75,14 +75,25 @@ export async function createPost(data: {
   const user = userResult.rows[0];
   const regionLimit = user.region_limit || 1;
   
-  // region_level: 1=镇, 2=县, 3=市, 4=省
+  // region_level: 1=镇，2=县，3=市，4=省，5=全国
   if (data.region_level > regionLimit) {
-    throw new Error(`您的会员等级(可访问${regionLimit}级区域)无法在此区域(${data.region_level}级)发帖`);
+    throw new Error(`您的会员等级 (可访问${regionLimit}级区域) 无法在此区域 (${data.region_level}级) 发帖`);
   }
+  
+  // 根据区域级别计算留存天数
+  // 镇=7 天，县=15 天，市=30 天，省=40 天，全国=50 天
+  const retentionDaysMap: Record<number, number> = {
+    1: 7,
+    2: 15,
+    3: 30,
+    4: 40,
+    5: 50,
+  };
+  const retentionDays = retentionDaysMap[data.region_level] || 7;
   
   // 计算过期时间
   const expireAt = new Date();
-  expireAt.setHours(expireAt.getHours() + 24);
+  expireAt.setDate(expireAt.getDate() + retentionDays);
   
   const result = await p.query(`
     INSERT INTO posts (user_id, content, images, region_code, region_level, status, expire_at, created_at)

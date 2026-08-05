@@ -10,6 +10,15 @@ import { checkContentLimit } from '../services/contentSimilarityService';
 
 const router = Router();
 
+// 会员等级对应的每日发帖限制
+const POST_LIMITS: Record<number, number> = {
+  0: 10,   // 镇
+  1: 30,   // 县
+  2: 100,  // 市
+  3: 200,  // 省
+  4: 300,  // 全国
+};
+
 // 获取帖子列表（公开，无需登录）
 router.get('/', async (req: any, res: Response) => {
   try {
@@ -104,11 +113,12 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     
     const user = await getUserById(req.userId!);
     
-    // 检查发帖限制
-    if (user.today_post_count >= (user.member_level + 5)) {
+    // 检查发帖限制（根据会员等级）
+    const postLimit = POST_LIMITS[user.member_level] || 10;
+    if (user.today_post_count >= postLimit) {
       return res.status(403).json({ 
         error: '今日发帖次数已用完',
-        limit: user.member_level + 5,
+        limit: postLimit,
         used: user.today_post_count
       });
     }
