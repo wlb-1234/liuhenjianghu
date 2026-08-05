@@ -53,8 +53,8 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       });
     }
     
-    // 县派及以上可以发布到县级
-    if (maxLevel >= 2 && user?.district_code) {
+    // 县级会员及以上可以发布到县级
+    if (maxLevel >= 1 && user?.district_code) {
       regions.push({
         level: 2,
         name: '县级',
@@ -63,8 +63,8 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       });
     }
     
-    // 市派及以上可以发布到市级
-    if (maxLevel >= 3 && user?.city_code) {
+    // 市级会员及以上可以发布到市级
+    if (maxLevel >= 2 && user?.city_code) {
       regions.push({
         level: 3,
         name: '市级',
@@ -73,8 +73,8 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       });
     }
     
-    // 省派可以发布到省级
-    if (maxLevel >= 4 && user?.province_code) {
+    // 省级会员可以发布到省级
+    if (maxLevel >= 3 && user?.province_code) {
       regions.push({
         level: 4,
         name: '省级',
@@ -83,10 +83,10 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
       });
     }
     
-    // 全国派可以发布到全国
-    if (maxLevel >= 5) {
+    // 全国会员可以发布到全国
+    if (maxLevel === 4) {
       regions.push({
-        level: 0,
+        level: 5,
         name: '全国',
         code: '0000000000',
         displayName: '全国',
@@ -99,11 +99,11 @@ export default function PostScreen({ onClose, onSuccess }: Props) {
   // 默认选择最高等级区域
   const [selectedRegionLevel, setSelectedRegionLevel] = useState(() => {
     const maxLevel = user?.member_level || 0;
-    if (maxLevel >= 5) return 0;  // 全国派默认全国
-    if (maxLevel >= 4 && user?.province_code) return 4;
-    if (maxLevel >= 3 && user?.city_code) return 3;
-    if (maxLevel >= 2 && user?.district_code) return 2;
-    return 1;
+    if (maxLevel === 4) return 5;  // 全国会员默认全国
+    if (maxLevel === 3 && user?.province_code) return 4;  // 省级会员默认省级
+    if (maxLevel === 2 && user?.city_code) return 3;  // 市级会员默认市级
+    if (maxLevel === 1 && user?.district_code) return 2;  // 县级会员默认县级
+    return 1;  // 默认镇级
   });
   
   // 当前选中的区域
