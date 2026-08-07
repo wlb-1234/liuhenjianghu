@@ -3081,3 +3081,201 @@ pm2 restart liuhen-client
 ### 后续调整
 - 2026-08-04 22:00：改为支持区域选择
 - 2026-08-04 23:30：完善为 5 级会员体系
+
+---
+
+## 2026-08-05 22:00 留言留存天数与发帖限制修复
+
+### 一、留言留存天数计算修复
+
+#### 问题描述
+- 所有留言的留存天数都显示为 1 天（expire_at 固定为 24 小时）
+- 留存天数应该根据区域级别计算，而不是固定值
+
+#### 修复方案
+根据区域级别计算留存天数：
+| 区域级别 | 名称 | 留存天数 |
+|---------|------|---------|
+| 1 | 镇级 | 7 天 |
+| 2 | 县级 | 15 天 |
+| 3 | 市级 | 30 天 |
+| 4 | 省级 | 40 天 |
+| 5 | 全国 | 50 天 |
+
+#### 修改文件
+- `server/src/services/postService.ts`
+  - createPost 函数中添加根据 region_level 计算 expire_at 的逻辑
+  - 使用 retentionDaysMap 映射区域级别到留存天数
+
+```typescript
+const retentionDaysMap: Record<number, number> = {
+  1: 7,
+  2: 15,
+  3: 30,
+  4: 40,
+  5: 50,
+};
+const retentionDays = retentionDaysMap[data.region_level] || 7;
+const expireAt = new Date();
+expireAt.setDate(expireAt.getDate() + retentionDays);
+```
+
+---
+
+### 二、发帖限制修复
+
+#### 问题描述
+- 发帖限制公式错误：`member_level + 5`（全国会员只有 9 条限制）
+- 市/县/镇级别只能发 1 条留言
+
+#### 修复方案
+根据会员等级设置正确的每日发帖限制：
+| 会员等级 | 名称 | 每日限制 |
+|---------|------|---------|
+| 0 | 江湖散人 | 10 条/天 |
+| 1 | 县级会员 | 30 条/天 |
+| 2 | 市级会员 | 100 条/天 |
+| 3 | 省级会员 | 200 条/天 |
+| 4 | 全国会员 | 300 条/天 |
+
+#### 修改文件
+- `server/src/routes/posts.ts`
+  - 添加 POST_LIMITS 常量定义正确的发帖限制
+  - 修改发帖限制检查逻辑
+
+```typescript
+const POST_LIMITS: Record<number, number> = {
+  0: 10,
+  1: 30,
+  2: 100,
+  3: 200,
+  4: 300,
+};
+const postLimit = POST_LIMITS[user.member_level] || 10;
+```
+
+---
+
+### 三、数据库修复
+
+#### 问题描述
+- 所有用户的 member_level 都是 0（江湖散人）
+- member_levels 表的 retention_days 值不正确
+
+#### 修复 SQL
+```sql
+-- 更新会员等级表的留存天数
+UPDATE member_levels SET retention_days = 40 WHERE level = 3;
+UPDATE member_levels SET retention_days = 50 WHERE level = 4;
+UPDATE member_levels SET region_limit = 5 WHERE level = 4;
+
+-- 更新管理员用户的会员等级
+UPDATE users SET member_level = 4 WHERE id = 2;
+```
+
+---
+
+## 2026-08-07 21:00 首页区域选择与级联选择器优化
+
+### 一、会员等级说明列表修复
+
+#### 问题描述
+- ProfileScreen.tsx 中的会员等级说明列表还是旧的 6 级体系
+- 显示：江湖散人、门派弟子、江湖侠客、一派掌门、武林盟主、天下共主
+
+#### 修复方案
+更新为新的 5 级体系：
+| 等级 | 名称 | 价格 | 可访问区域 | 每日限制 | 留存天数 |
+|------|------|------|-----------|---------|---------|
+| 0 | 江湖散人 | 免费 | 本镇发布 | 10 条/天 | 7 天留存 |
+| 1 | 县级会员 | 20 元/月 | 本县发布 | 30 条/天 | 15 天留存 |
+| 2 | 市级会员 | 100 元/月 | 本市发布 | 100 条/天 | 30 天留存 |
+| 3 | 省级会员 | 500 元/月 | 本省发布 | 200 条/天 | 40 天留存 |
+| 4 | 全国会员 | 2000 元/月 | 全国发布 | 300 条/天 | 50 天留存 |
+
+#### 修改文件
+- `client/screens/profile/ProfileScreen.tsx`
+  - 更新会员等级说明列表的数据
+
+---
+
+### 二、首页区域级别选择添加"全国"选项
+
+#### 问题描述
+- 首页区域级别选择按钮只有：省、市、县、镇
+- 缺少"全国"选项，全国会员无法选择全国区域
+
+#### 修复方案
+添加"全国"选项到区域级别选择按钮：
+- 全国（level: 0）
+- 省（level: 1）
+- 市（level: 2）
+- 县（level: 3）
+- 镇（level: 4）
+
+#### 修改文件
+- `client/screens/home/HomeScreen.tsx`
+  - 区域级别选择按钮数组添加 `{ level: 0, name: '全国' }`
+  - 添加点击全国按钮时的逻辑（region_code='0000000000'）
+
+---
+
+### 三、"其他留言"按钮改为级联区域选择器
+
+#### 问题描述
+- 点击"其他留言"按钮后，只显示用户自己的区域（省、市、县、镇）
+- 用户想要像注册时那样的完整区域选择，可以选择全国任何区域
+
+#### 修复方案
+将简单的区域选择 Modal 改为级联选择器：
+1. **全国选项**：全国会员可以直接选择"全国"
+2. **省份选择**：横向滚动列表显示所有省份
+3. **城市选择**：选择省份后显示该省的所有城市
+4. **区县选择**：选择城市后显示该市的所有区县
+5. **乡镇选择**：选择区县后显示该县的所有乡镇/街道
+
+#### 功能特点
+- 级联加载：省→市→县→镇，每级选择后加载下一级数据
+- 已选区域显示：实时显示已选择的完整区域路径
+- 确认按钮：选择完成后点击确认按钮应用选择
+
+#### 修改文件
+- `client/screens/home/HomeScreen.tsx`
+  - 添加级联选择器状态（provinces, cities, districts, streets）
+  - 添加加载函数（loadProvinces, loadCities, loadDistricts, loadStreets）
+  - 添加选择处理函数（handleProvinceSelect, handleCitySelect, handleDistrictSelect, handleStreetSelect）
+  - 添加确认选择函数（handleConfirmRegion）
+  - 替换区域选择 Modal 为级联选择器 UI
+  - 添加级联选择器样式
+
+#### API 调用
+- `api.getProvinces()`：获取所有省份
+- `api.getCities(provinceCode)`：获取指定省份的城市
+- `api.getDistricts(cityCode)`：获取指定城市的区县
+- `api.getTowns(districtCode)`：获取指定区县的乡镇/街道
+
+---
+
+### 四、根本原因分析
+
+#### 问题 1：代码未推送
+- **原因**：修复脚本使用了错误的文本匹配，导致修改没有生效
+- **解决**：使用正确的文本匹配，确认修改成功后再提交
+
+#### 问题 2：服务器代码未更新
+- **原因**：服务器上的代码是旧的，没有拉取最新提交
+- **解决**：执行 `git pull origin main` 拉取最新代码
+
+#### 问题 3：前端缓存问题
+- **原因**：浏览器缓存了旧版本的前端代码
+- **解决**：清除浏览器缓存并强制刷新（Ctrl+F5）
+
+---
+
+### 五、经验教训
+
+1. **代码修改验证**：修改代码后必须验证文件内容是否真的改变了
+2. **Git 提交检查**：提交前检查 `git status` 和 `git log`，确保所有修改都已提交
+3. **服务器同步**：部署前确认服务器上的代码是最新的
+4. **缓存处理**：前端更新后需要清除浏览器缓存
+5. **文本匹配**：使用脚本修改文件时，确保文本匹配准确
