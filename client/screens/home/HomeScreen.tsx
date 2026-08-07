@@ -336,6 +336,16 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [selectedRegionName, setSelectedRegionName] = useState<string>('');
   const [selectedRegionLevel, setSelectedRegionLevel] = useState<number>(4); // 1=省, 2=市, 3=县, 4=镇
   const [showRegionModal, setShowRegionModal] = useState(false);
+  
+  // 级联选择器状态
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [streets, setStreets] = useState<any[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<any>(null);
+  const [selectedCity, setSelectedCity] = useState<any>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
+  const [selectedStreet, setSelectedStreet] = useState<any>(null);
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -344,6 +354,108 @@ export default function HomeScreen({ onPostPress }: Props) {
     { code: 'share', name: '分享' },
     { code: 'other', name: '其他' },
   ];
+
+  // 加载省份数据
+  const loadProvinces = async () => {
+    try {
+      const { data } = await api.getProvinces();
+      setProvinces(data);
+    } catch (error) {
+      console.error('加载省份失败:', error);
+    }
+  };
+
+  // 加载城市数据
+  const loadCities = async (provinceCode: string) => {
+    try {
+      const { data } = await api.getCities(provinceCode);
+      setCities(data);
+      setDistricts([]);
+      setStreets([]);
+      setSelectedCity(null);
+      setSelectedDistrict(null);
+      setSelectedStreet(null);
+    } catch (error) {
+      console.error('加载城市失败:', error);
+    }
+  };
+
+  // 加载区县数据
+  const loadDistricts = async (cityCode: string) => {
+    try {
+      const { data } = await api.getDistricts(cityCode);
+      setDistricts(data);
+      setStreets([]);
+      setSelectedDistrict(null);
+      setSelectedStreet(null);
+    } catch (error) {
+      console.error('加载区县失败:', error);
+    }
+  };
+
+  // 加载乡镇数据
+  const loadStreets = async (districtCode: string) => {
+    try {
+      const { data } = await api.getTowns(districtCode);
+      setStreets(data);
+      setSelectedStreet(null);
+    } catch (error) {
+      console.error('加载乡镇失败:', error);
+    }
+  };
+
+  // 选择省份
+  const handleProvinceSelect = (province: any) => {
+    setSelectedProvince(province);
+    loadCities(province.code);
+  };
+
+  // 选择城市
+  const handleCitySelect = (city: any) => {
+    setSelectedCity(city);
+    loadDistricts(city.code);
+  };
+
+  // 选择区县
+  const handleDistrictSelect = (district: any) => {
+    setSelectedDistrict(district);
+    loadStreets(district.code);
+  };
+
+  // 选择乡镇
+  const handleStreetSelect = (street: any) => {
+    setSelectedStreet(street);
+  };
+
+  // 确认选择区域
+  const handleConfirmRegion = () => {
+    if (selectedStreet) {
+      setSelectedRegionCode(selectedStreet.code);
+      setSelectedRegionName(selectedStreet.name);
+      setSelectedRegionLevel(4);
+    } else if (selectedDistrict) {
+      setSelectedRegionCode(selectedDistrict.code);
+      setSelectedRegionName(selectedDistrict.name);
+      setSelectedRegionLevel(3);
+    } else if (selectedCity) {
+      setSelectedRegionCode(selectedCity.code);
+      setSelectedRegionName(selectedCity.name);
+      setSelectedRegionLevel(2);
+    } else if (selectedProvince) {
+      setSelectedRegionCode(selectedProvince.code);
+      setSelectedRegionName(selectedProvince.name);
+      setSelectedRegionLevel(1);
+    }
+    setShowRegionModal(false);
+    // 重置选择
+    setSelectedProvince(null);
+    setSelectedCity(null);
+    setSelectedDistrict(null);
+    setSelectedStreet(null);
+    setCities([]);
+    setDistricts([]);
+    setStreets([]);
+  };
 
   // 初始化默认区域（根据会员等级）
   useEffect(() => {
@@ -535,7 +647,10 @@ export default function HomeScreen({ onPostPress }: Props) {
         </View>
         <TouchableOpacity
           style={styles.otherRegionButton}
-          onPress={() => setShowRegionModal(true)}
+          onPress={() => {
+          setShowRegionModal(true);
+          loadProvinces();
+        }}
         >
           <Text style={styles.otherRegionText}>其他留言</Text>
         </TouchableOpacity>
@@ -615,110 +730,153 @@ export default function HomeScreen({ onPostPress }: Props) {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* 区域选择 Modal */}
+      {/* 区域选择 Modal - 级联选择器 */}
       {showRegionModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>选择其他区域</Text>
+              <Text style={styles.modalTitle}>选择区域</Text>
               <TouchableOpacity onPress={() => setShowRegionModal(false)}>
                 <Text style={styles.modalClose}>×</Text>
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
-              {/* 全国选择 */}
+              {/* 全国选项 */}
               {user?.member_level >= 4 && (
-                <View style={styles.regionSection}>
-                  <Text style={styles.regionSectionTitle}>全国</Text>
+                <TouchableOpacity
+                  style={styles.cascadeOption}
+                  onPress={() => {
+                    setSelectedRegionCode('0000000000');
+                    setSelectedRegionName('全国');
+                    setSelectedRegionLevel(0);
+                    setShowRegionModal(false);
+                  }}
+                >
+                  <Text style={styles.cascadeOptionText}>全国</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* 省份选择 */}
+              <Text style={styles.cascadeLabel}>选择省份</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
+                {provinces.map((province) => (
                   <TouchableOpacity
-                    style={styles.regionOption}
-                    onPress={() => {
-                      setSelectedRegionCode('0000000000');
-                      setSelectedRegionName('全国');
-                      setSelectedRegionLevel(0);
-                      setShowRegionModal(false);
-                    }}
+                    key={province.code}
+                    style={[
+                      styles.cascadeItem,
+                      selectedProvince?.code === province.code && styles.cascadeItemSelected,
+                    ]}
+                    onPress={() => handleProvinceSelect(province)}
                   >
-                    <Text style={styles.regionOptionText}>全国</Text>
-                    <Text style={styles.regionOptionConfirm}>确定</Text>
+                    <Text style={[
+                      styles.cascadeItemText,
+                      selectedProvince?.code === province.code && styles.cascadeItemTextSelected,
+                    ]}>
+                      {province.name}
+                    </Text>
                   </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* 城市选择 */}
+              {cities.length > 0 && (
+                <>
+                  <Text style={styles.cascadeLabel}>选择城市</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
+                    {cities.map((city) => (
+                      <TouchableOpacity
+                        key={city.code}
+                        style={[
+                          styles.cascadeItem,
+                          selectedCity?.code === city.code && styles.cascadeItemSelected,
+                        ]}
+                        onPress={() => handleCitySelect(city)}
+                      >
+                        <Text style={[
+                          styles.cascadeItemText,
+                          selectedCity?.code === city.code && styles.cascadeItemTextSelected,
+                        ]}>
+                          {city.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {/* 区县选择 */}
+              {districts.length > 0 && (
+                <>
+                  <Text style={styles.cascadeLabel}>选择区县</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
+                    {districts.map((district) => (
+                      <TouchableOpacity
+                        key={district.code}
+                        style={[
+                          styles.cascadeItem,
+                          selectedDistrict?.code === district.code && styles.cascadeItemSelected,
+                        ]}
+                        onPress={() => handleDistrictSelect(district)}
+                      >
+                        <Text style={[
+                          styles.cascadeItemText,
+                          selectedDistrict?.code === district.code && styles.cascadeItemTextSelected,
+                        ]}>
+                          {district.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {/* 乡镇选择 */}
+              {streets.length > 0 && (
+                <>
+                  <Text style={styles.cascadeLabel}>选择乡镇/街道</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
+                    {streets.map((street) => (
+                      <TouchableOpacity
+                        key={street.code}
+                        style={[
+                          styles.cascadeItem,
+                          selectedStreet?.code === street.code && styles.cascadeItemSelected,
+                        ]}
+                        onPress={() => handleStreetSelect(street)}
+                      >
+                        <Text style={[
+                          styles.cascadeItemText,
+                          selectedStreet?.code === street.code && styles.cascadeItemTextSelected,
+                        ]}>
+                          {street.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {/* 已选区域显示 */}
+              {(selectedProvince || selectedCity || selectedDistrict || selectedStreet) && (
+                <View style={styles.selectedRegionDisplay}>
+                  <Text style={styles.selectedRegionLabel}>已选区域：</Text>
+                  <Text style={styles.selectedRegionText}>
+                    {selectedProvince?.name || ''}
+                    {selectedCity?.name ? ' ' + selectedCity.name : ''}
+                    {selectedDistrict?.name ? ' ' + selectedDistrict.name : ''}
+                    {selectedStreet?.name ? ' ' + selectedStreet.name : ''}
+                  </Text>
                 </View>
               )}
 
-              {/* 省级选择 */}
-              {user?.province_name && (
-                <View style={styles.regionSection}>
-                  <Text style={styles.regionSectionTitle}>省级</Text>
-                  <TouchableOpacity
-                    style={styles.regionOption}
-                    onPress={() => {
-                      setSelectedRegionCode(user.province_code || '');
-                      setSelectedRegionName(user.province_name || '');
-                      setSelectedRegionLevel(1);
-                      setShowRegionModal(false);
-                    }}
-                  >
-                    <Text style={styles.regionOptionText}>{user.province_name}</Text>
-                    <Text style={styles.regionOptionConfirm}>确定</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* 市级选择 */}
-              {user?.city_name && (
-                <View style={styles.regionSection}>
-                  <Text style={styles.regionSectionTitle}>市级</Text>
-                  <TouchableOpacity
-                    style={styles.regionOption}
-                    onPress={() => {
-                      setSelectedRegionCode(user.city_code || '');
-                      setSelectedRegionName(user.city_name || '');
-                      setSelectedRegionLevel(2);
-                      setShowRegionModal(false);
-                    }}
-                  >
-                    <Text style={styles.regionOptionText}>{user.city_name}</Text>
-                    <Text style={styles.regionOptionConfirm}>确定</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* 县级选择 */}
-              {user?.district_name && (
-                <View style={styles.regionSection}>
-                  <Text style={styles.regionSectionTitle}>县级</Text>
-                  <TouchableOpacity
-                    style={styles.regionOption}
-                    onPress={() => {
-                      setSelectedRegionCode(user.district_code || '');
-                      setSelectedRegionName(user.district_name || '');
-                      setSelectedRegionLevel(3);
-                      setShowRegionModal(false);
-                    }}
-                  >
-                    <Text style={styles.regionOptionText}>{user.district_name}</Text>
-                    <Text style={styles.regionOptionConfirm}>确定</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* 镇级选择 */}
-              {user?.town_name && (
-                <View style={styles.regionSection}>
-                  <Text style={styles.regionSectionTitle}>镇级</Text>
-                  <TouchableOpacity
-                    style={styles.regionOption}
-                    onPress={() => {
-                      setSelectedRegionCode(user.town_code || '');
-                      setSelectedRegionName(user.town_name || '');
-                      setSelectedRegionLevel(4);
-                      setShowRegionModal(false);
-                    }}
-                  >
-                    <Text style={styles.regionOptionText}>{user.town_name}</Text>
-                    <Text style={styles.regionOptionConfirm}>确定</Text>
-                  </TouchableOpacity>
-                </View>
+              {/* 确认按钮 */}
+              {(selectedProvince || selectedCity || selectedDistrict || selectedStreet) && (
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={handleConfirmRegion}
+                >
+                  <Text style={styles.confirmButtonText}>确认选择</Text>
+                </TouchableOpacity>
               )}
             </ScrollView>
           </View>
@@ -727,6 +885,84 @@ export default function HomeScreen({ onPostPress }: Props) {
     </SafeAreaView>
   );
 }
+
+const cascadeStyles = {
+  cascadeOption: {
+    padding: 16,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.3)',
+  },
+  cascadeOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#D4AF37',
+    textAlign: 'center',
+  },
+  cascadeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  cascadeScroll: {
+    marginBottom: 8,
+  },
+  cascadeItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(139,115,85,0.1)',
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(139,115,85,0.2)',
+  },
+  cascadeItemSelected: {
+    backgroundColor: 'rgba(212,175,55,0.2)',
+    borderColor: '#D4AF37',
+  },
+  cascadeItemText: {
+    fontSize: 14,
+    color: '#8B7355',
+  },
+  cascadeItemTextSelected: {
+    color: '#D4AF37',
+    fontWeight: '600',
+  },
+  selectedRegionDisplay: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: 'rgba(212,175,55,0.05)',
+    borderRadius: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  selectedRegionLabel: {
+    fontSize: 13,
+    color: '#8B7355',
+    fontWeight: '500',
+  },
+  selectedRegionText: {
+    fontSize: 13,
+    color: '#D4AF37',
+    fontWeight: '600',
+  },
+  confirmButton: {
+    marginTop: 20,
+    padding: 14,
+    backgroundColor: '#D4AF37',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -1185,4 +1421,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F0E6',
     borderRadius: 6,
   },
+  ...cascadeStyles,
 });
