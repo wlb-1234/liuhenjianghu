@@ -146,11 +146,10 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
           <Text style={styles.sectionTitle}>江湖会员等级</Text>
           {[
             { level: 0, name: '江湖散人', price: '免费', features: ['本镇发布', '10条/天', '7天留存'] },
-            { level: 1, name: '门派弟子', price: '9元/月', features: ['本镇发布', '10条/天', '14天留存'] },
-            { level: 2, name: '江湖侠客', price: '19元/月', features: ['本县发布', '30条/天', '30天留存'] },
-            { level: 3, name: '一派掌门', price: '39元/月', features: ['本市发布', '100条/天', '90天留存'] },
-            { level: 4, name: '武林盟主', price: '69元/月', features: ['本省发布', '999条/天', '365天留存'] },
-            { level: 5, name: '天下共主', price: '99元/月', features: ['全国发布', '999条/天', '999天留存'] },
+            { level: 1, name: '县级会员', price: '20元/月', features: ['本县发布', '30条/天', '15天留存'] },
+            { level: 2, name: '市级会员', price: '100元/月', features: ['本市发布', '100条/天', '30天留存'] },
+            { level: 3, name: '省级会员', price: '500元/月', features: ['本省发布', '200条/天', '40天留存'] },
+            { level: 4, name: '全国会员', price: '2000元/月', features: ['全国发布', '300条/天', '50天留存'] },
           ].map(item => (
             <TouchableOpacity
               key={item.level}
