@@ -144,16 +144,20 @@ function FloatingPostCard({
   item,
   onPress,
   onLike,
+  onDelete,
   likeLoading,
   index,
   totalCount,
+  currentUserId,
 }: {
   item: Post;
   onPress: () => void;
   onLike: () => void;
+  onDelete?: () => void;
   likeLoading: boolean;
   index: number;
   totalCount: number;
+  currentUserId?: number;
 }) {
   const floatAnim = useRef(new Animated.Value(0)).current;
   const images = typeof item.images === 'string' ? JSON.parse(item.images) : item.images || [];
