@@ -485,6 +485,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       <View style={styles.regionLevelContainer}>
         <View style={styles.regionLevelButtons}>
           {[
+            { level: 0, name: '全国' },
             { level: 1, name: '省' },
             { level: 2, name: '市' },
             { level: 3, name: '县' },
@@ -500,7 +501,10 @@ export default function HomeScreen({ onPostPress }: Props) {
                 // 根据用户信息获取对应级别的区域代码
                 let code = '';
                 let name = '';
-                if (item.level === 1 && user?.province_code) {
+                if (item.level === 0) {
+                  code = '0000000000';
+                  name = '全国';
+                } else if (item.level === 1 && user?.province_code) {
                   code = user.province_code;
                   name = user.province_name || '';
                 } else if (item.level === 2 && user?.city_code) {
