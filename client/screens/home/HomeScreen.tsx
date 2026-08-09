@@ -318,6 +318,15 @@ function FloatingPostCard({
           >
             <Text style={styles.actionIcon}>举</Text>
           </TouchableOpacity>
+          {currentUserId && item.user_id === currentUserId && onDelete && (
+            <TouchableOpacity
+              style={[styles.actionItem, { marginLeft: 'auto' }]}
+              onPress={onDelete}
+            >
+              <Text style={[styles.actionIcon, { color: '#D32F2F' }]}>🗑</Text>
+              <Text style={[styles.actionText, { color: '#D32F2F' }]}>删除</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -583,9 +592,11 @@ export default function HomeScreen({ onPostPress }: Props) {
       item={item}
       onPress={() => onPostPress(item)}
       onLike={() => handleLike(item.id)}
+      onDelete={() => handleDeletePost(item.id)}
       likeLoading={likeLoading === item.id}
       index={index}
       totalCount={posts.length}
+      currentUserId={user?.id}
     />
   );
 
