@@ -3311,3 +3311,55 @@ UPDATE users SET member_level = 4 WHERE id = 2;
 **注意事项**：
 - 如果需要恢复使用阿里云 RDS，需要检查安全组/白名单配置
 - 当前使用的数据库是 volces.com，与 exec_sql 工具使用的是同一个数据库
+
+---
+
+### 2026-08-10 23:00 - 阿里云 RDS 白名单配置说明
+
+**问题描述**：
+- 沙箱环境（开发环境）无法连接阿里云 RDS 数据库
+- 错误信息：`Connection terminated due to connection timeout`
+- 原因：沙箱环境的出口 IP 不在阿里云 RDS 的白名单中
+
+**沙箱环境信息**：
+- 出口 IP：`115.190.218.237`
+- 此 IP 用于开发测试环境
+
+**解决方案**：
+
+#### 方案 1：添加沙箱 IP 到白名单（推荐）
+1. 登录阿里云控制台：https://rdsnext.console.aliyun.com/
+2. 找到 RDS 实例：`pgm-uf6sc0v55a1p3r7m`
+3. 进入"数据安全性" -> "白名单设置"
+4. 添加 IP 白名单：`115.190.218.237`
+5. 保存后等待 1-2 分钟生效
+
+#### 方案 2：添加所有 IP（仅用于测试）
+1. 在白名单中添加：`0.0.0.0/0`
+2. ⚠️ **安全警告**：此配置允许所有 IP 访问，不推荐用于生产环境
+
+#### 方案 3：使用服务器 IP（生产环境）
+- 服务器 IP：`47.116.142.121`
+- 确保此 IP 已在白名单中
+- 生产环境使用此配置
+
+**当前配置**：
+- 开发环境（.env）：使用阿里云 RDS
+- 生产环境（ecosystem.config.cjs）：使用阿里云 RDS
+- 临时方案：如无法配置白名单，可临时使用 volces.com 数据库
+
+**验证方法**：
+```bash
+# 测试数据库连接
+cd /workspace/projects/server
+node -e "
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 5000
+});
+pool.query('SELECT 1')
+  .then(res => console.log('连接成功:', res.rows[0]))
+  .catch(err => console.error('连接失败:', err.message));
+"
+```
