@@ -3402,3 +3402,52 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 pool.query('SELECT 1').then(res => console.log('成功')).catch(err => console.error('失败:', err.message));
 "
 ```
+
+---
+
+### 2026-08-10 23:59 - 生产服务器配置更新
+
+**问题**：服务器修改 ecosystem.config.cjs 后，数据库连接仍然失败
+
+**可能原因**：
+1. sed 命令可能没有正确匹配和替换
+2. ecosystem.config.cjs 中的 DATABASE_URL 格式可能不同
+3. PM2 缓存了旧的环境变量
+
+**排查步骤**：
+
+1. **检查文件内容**：
+```bash
+cat /opt/liuhenjianghu/server/ecosystem.config.cjs | grep DATABASE_URL
+```
+
+2. **如果还是内网地址，手动编辑**：
+```bash
+nano /opt/liuhenjianghu/server/ecosystem.config.cjs
+```
+找到 DATABASE_URL 行，改为：
+```
+DATABASE_URL: 'postgresql://liuhenjianghu:Liuhen2026App@pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com:5432/liuhenjianghu',
+```
+
+3. **清除 PM2 缓存并重启**：
+```bash
+pm2 delete liuhen-api
+pm2 start ecosystem.config.cjs --env production
+pm2 save
+```
+
+4. **测试连接**：
+```bash
+cd /opt/liuhenjianghu/server
+node -e "
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: 'postgresql://liuhenjianghu:Liuhen2026App@pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com:5432/liuhenjianghu' });
+pool.query('SELECT 1').then(res => console.log('✅ 成功')).catch(err => console.error('❌ 失败:', err.message));
+"
+```
+
+5. **验证 API**：
+```bash
+curl https://liuhenjianghu.com/api/v1/health
+```
