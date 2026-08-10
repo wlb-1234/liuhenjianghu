@@ -3363,3 +3363,42 @@ pool.query('SELECT 1')
   .catch(err => console.error('连接失败:', err.message));
 "
 ```
+
+---
+
+### 2026-08-10 23:40 - 生产部署数据库配置说明
+
+**配置策略**：
+- **开发环境（沙箱）**：使用 volces.com 数据库（IP 动态，无法配置固定白名单）
+- **生产环境（服务器）**：使用阿里云 RDS 外网地址（固定 IP 白名单）
+
+**开发环境配置**（server/.env）：
+```
+DATABASE_URL=postgresql://postgres:h6RRDenG294WF9CB4V@cp-brisk-fair-716f235e.pg4.aidap-global.cn-beijing.volces.com:5432/postgres?sslmode=require
+```
+
+**生产环境配置**（服务器 ecosystem.config.cjs）：
+```javascript
+DATABASE_URL: 'postgresql://liuhenjianghu:Liuhen2026App@pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com:5432/liuhenjianghu'
+```
+
+**白名单设置**：
+- 只保留生产服务器 IP：`47.116.142.121`
+- 移除所有动态 IP
+
+**部署流程**：
+1. 代码推送到 GitHub main 分支
+2. GitHub Actions 自动部署到服务器
+3. 服务器使用 ecosystem.config.cjs 中的阿里云 RDS 配置
+4. 数据库连接正常（白名单已配置）
+
+**验证方法**：
+```bash
+# 在服务器上测试数据库连接
+cd /opt/liuhenjianghu/server
+node -e "
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+pool.query('SELECT 1').then(res => console.log('成功')).catch(err => console.error('失败:', err.message));
+"
+```
