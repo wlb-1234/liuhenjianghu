@@ -335,7 +335,7 @@ function FloatingPostCard({
           >
             <Text style={styles.actionIcon}>举</Text>
           </TouchableOpacity>
-          {currentUserId && item.user_id === currentUserId && onDelete && (
+          {currentUserId && item.author?.id === currentUserId && onDelete && (
             <TouchableOpacity
               style={[styles.actionItem, { marginLeft: 'auto' }]}
               onPress={onDelete}

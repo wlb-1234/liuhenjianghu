@@ -183,7 +183,10 @@ router.post('/:id/like', authMiddleware, async (req: AuthRequest, res: Response)
     
     const liked = await toggleLike(req.userId!, postId);
     
-    res.json({ success: true, liked });
+    // 获取更新后的点赞数
+    const updatedPost = await getPostById(postId);
+    
+    res.json({ success: true, liked, like_count: updatedPost.like_count });
   } catch (error: any) {
     console.error('点赞错误:', error);
     res.status(500).json({ error: error.message || '操作失败' });
