@@ -3537,3 +3537,37 @@ curl https://liuhenjianghu.com/api/v1/posts?page=1&pageSize=5
 ```bash
 pm2 logs liuhen-api --lines 100
 ```
+
+---
+
+### 2026-08-11 00:15 - 生产环境配置成功 ✅
+
+**最终状态**：
+- ✅ 数据库连接：成功
+- ✅ API 健康检查：`{"status":"ok","service":"China Regions API","version":"3.0.0","database":"liuhenjianghu"}`
+- ✅ 帖子列表 API：返回 19 条帖子数据
+- ✅ PM2 服务：正常运行（进程 ID 10, 11）
+
+**生产环境配置**：
+| 项目 | 配置 |
+|------|------|
+| 服务器 IP | 47.116.142.121 |
+| 数据库地址 | pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com（外网） |
+| 数据库名 | liuhenjianghu |
+| 用户名 | liuhenjianghu |
+| 白名单 | 47.116.142.121 |
+| PM2 应用 | liuhen-api (2 instances) |
+| API 地址 | https://liuhenjianghu.com/api/v1 |
+
+**关键步骤**：
+1. 修改 ecosystem.config.cjs 使用外网地址
+2. 配置阿里云 RDS 白名单（服务器 IP）
+3. 完全重载 PM2（delete + start，不是 restart）
+4. 验证 API 连接
+
+**开发环境**：
+- 沙箱环境使用 volces.com 数据库
+- 生产环境使用阿里云 RDS 数据库
+- 代码已推送到 GitHub
+
+**生产环境已就绪，可以正式运营！** 🎉
