@@ -9,9 +9,10 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { apiRequest } from '@/services/api';
+import { useSafeSearchParams, useSafeRouter } from '@/hooks/useSafeRouter';
+import api from '@/services/api';
 import { ShareButton } from '@/components/Share';
 
 const { width } = Dimensions.get('window');
@@ -33,7 +34,8 @@ interface Post {
 }
 
 export default function SharedPostScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useSafeSearchParams<{ id: string }>();
+  const router = useSafeRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,8 +47,8 @@ export default function SharedPostScreen() {
 
   const fetchPost = async () => {
     try {
-      const data = await apiRequest(`/posts/${id}`);
-      setPost(data);
+      const data = await api.getPost(parseInt(id));
+      setPost(data.post);
     } catch (error) {
       console.error('获取帖子失败:', error);
     } finally {
@@ -57,13 +59,11 @@ export default function SharedPostScreen() {
   const handleLike = async () => {
     if (!post) return;
     try {
-      const res = await apiRequest(`/posts/${post.id}/like`, {
-        method: 'POST',
-      });
+      const res = await api.toggleLike(post.id);
       setPost({
         ...post,
-        is_liked: res.is_liked,
-        like_count: res.is_liked ? post.like_count + 1 : post.like_count - 1,
+        is_liked: res.liked,
+        like_count: res.like_count,
       });
     } catch (error) {
       console.error('点赞失败:', error);
@@ -87,7 +87,7 @@ export default function SharedPostScreen() {
     return (
       <View style={styles.error}>
         <Text style={styles.errorText}>帖子不存在或已被删除</Text>
-        <TouchableOpacity style={styles.homeBtn} onPress={() => window.location.href = '/'}>
+        <TouchableOpacity style={styles.homeBtn} onPress={() => router.navigate('/')}>
           <Text style={styles.homeBtnText}>返回首页</Text>
         </TouchableOpacity>
       </View>
@@ -159,7 +159,7 @@ export default function SharedPostScreen() {
         {/* 底部提示 */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>来自「流痕江湖」</Text>
-          <TouchableOpacity onPress={() => window.location.href = '/'}>
+          <TouchableOpacity onPress={() => router.navigate('/')}>
             <Text style={styles.openApp}>打开 App 查看更多</Text>
           </TouchableOpacity>
         </View>
