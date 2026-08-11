@@ -3451,3 +3451,44 @@ pool.query('SELECT 1').then(res => console.log('✅ 成功')).catch(err => conso
 ```bash
 curl https://liuhenjianghu.com/api/v1/health
 ```
+
+---
+
+### 2026-08-11 00:05 - 生产环境 PM2 环境变量缓存问题
+
+**问题**：
+- 服务器直接测试数据库连接：✅ 成功
+- API 健康检查：❌ 连接超时
+- 原因：PM2 缓存了旧的环境变量
+
+**解决方案**：
+
+**方法 1：完全重载 PM2（推荐）**
+```bash
+cd /opt/liuhenjianghu/server
+pm2 delete liuhen-api
+pm2 start ecosystem.config.cjs --env production
+pm2 save
+```
+
+**方法 2：更新环境变量后重启**
+```bash
+cd /opt/liuhenjianghu/server
+pm2 update-env liuhen-api
+pm2 restart liuhen-api
+```
+
+**验证步骤**：
+```bash
+# 1. 检查 PM2 环境变量
+pm2 env liuhen-api | grep DATABASE_URL
+
+# 2. 测试 API
+curl https://liuhenjianghu.com/api/v1/health
+
+# 3. 测试帖子列表
+curl https://liuhenjianghu.com/api/v1/posts?page=1&pageSize=5
+
+# 4. 查看日志
+pm2 logs liuhen-api --lines 50
+```
