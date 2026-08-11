@@ -314,7 +314,24 @@ function FloatingPostCard({
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => Alert.alert('举报', '确定要举报这条留言吗？')}
+            onPress={() => {
+              Alert.alert('举报', '确定要举报这条留言吗？', [
+                { text: '取消', style: 'cancel' },
+                {
+                  text: '举报',
+                  onPress: async () => {
+                    try {
+                      const result = await apiService.reportPost(item.id, '不当内容');
+                      if (result.success) {
+                        Alert.alert('成功', result.message || '举报已提交');
+                      }
+                    } catch (error: any) {
+                      Alert.alert('错误', error.message || '举报失败');
+                    }
+                  },
+                },
+              ]);
+            }}
           >
             <Text style={styles.actionIcon}>举</Text>
           </TouchableOpacity>

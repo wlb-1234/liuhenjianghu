@@ -255,4 +255,38 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   }
 });
 
+// 举报帖子
+router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const { reason } = req.body;
+    
+    const post = await getPostById(postId);
+    if (!post) {
+      return res.status(404).json({ error: '帖子不存在' });
+    }
+    
+    // 检查是否已经举报过
+    const existingReport = await pool.query(
+      'SELECT id FROM reports WHERE post_id = $1 AND user_id = $2',
+      [postId, req.userId]
+    );
+    
+    if (existingReport.rows.length > 0) {
+      return res.status(400).json({ error: '您已经举报过该帖子' });
+    }
+    
+    // 创建举报记录
+    await pool.query(
+      'INSERT INTO reports (post_id, user_id, reason, status, created_at) VALUES ($1, $2, $3, 0, NOW())',
+      [postId, req.userId, reason || '用户举报']
+    );
+    
+    res.json({ success: true, message: '举报成功' });
+  } catch (error: any) {
+    console.error('举报帖子错误:', error);
+    res.status(500).json({ error: error.message || '举报失败' });
+  }
+});
+
 export default router;

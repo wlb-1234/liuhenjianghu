@@ -175,6 +175,14 @@ class ApiService {
     return this.request(`/posts/${postId}/like`, { method: 'POST' });
   }
 
+  // 举报帖子
+  async reportPost(postId: number, reason?: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/posts/${postId}/report`, {
+      method: 'POST',
+      body: { reason },
+    });
+  }
+
   // 获取评论
   async getComments(postId: number): Promise<{ comments: any[] }> {
     return this.request(`/posts/${postId}/comments`);
