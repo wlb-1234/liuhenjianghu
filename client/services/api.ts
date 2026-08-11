@@ -196,14 +196,6 @@ class ApiService {
     });
   }
 
-  // 举报帖子
-  async reportPost(postId: number, reason: string): Promise<{ success: boolean }> {
-    return this.request(`/posts/${postId}/report`, {
-      method: 'POST',
-      body: { reason },
-    });
-  }
-
   // 删除帖子
   async deletePost(postId: number): Promise<{ success: boolean }> {
     return this.request(`/posts/${postId}`, { method: 'DELETE' });

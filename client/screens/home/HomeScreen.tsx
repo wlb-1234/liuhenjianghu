@@ -599,6 +599,49 @@ export default function HomeScreen({ onPostPress }: Props) {
     }
   };
 
+
+  const handleDeletePost = async (postId: number) => {
+    Alert.alert(
+      '删除留言',
+      '确定要删除这条留言吗？',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '删除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deletePost(postId);
+              setPosts((prev) => prev.filter((p) => p.id !== postId));
+            } catch (error: any) {
+              Alert.alert('删除失败', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleReport = async (postId: number) => {
+    Alert.alert(
+      '举报留言',
+      '确定要举报这条留言吗？',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '举报',
+          onPress: async () => {
+            try {
+              await api.reportPost(postId);
+              Alert.alert('举报成功', '感谢您的反馈，我们会尽快处理');
+            } catch (error: any) {
+              Alert.alert('举报失败', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
   const handleNewPostPress = () => {
     setShowNewPostAlert(false);
     handleRefresh();
