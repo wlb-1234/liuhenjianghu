@@ -3571,3 +3571,43 @@ pm2 logs liuhen-api --lines 100
 - 代码已推送到 GitHub
 
 **生产环境已就绪，可以正式运营！** 🎉
+
+---
+
+### 2026-08-11 00:30 - 修复删除按钮显示问题
+
+**问题描述**：
+- 用户反馈：帖子后面没有删除按钮
+- 原因：前端使用 `item.user_id === currentUserId` 判断是否显示删除按钮
+- 但后端返回的帖子数据中，用户信息在 `item.author.id` 字段
+
+**解决方案**：
+- 修改判断条件：`item.user_id === currentUserId` → `item.author?.id === currentUserId`
+- 修改文件：`client/screens/home/HomeScreen.tsx`
+
+**修改内容**：
+```tsx
+// 修改前
+{currentUserId && item.user_id === currentUserId && onDelete && (
+
+// 修改后
+{currentUserId && item.author?.id === currentUserId && onDelete && (
+```
+
+**验证方法**：
+1. 使用无痕模式登录
+2. 发布新帖子
+3. 查看帖子列表，应该能看到删除按钮（🗑图标）
+
+**当前状态**：
+- ✅ 代码已推送到 GitHub
+-  需要在服务器上重新构建前端
+
+**服务器操作**：
+```bash
+cd /opt/liuhenjianghu
+git pull origin main
+cd client
+npx expo export --platform web --clear
+pm2 restart liuhen-client
+```
