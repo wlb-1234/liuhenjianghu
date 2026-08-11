@@ -3492,3 +3492,48 @@ curl https://liuhenjianghu.com/api/v1/posts?page=1&pageSize=5
 # 4. 查看日志
 pm2 logs liuhen-api --lines 50
 ```
+
+---
+
+### 2026-08-11 00:10 - PM2 环境变量完全重载方案
+
+**问题现象**：
+- 直接 node 测试数据库连接：✅ 成功
+- PM2 运行的 API 健康检查：❌ 超时
+- 原因：PM2 restart 不会刷新环境变量缓存
+
+**根本原因**：
+PM2 的 `restart` 命令会保留旧的环境变量，只有 `delete` + `start` 才会重新加载 ecosystem.config.cjs 中的配置。
+
+**解决方案**：
+
+```bash
+cd /opt/liuhenjianghu/server
+
+# 1. 完全删除 PM2 进程
+pm2 delete liuhen-api
+
+# 2. 重新启动（会重新加载 ecosystem.config.cjs）
+pm2 start ecosystem.config.cjs --env production
+
+# 3. 保存配置
+pm2 save
+
+# 4. 验证环境变量
+pm2 env liuhen-api | grep DATABASE_URL
+
+# 5. 测试 API
+curl https://liuhenjianghu.com/api/v1/health
+
+# 6. 测试帖子列表
+curl https://liuhenjianghu.com/api/v1/posts?page=1&pageSize=5
+```
+
+**预期结果**：
+- health 检查返回：`{"status":"ok","database":"connected"}`
+- posts 接口返回帖子数据
+
+**如果还是失败，检查日志**：
+```bash
+pm2 logs liuhen-api --lines 100
+```
