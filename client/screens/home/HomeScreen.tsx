@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Animated,
   ScrollView,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -376,6 +378,8 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [selectedCity, setSelectedCity] = useState<any>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<any>(null);
   const [selectedStreet, setSelectedStreet] = useState<any>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -601,25 +605,28 @@ export default function HomeScreen({ onPostPress }: Props) {
 
 
   const handleDeletePost = async (postId: number) => {
-    Alert.alert(
-      '删除留言',
-      '确定要删除这条留言吗？',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deletePost(postId);
-              setPosts((prev) => prev.filter((p) => p.id !== postId));
-            } catch (error: any) {
-              Alert.alert('删除失败', error.message);
-            }
-          },
-        },
-      ]
-    );
+    setDeletingPostId(postId);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPostId) return;
+    
+    try {
+      await api.deletePost(deletingPostId);
+      setPosts((prev) => prev.filter((p) => p.id !== deletingPostId));
+      setDeleteModalVisible(false);
+      setDeletingPostId(null);
+    } catch (error: any) {
+      Alert.alert('删除失败', error.message);
+      setDeleteModalVisible(false);
+      setDeletingPostId(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalVisible(false);
+    setDeletingPostId(null);
   };
 
   const handleReport = async (postId: number) => {
@@ -957,6 +964,35 @@ export default function HomeScreen({ onPostPress }: Props) {
           </View>
         </View>
       )}
+
+      {/* 删除确认 Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>删除留言</Text>
+            <Text style={styles.modalMessage}>确定要删除这条留言吗？</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={cancelDelete}
+              >
+                <Text style={styles.cancelButtonText}>取消</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.deleteButtonText}>删除</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1034,6 +1070,60 @@ const cascadeStyles = {
   },
   confirmButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // 删除确认 Modal 样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C2C2C',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F0F0F0',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
   },
