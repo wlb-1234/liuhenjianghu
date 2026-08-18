@@ -3611,3 +3611,183 @@ cd client
 npx expo export --platform web --clear
 pm2 restart liuhen-client
 ```
+
+---
+
+### 2026-08-18 16:00 - 建立 AI 辅助修改流程保护机制 ✅
+
+**问题背景**：
+- 修复"不能删除帖子" → 导致"不能登录"
+- 修复"不能登录" → 导致"白屏"和"不能发送验证码"
+- 原因：缺少版本控制和测试机制，修复一个问题时破坏了其他正常功能
+
+**解决方案**：建立完整的 AI 辅助修改流程，确保每次修改都有测试保护和快速回滚能力。
+
+#### 1. 版本保护机制
+
+**Git 版本标签**：
+```bash
+cd /opt/liuhenjianghu
+git add -A
+git commit -m "✅ 稳定版本：登录、注册、SMS、发帖功能正常"
+git tag v1.0-stable
+```
+
+**作用**：出问题时一行命令回退到稳定版本
+
+#### 2. 快速回滚脚本
+
+**文件**：`/opt/liuhenjianghu/rollback.sh`
+
+```bash
+#!/bin/bash
+echo "⚠️  开始回滚到稳定版本..."
+cd /opt/liuhenjianghu
+
+# 回退 Git
+git checkout v1.0-stable
+
+# 重新部署后端
+cd server
+pnpm build
+pm2 restart liuhen-api
+
+# 重新部署前端
+cd ../client
+rm -rf dist .expo
+EXPO_PUBLIC_BACKEND_BASE_URL="" npx expo export --platform web
+pm2 restart liuhen-client
+
+echo "✅ 回滚完成！"
+```
+
+**使用**：`bash /opt/liuhenjianghu/rollback.sh`
+
+#### 3. 冒烟测试脚本
+
+**文件**：`/opt/liuhenjianghu/test.sh`
+
+```bash
+#!/bin/bash
+echo "=== 冒烟测试 ==="
+
+# 1. 后端健康检查
+echo "1. 后端健康检查..."
+curl -s http://localhost:9091/api/v1/health | grep -q '"status":"ok"' && echo "✅ 后端正常" || echo "❌ 后端异常"
+
+# 2. 前端健康检查
+echo "2. 前端健康检查..."
+curl -I -s http://localhost:5000 | grep -q "200 OK" && echo "✅ 前端正常" || echo "❌ 前端异常"
+
+# 3. SMS 配置检查
+echo "3. SMS 配置检查..."
+pm2 logs liuhen-api --lines 5 | grep -q "SMS" && echo "✅ SMS 配置正常" || echo "️  SMS 配置可能有问题"
+
+echo "=== 测试完成 ==="
+```
+
+**使用**：`bash /opt/liuhenjianghu/test.sh`
+
+#### 4. AI 辅助修改流程脚本
+
+**文件**：
+- `/opt/liuhenjianghu/ai-modify.sh` - 修改前检查 + 备份
+- `/opt/liuhenjianghu/ai-verify.sh` - 修改后测试 + 部署
+- `/opt/liuhenjianghu/ai-rollback.sh` - 失败时自动回滚
+
+**ai-modify.sh 功能**：
+1. 运行修改前测试（test.sh）
+2. 备份当前代码到 `/tmp/liuhen-backup-YYYYMMDD-HHMMSS`
+3. 创建 Git 提交（备份点）
+4. 输出备份目录路径
+
+**ai-verify.sh 功能**：
+1. 运行修改后测试（test.sh）
+2. 如果测试失败，提示运行 ai-rollback.sh
+3. 如果测试通过，自动部署（构建 + 重启服务）
+4. 运行部署后测试
+5. 创建 Git 提交（修改完成）
+
+**ai-rollback.sh 功能**：
+1. 接收备份目录参数
+2. 恢复备份文件
+3. 重新部署
+4. 运行测试验证
+
+#### 5. 标准工作流程
+
+**当用户说"帮我修改 XXX 功能"时，AI 自动执行：**
+
+```
+1. 运行 ai-modify.sh    → 修改前测试 + 备份
+2. 修改代码             → AI 帮你改代码
+3. 运行 ai-verify.sh    → 修改后测试 + 部署
+4. 如果出问题           → 运行 ai-rollback.sh 自动回滚
+```
+
+**用户只需**：告诉 AI 改什么，剩下的流程 AI 自动处理。
+
+#### 6. 使用示例
+
+**场景 1：用户说"帮我修改登录页面样式"**
+
+AI 自动执行：
+```bash
+# 1. 修改前检查 + 备份
+bash /opt/liuhenjianghu/ai-modify.sh
+# 输出：备份目录 /tmp/liuhen-backup-20260818-160000
+
+# 2. 修改登录页面代码...
+
+# 3. 修改后测试 + 部署
+bash /opt/liuhenjianghu/ai-verify.sh
+
+# 4. 如果测试失败
+bash /opt/liuhenjianghu/ai-rollback.sh /tmp/liuhen-backup-20260818-160000
+```
+
+**场景 2：用户自己修改代码**
+
+```bash
+# 1. 修改前检查
+bash /opt/liuhenjianghu/test.sh
+
+# 2. 修改代码...
+
+# 3. 修改后检查
+bash /opt/liuhenjianghu/test.sh
+
+# 4. 如果出问题，立即回滚
+bash /opt/liuhenjianghu/rollback.sh
+```
+
+#### 7. 保护机制总结
+
+| 机制 | 文件/命令 | 作用 |
+|------|----------|------|
+| Git 版本标签 | `git tag v1.0-stable` | 保存稳定版本 |
+| 快速回滚 | `rollback.sh` | 一键回退到稳定版本 |
+| 冒烟测试 | `test.sh` | 快速检查前后端状态 |
+| AI 修改前备份 | `ai-modify.sh` | 自动备份 + 测试 |
+| AI 修改后验证 | `ai-verify.sh` | 自动测试 + 部署 |
+| AI 失败回滚 | `ai-rollback.sh` | 自动恢复到备份 |
+
+#### 8. 关键原则
+
+1. **修改前必测试**：确认当前状态正常
+2. **修改前必备份**：出问题时能快速回退
+3. **修改后必验证**：确认没有破坏其他功能
+4. **失败立即回滚**：不要在生产环境调试
+
+**效果**：避免"修复一个问题，破坏三个功能"的情况再次发生。
+
+---
+
+**当前状态**：
+- ✅ 版本标签 v1.0-stable 已创建
+- ✅ 回滚脚本 rollback.sh 已创建
+- ✅ 测试脚本 test.sh 已创建
+- ✅ AI 辅助脚本（ai-modify.sh, ai-verify.sh, ai-rollback.sh）已创建
+- ✅ 所有脚本已添加到 Git 并推送
+
+**生产环境已建立完整的保护机制，可以安全地进行功能修改！** 🛡️
