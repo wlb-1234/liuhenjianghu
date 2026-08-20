@@ -116,18 +116,18 @@ export async function toggleLike(userId: number, postId: number) {
   
   // 检查是否已点赞
   const existing = await p.query(
-    'SELECT id FROM likes WHERE user_id = $1 AND post_id = $2',
+    "SELECT id FROM likes WHERE user_id = $1 AND target_type = 'post' AND target_id = $2",
     [userId, postId]
   );
   
   if (existing.rows.length > 0) {
     // 取消点赞
-    await p.query('DELETE FROM likes WHERE user_id = $1 AND post_id = $2', [userId, postId]);
+    await p.query("DELETE FROM likes WHERE user_id = $1 AND target_type = 'post' AND target_id = $2", [userId, postId]);
     await p.query('UPDATE posts SET like_count = like_count - 1 WHERE id = $1', [postId]);
     return false;
   } else {
     // 添加点赞
-    await p.query('INSERT INTO likes (user_id, post_id) VALUES ($1, $2)', [userId, postId]);
+    await p.query("INSERT INTO likes (user_id, target_type, target_id) VALUES ($1, 'post', $2)", [userId, postId]);
     await p.query('UPDATE posts SET like_count = like_count + 1 WHERE id = $1', [postId]);
     return true;
   }
@@ -137,7 +137,7 @@ export async function toggleLike(userId: number, postId: number) {
 export async function isLiked(userId: number, postId: number) {
   const p = getPool();
   const result = await p.query(
-    'SELECT id FROM likes WHERE user_id = $1 AND post_id = $2',
+    "SELECT id FROM likes WHERE user_id = $1 AND target_type = 'post' AND target_id = $2",
     [userId, postId]
   );
   return result.rows.length > 0;
