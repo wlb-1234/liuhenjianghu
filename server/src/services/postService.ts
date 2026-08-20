@@ -195,7 +195,7 @@ export async function createReport(data: {
 // 删除帖子
 export async function deletePost(postId: number) {
   const p = getPool();
-  await p.query('DELETE FROM likes WHERE post_id = $1', [postId]);
+  await p.query("DELETE FROM likes WHERE target_type = 'post' AND target_id = $1", [postId]);
   await p.query('DELETE FROM comments WHERE post_id = $1', [postId]);
   await p.query('DELETE FROM posts WHERE id = $1', [postId]);
 }
