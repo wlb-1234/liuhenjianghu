@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-08-02 20:40 (北京时间)**
+**最后更新：2026-08-21 23:30 (北京时间)**
 
 ## 项目概述
 
@@ -547,6 +547,7 @@ Content-Type: application/json
 | DELETE | /posts/:id | 删除帖子 | 是 |
 | POST | /posts/:id/like | 点赞 | 是 |
 | DELETE | /posts/:id/like | 取消点赞 | 是 |
+| POST | /posts/:id/report | 举报帖子 | 是 |
 
 ### 评论相关 `/comments`
 | 方法 | 路径 | 说明 | 认证 |
@@ -3791,3 +3792,99 @@ bash /opt/liuhenjianghu/rollback.sh
 - ✅ 所有脚本已添加到 Git 并推送
 
 **生产环境已建立完整的保护机制，可以安全地进行功能修改！** 🛡️
+
+---
+
+## 更新日志
+
+### 2026-08-21 23:30 - 举报功能修复
+
+**问题描述**：
+- 用户点击举报按钮后，对话框消失但没有成功/失败提示
+- 重复举报同一帖子时，对话框不关闭，按钮反复触发
+
+**根本原因**：
+1. 后端 SQL 字段名错误：使用了 `content_id/content_type`，但阿里云 RDS 实际表结构是 `target_id/target_type`
+2. 前端 `Alert.alert()` 在 Web 平台不支持，导致无提示
+3. `ReportToast` 组件已定义但未在 JSX 的 return 语句中渲染
+
+**修复内容**：
+
+**后端修复** (`server/src/routes/posts.ts`)：
+```typescript
+// 修复前
+INSERT INTO reports (content_id, content_type, reporter_id, reason)
+VALUES ($1, 'post', $2, $3)
+
+// 修复后
+INSERT INTO reports (target_id, target_type, reporter_id, reason)
+VALUES ($1, 'post', $2, $3)
+```
+
+**前端修复** (`client/screens/home/HomeScreen.tsx`)：
+1. 创建 `ReportToast` 组件替代 `Alert.alert`（Web 兼容）
+2. 在 HomeScreen 的 return 语句中添加 `<ReportToast>` 组件渲染
+3. 修改 `confirmReport` 函数：
+   - 无论成功失败都关闭 Modal
+   - 400 错误（已举报）也显示为成功提示
+   - Toast 在 finally 中统一处理
+
+**修复后的交互流程**：
+1. 点击举报 → 弹出确认对话框
+2. 点击确认 → Modal 关闭 + 顶部显示绿色 Toast（"举报成功，感谢您的反馈"）
+3. 3 秒后 Toast 自动消失
+4. 重复举报同一帖子 → 显示"您已经举报过该帖子"（也视为成功）
+
+**技术要点**：
+- 后端：PostgreSQL 字段名必须与实际表结构匹配
+- 前端：Web 平台不支持 `Alert.alert()`，需用自定义 Toast 组件
+- React：组件定义后必须在 JSX 中调用才会渲染
+
+**验证结果**：
+- ✅ 后端 API 测试通过（返回 `{"success":true,"message":"举报成功"}`）
+- ✅ 前端 Toast 组件正常显示
+- ✅ Modal 对话框正常关闭
+- ✅ 重复举报处理正确（400 错误友好提示）
+
+---
+
+### 2026-08-21 - 帖子功能配置总结
+
+**点赞功能**：
+- API: `POST /api/v1/posts/:id/like` (点赞), `DELETE /api/v1/posts/:id/like` (取消点赞)
+- 前端：点击爱心图标切换点赞状态
+- 数据库：`post_likes` 表记录用户点赞
+
+**删除功能**：
+- API: `DELETE /api/v1/posts/:id`
+- 权限：仅帖子作者可删除
+- 前端：点击删除按钮 → 确认对话框 → 删除成功刷新列表
+
+**举报功能**：
+- API: `POST /api/v1/posts/:id/report`
+- 参数：`reason: string` (举报原因)
+- 防重复：同一用户不能重复举报同一帖子（返回 400）
+- 前端：点击举报 → 确认对话框 → Toast 提示
+- 数据库：`reports` 表字段 `target_id/target_type/reporter_id/reason/status`
+
+**数据库表结构** (`reports` 表)：
+```sql
+CREATE TABLE reports (
+  id SERIAL PRIMARY KEY,
+  target_id INTEGER NOT NULL,      -- 被举报内容 ID
+  target_type VARCHAR(50) NOT NULL, -- 内容类型 ('post', 'comment')
+  reporter_id INTEGER NOT NULL,     -- 举报人 ID
+  reason TEXT,                      -- 举报原因
+  status VARCHAR(20) DEFAULT 'pending', -- 状态：pending/processed/dismissed
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**后端文件**：
+- `server/src/routes/posts.ts` - 帖子路由（包含举报端点）
+- `server/src/routes/reports.ts` - 举报管理路由（管理后台）
+
+**前端文件**：
+- `client/screens/home/HomeScreen.tsx` - 首页（包含举报按钮和 Toast 组件）
+- `client/services/api.ts` - API 服务（包含 `reportPost` 方法）
+
