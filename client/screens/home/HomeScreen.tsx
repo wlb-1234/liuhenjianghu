@@ -643,10 +643,11 @@ export default function HomeScreen({ onPostPress }: Props) {
     } catch (error: any) {
       setReportModalVisible(false);
       setReportingPostId(null);
-      // 400 错误（已举报）也显示为成功
+      // 400 错误（已举报）显示错误提示
       if (error.message && error.message.includes('已经举报')) {
-        setReportSuccess(true);
-        setTimeout(() => setReportSuccess(false), 2000);
+        showToast('您已经举报过该帖子', 'error');
+      } else {
+        showToast(error.message || '举报失败', 'error');
       }
     }
   };
