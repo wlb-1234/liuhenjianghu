@@ -136,7 +136,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     const limitCheck = checkContentLimit(
       content.trim(),
       existingPosts.rows,
-      2 // 最多2条相似
+      5 // 最多5条相似（临时增加）
     );
     
     if (!limitCheck.canPost) {
