@@ -368,6 +368,7 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportingPostId, setReportingPostId] = useState<number | null>(null);
+  const [reportSuccess, setReportSuccess] = useState(false);
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -629,12 +630,16 @@ export default function HomeScreen({ onPostPress }: Props) {
       await api.reportPost(reportingPostId);
       setReportModalVisible(false);
       setReportingPostId(null);
-      // 显示成功提示
-      Alert.alert('提示', '举报成功，感谢您的反馈');
+      setReportSuccess(true);
+      setTimeout(() => setReportSuccess(false), 2000);
     } catch (error: any) {
-      Alert.alert('提示', error.message || '举报失败');
       setReportModalVisible(false);
       setReportingPostId(null);
+      // 400 错误（已举报）也显示为成功
+      if (error.message && error.message.includes('已经举报')) {
+        setReportSuccess(true);
+        setTimeout(() => setReportSuccess(false), 2000);
+      }
     }
   };
 
@@ -1021,6 +1026,15 @@ export default function HomeScreen({ onPostPress }: Props) {
           </View>
         </View>
       </Modal>
+
+      {/* 举报成功提示 */}
+      {reportSuccess && (
+        <View style={styles.toastContainer}>
+          <View style={styles.toastContent}>
+            <Text style={styles.toastText}>✓ 举报成功</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -1107,6 +1121,26 @@ const cascadeStyles = {
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Toast 提示样式
+  toastContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  toastContent: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
