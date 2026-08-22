@@ -142,25 +142,28 @@ function NewPostAlert({ onPress }: { onPress: () => void }) {
 }
 
 // 漂流瓶帖子卡片
-function FloatingPostCard({
-  item,
-  onPress,
-  onLike,
-  onDelete,
-  likeLoading,
-  index,
-  totalCount,
-  currentUserId,
-}: {
+function FloatingPostCard(props: {
   item: Post;
   onPress: () => void;
   onLike: () => void;
   onDelete?: () => void;
+  onReport?: () => void;
   likeLoading: boolean;
   index: number;
   totalCount: number;
-  currentUserId?: number;
+  currentUserId: number | null;
 }) {
+  const {
+    item,
+    onPress,
+    onLike,
+    onDelete,
+    onReport,
+    likeLoading,
+    index,
+    totalCount,
+    currentUserId,
+  } = props;
   const floatAnim = useRef(new Animated.Value(0)).current;
   const images = typeof item.images === 'string' ? JSON.parse(item.images) : item.images || [];
 
@@ -316,24 +319,7 @@ function FloatingPostCard({
 
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => {
-              Alert.alert('举报', '确定要举报这条留言吗？', [
-                { text: '取消', style: 'cancel' },
-                {
-                  text: '举报',
-                  onPress: async () => {
-                    try {
-                      const result = await apiService.reportPost(item.id, '不当内容');
-                      if (result.success) {
-                        Alert.alert('成功', result.message || '举报已提交');
-                      }
-                    } catch (error: any) {
-                      Alert.alert('错误', error.message || '举报失败');
-                    }
-                  },
-                },
-              ]);
-            }}
+            onPress={onReport}
           >
             <Text style={styles.actionIcon}>举</Text>
           </TouchableOpacity>
@@ -380,6 +366,8 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [selectedStreet, setSelectedStreet] = useState<any>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportingPostId, setReportingPostId] = useState<number | null>(null);
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -629,6 +617,32 @@ export default function HomeScreen({ onPostPress }: Props) {
     setDeletingPostId(null);
   };
 
+  const handleReportClick = (postId: number) => {
+    setReportingPostId(postId);
+    setReportModalVisible(true);
+  };
+
+  const confirmReport = async () => {
+    if (!reportingPostId) return;
+    
+    try {
+      await api.reportPost(reportingPostId);
+      setReportModalVisible(false);
+      setReportingPostId(null);
+      // 显示成功提示（使用自定义 Toast 或简单的 Alert）
+      Alert.alert('举报成功', '感谢您的反馈，我们会尽快处理');
+    } catch (error: any) {
+      Alert.alert('举报失败', error.message || '请稍后重试');
+      setReportModalVisible(false);
+      setReportingPostId(null);
+    }
+  };
+
+  const cancelReport = () => {
+    setReportModalVisible(false);
+    setReportingPostId(null);
+  };
+
   const handleReport = async (postId: number) => {
     Alert.alert(
       '举报留言',
@@ -660,6 +674,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       onPress={() => onPostPress(item)}
       onLike={() => handleLike(item.id)}
       onDelete={() => handleDeletePost(item.id)}
+      onReport={() => handleReportClick(item.id)}
       likeLoading={likeLoading === item.id}
       index={index}
       totalCount={posts.length}
@@ -993,6 +1008,35 @@ export default function HomeScreen({ onPostPress }: Props) {
           </View>
         </View>
       </Modal>
+
+      {/* 举报确认 Modal */}
+      <Modal
+        visible={reportModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={cancelReport}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>举报留言</Text>
+            <Text style={styles.modalMessage}>确定要举报这条留言吗？</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={cancelReport}
+              >
+                <Text style={styles.cancelButtonText}>取消</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.reportButton]}
+                onPress={confirmReport}
+              >
+                <Text style={styles.reportButtonText}>举报</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1123,6 +1167,14 @@ const cascadeStyles = {
     backgroundColor: '#FF3B30',
   },
   deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  reportButton: {
+    backgroundColor: '#FF9500',
+  },
+  reportButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
