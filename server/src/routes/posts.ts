@@ -272,7 +272,7 @@ router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Respons
     
     // 检查是否已经举报过
     const existingReport = await pool.query(
-      'SELECT id FROM reports WHERE post_id = $1 AND user_id = $2',
+      'SELECT id FROM reports WHERE target_id = $1 AND reporter_id = $2',
       [postId, req.userId]
     );
     
@@ -282,8 +282,8 @@ router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Respons
     
     // 创建举报记录
     await pool.query(
-      'INSERT INTO reports (post_id, user_id, reason, status, created_at) VALUES ($1, $2, $3, 0, NOW())',
-      [postId, req.userId, reason || '用户举报']
+      'INSERT INTO reports (target_id, target_type, reporter_id, reason, status, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
+      [postId, 'post', req.userId, reason || '用户举报', 'pending']
     );
     
     res.json({ success: true, message: '举报成功' });
