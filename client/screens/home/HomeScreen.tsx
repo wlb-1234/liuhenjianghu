@@ -369,6 +369,8 @@ export default function HomeScreen({ onPostPress }: Props) {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportingPostId, setReportingPostId] = useState<number | null>(null);
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const categories = [
     { code: '', name: '全部' },
     { code: 'social', name: '社交' },
@@ -616,6 +618,12 @@ export default function HomeScreen({ onPostPress }: Props) {
   const cancelDelete = () => {
     setDeleteModalVisible(false);
     setDeletingPostId(null);
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleReportClick = (postId: number) => {
