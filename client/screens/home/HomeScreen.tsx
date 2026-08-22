@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHeart as faHeartFilled } from '@fortawesome/free-solid-svg-icons';
 import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/heroui/providers/toast';
 import api from '@/services/api';
 import { buildAssetUrl } from '@/utils';
 
@@ -340,6 +341,7 @@ function FloatingPostCard(props: {
 
 export default function HomeScreen({ onPostPress }: Props) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -539,7 +541,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       }
       setHasMore(result.page < result.totalPages);
     } catch (error: any) {
-      Alert.alert('加载失败', error.message);
+      toast.show(error.message || '加载失败');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -585,7 +587,7 @@ export default function HomeScreen({ onPostPress }: Props) {
         )
       );
     } catch (error: any) {
-      Alert.alert('操作失败', error.message);
+      toast.show(error.message || '操作失败');
     } finally {
       setLikeLoading(null);
     }
@@ -606,7 +608,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       setDeleteModalVisible(false);
       setDeletingPostId(null);
     } catch (error: any) {
-      Alert.alert('删除失败', error.message);
+      toast.show(error.message || '删除失败');
       setDeleteModalVisible(false);
       setDeletingPostId(null);
     }
@@ -629,10 +631,10 @@ export default function HomeScreen({ onPostPress }: Props) {
       await api.reportPost(reportingPostId);
       setReportModalVisible(false);
       setReportingPostId(null);
-      // 显示成功提示（使用自定义 Toast 或简单的 Alert）
-      Alert.alert('举报成功', '感谢您的反馈，我们会尽快处理');
+      // 显示成功提示
+      toast.show('举报成功，感谢您的反馈');
     } catch (error: any) {
-      Alert.alert('举报失败', error.message || '请稍后重试');
+      toast.show(error.message || '举报失败');
       setReportModalVisible(false);
       setReportingPostId(null);
     }
@@ -644,24 +646,8 @@ export default function HomeScreen({ onPostPress }: Props) {
   };
 
   const handleReport = async (postId: number) => {
-    Alert.alert(
-      '举报留言',
-      '确定要举报这条留言吗？',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '举报',
-          onPress: async () => {
-            try {
-              await api.reportPost(postId);
-              Alert.alert('举报成功', '感谢您的反馈，我们会尽快处理');
-            } catch (error: any) {
-              Alert.alert('举报失败', error.message);
-            }
-          },
-        },
-      ]
-    );
+    setReportingPostId(postId);
+    setReportModalVisible(true);
   };
   const handleNewPostPress = () => {
     setShowNewPostAlert(false);
