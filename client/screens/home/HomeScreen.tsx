@@ -20,7 +20,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHeart as faHeartFilled } from '@fortawesome/free-solid-svg-icons';
 import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/heroui/providers/toast';
 import api from '@/services/api';
 import { buildAssetUrl } from '@/utils';
 
@@ -341,7 +340,6 @@ function FloatingPostCard(props: {
 
 export default function HomeScreen({ onPostPress }: Props) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -541,7 +539,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       }
       setHasMore(result.page < result.totalPages);
     } catch (error: any) {
-      toast.show(error.message || '加载失败');
+      Alert.alert('提示', error.message || '加载失败');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -587,7 +585,7 @@ export default function HomeScreen({ onPostPress }: Props) {
         )
       );
     } catch (error: any) {
-      toast.show(error.message || '操作失败');
+      Alert.alert('提示', error.message || '操作失败');
     } finally {
       setLikeLoading(null);
     }
@@ -608,7 +606,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       setDeleteModalVisible(false);
       setDeletingPostId(null);
     } catch (error: any) {
-      toast.show(error.message || '删除失败');
+      Alert.alert('提示', error.message || '删除失败');
       setDeleteModalVisible(false);
       setDeletingPostId(null);
     }
@@ -632,9 +630,9 @@ export default function HomeScreen({ onPostPress }: Props) {
       setReportModalVisible(false);
       setReportingPostId(null);
       // 显示成功提示
-      toast.show('举报成功，感谢您的反馈');
+      Alert.alert('提示', '举报成功，感谢您的反馈');
     } catch (error: any) {
-      toast.show(error.message || '举报失败');
+      Alert.alert('提示', error.message || '举报失败');
       setReportModalVisible(false);
       setReportingPostId(null);
     }
