@@ -263,6 +263,7 @@ router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Respons
   try {
     const postId = parseInt(req.params.id);
     const { reason } = req.body;
+    const pool = getPool();
     
     const post = await getPostById(postId);
     if (!post) {
