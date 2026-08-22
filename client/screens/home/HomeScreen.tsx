@@ -1036,11 +1036,11 @@ export default function HomeScreen({ onPostPress }: Props) {
         </View>
       </Modal>
 
-      {/* 举报成功提示 */}
-      {reportSuccess && (
+      {/* Toast 提示 */}
+      {toastMessage && (
         <View style={styles.toastContainer}>
-          <View style={styles.toastContent}>
-            <Text style={styles.toastText}>✓ 举报成功</Text>
+          <View style={[styles.toastContent, toastType === 'success' ? styles.toastSuccess : styles.toastError]}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
           </View>
         </View>
       )}
@@ -1147,6 +1147,12 @@ const cascadeStyles = {
     borderRadius: 24,
   },
   toastText: {
+  },
+  toastSuccess: {
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  toastError: {
+    backgroundColor: 'rgba(220,53,69,0.9)',
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
