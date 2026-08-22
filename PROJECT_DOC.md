@@ -3848,6 +3848,49 @@ VALUES ($1, 'post', $2, $3)
 
 ---
 
+### 2026-08-22 - 举报功能二次修复（pool 变量未定义）
+
+**问题描述**：
+- 举报功能再次失效，后端报错 `pool is not defined`
+
+**根本原因**：
+- `server/src/routes/posts.ts` 中举报路由使用了 `pool.query()`，但 `pool` 变量只在创建帖子路由内部定义，举报路由作用域内未定义
+
+**修复内容**：
+
+**后端修复** (`server/src/routes/posts.ts` 第 262-266 行)：
+```typescript
+// 修复前 - pool 未定义
+router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const { reason } = req.body;
+    
+    const post = await getPostById(postId);
+    // ...
+    const existingReport = await pool.query(...)  // ❌ pool 未定义
+
+// 修复后 - 添加 pool 定义
+router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id);
+    const { reason } = req.body;
+    const pool = getPool();  // ✅ 添加这行
+    
+    const post = await getPostById(postId);
+    // ...
+    const existingReport = await pool.query(...)  // ✅ 正常工作
+```
+
+**附带修复** (`server/src/services/reviewService.ts` 第 14 行)：
+- 删除多余的 `}` 语法错误
+
+**验证结果**：
+- ✅ 后端构建成功
+- ✅ 代码已推送到 GitHub (commit: dc84ef2)
+
+---
+
 ### 2026-08-21 - 帖子功能配置总结
 
 **点赞功能**：
