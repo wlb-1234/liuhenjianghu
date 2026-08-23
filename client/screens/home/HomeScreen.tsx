@@ -639,6 +639,7 @@ export default function HomeScreen({ onPostPress }: Props) {
       setReportModalVisible(false);
       setReportingPostId(null);
       setReportSuccess(true);
+      showToast('举报成功！', 'success');
       setTimeout(() => setReportSuccess(false), 2000);
     } catch (error: any) {
       setReportModalVisible(false);
