@@ -1148,6 +1148,9 @@ const cascadeStyles = {
     borderRadius: 24,
   },
   toastText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   toastSuccess: {
     backgroundColor: 'rgba(0,0,0,0.8)',
