@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-08-21 23:30 (北京时间)**
+**最后更新：2026-08-23 21:30 (北京时间)**
 
 ## 项目概述
 
@@ -3888,6 +3888,76 @@ router.post('/:id/report', authMiddleware, async (req: AuthRequest, res: Respons
 **验证结果**：
 - ✅ 后端构建成功
 - ✅ 代码已推送到 GitHub (commit: dc84ef2)
+
+---
+
+### 2026-08-23 21:30 - 举报功能三次修复（Toast 显示问题）
+
+**问题描述**：
+- 第一次举报成功后，Toast 提示没有显示
+- 第二次举报同一帖子时，红色"您已经举报过该帖子"正常显示
+- Toast 组件显示了黑色背景，但文字不可见
+
+**根本原因**：
+1. `confirmReport` 函数中举报成功后缺少 `showToast()` 调用
+2. `toastText` 样式没有定义文字颜色，导致黑色背景配黑色文字看不见
+
+**修复内容**：
+
+**前端修复** (`client/screens/home/HomeScreen.tsx`)：
+
+1. **添加 Toast 调用** (第 642 行)：
+```typescript
+// 修复前 - 举报成功后没有 Toast 提示
+try {
+  await api.reportPost(reportingPostId);
+  setReportModalVisible(false);
+  setReportingPostId(null);
+  setReportSuccess(true);
+  setTimeout(() => setReportSuccess(false), 2000);
+}
+
+// 修复后 - 添加 showToast 调用
+try {
+  await api.reportPost(reportingPostId);
+  setReportModalVisible(false);
+  setReportingPostId(null);
+  setReportSuccess(true);
+  showToast('举报成功！', 'success');  // ✅ 添加这行
+  setTimeout(() => setReportSuccess(false), 2000);
+}
+```
+
+2. **修复 Toast 文字颜色** (第 1150-1154 行)：
+```typescript
+// 修复前 - toastText 样式为空
+toastText: {
+},
+
+// 修复后 - 添加白色文字颜色
+toastText: {
+  color: '#FFFFFF',        // ✅ 白色文字
+  fontSize: 14,            // ✅ 字号
+  fontWeight: '600',       // ✅ 字重
+},
+```
+
+**修复后的交互流程**：
+1. 点击举报 → 弹出确认对话框
+2. 点击确认 → Modal 关闭 + 顶部显示黑色背景 + 白色文字"举报成功！"
+3. 3 秒后 Toast 自动消失
+4. 重复举报同一帖子 → 红色背景 + 白色文字"您已经举报过该帖子"
+
+**技术要点**：
+- React：状态更新后需要调用显示函数才能触发 UI 更新
+- 样式：Toast 文字颜色必须与背景色形成对比（黑底白字/红底白字）
+- Web 平台：自定义 Toast 组件需要手动管理显示/隐藏状态
+
+**验证结果**：
+- ✅ 第一次举报 → 黑色背景 + 白色文字"举报成功！"
+- ✅ 第二次举报 → 红色背景 + 白色文字"您已经举报过该帖子"
+- ✅ Toast 3 秒后自动消失
+- ✅ 代码已推送到 GitHub (commit: 7a7239c)
 
 ---
 
