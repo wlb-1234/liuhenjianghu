@@ -19,13 +19,17 @@ import { apiService } from '@/services/api';
 import { useAuthStore } from '@/contexts/AuthContext';
 import { FontAwesome } from '@expo/vector-icons';
 
+import { useSafeSearchParams } from '@/hooks/useSafeRouter';
+
 interface PostDetailScreenProps {
-  postId: string;
+  postId?: string;
 }
 
-export default function PostDetailScreen({ postId }: PostDetailScreenProps) {
+export default function PostDetailScreen({ postId: propPostId }: PostDetailScreenProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const params = useSafeSearchParams<{ id: string }>();
+  const postId = propPostId || params.id;
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

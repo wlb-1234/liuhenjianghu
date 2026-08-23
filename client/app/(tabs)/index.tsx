@@ -45,7 +45,7 @@ export default function HomeTab() {
   };
 
   const handlePostPress = (post: Post) => {
-    router.push(`/post/${post.id}`);
+    router.push(`/post-detail/${post.id}`);
   };
 
   return (
