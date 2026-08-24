@@ -35,12 +35,17 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  console.log('[PostDetail] postId:', postId, 'propPostId:', propPostId, 'localParams:', localParams);
+
   const fetchPostDetail = useCallback(async () => {
     try {
+      console.log('[PostDetail] fetchPostDetail called with postId:', postId);
       const data = await apiService.getPost(parseInt(postId));
+      console.log('[PostDetail] API response:', data);
       setPost(data.post);
       setComments(data.comments || []);
     } catch (error: any) {
+      console.error('[PostDetail] fetchPostDetail error:', error);
       Alert.alert('加载失败', error.message);
     } finally {
       setLoading(false);
