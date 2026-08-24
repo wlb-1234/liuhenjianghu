@@ -14,19 +14,17 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import { useRouter } from '@/hooks/useSafeRouter';
+import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
 import { apiService } from '@/services/api';
 import { useAuthStore } from '@/contexts/AuthContext';
 import { FontAwesome } from '@expo/vector-icons';
-
-import { useSafeSearchParams } from '@/hooks/useSafeRouter';
 
 interface PostDetailScreenProps {
   postId?: string;
 }
 
 export default function PostDetailScreen({ postId: propPostId }: PostDetailScreenProps) {
-  const router = useRouter();
+  const router = useSafeRouter();
   const { user } = useAuthStore();
   const params = useSafeSearchParams<{ id: string }>();
   const postId = propPostId || params.id;
