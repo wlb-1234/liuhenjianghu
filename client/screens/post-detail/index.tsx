@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
 import { apiService } from '@/services/api';
-import { useAuthStore } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesome } from '@expo/vector-icons';
 
 interface PostDetailScreenProps {
@@ -25,7 +25,7 @@ interface PostDetailScreenProps {
 
 export default function PostDetailScreen({ postId: propPostId }: PostDetailScreenProps) {
   const router = useSafeRouter();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const params = useSafeSearchParams<{ id: string }>();
   const postId = propPostId || params.id;
   const [post, setPost] = useState<any>(null);
