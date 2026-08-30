@@ -747,10 +747,10 @@ export default function HomeScreen({ onPostPress }: Props) {
         </View>
         <TouchableOpacity
           style={styles.otherRegionButton}
-          onPress={() => {
-          setShowRegionModal(true);
-          loadProvinces();
-        }}
+          onPress={async () => {
+            await loadProvinces();
+            setShowRegionModal(true);
+          }}
         >
           <Text style={styles.otherRegionText}>其他留言</Text>
         </TouchableOpacity>
