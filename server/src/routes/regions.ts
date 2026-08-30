@@ -14,7 +14,7 @@ async function getProvinces() {
   if (cached) return cached as { code: string; name: string }[];
 
   const result = await query(
-    "SELECT code, name, type FROM regions WHERE level = 1 ORDER BY code"
+    "SELECT code, name FROM regions WHERE level = 1 ORDER BY code"
   );
   const provinces: { code: string; name: string }[] = result.rows.map((r) => ({ code: r.code, name: r.name }));
   setCache(cacheKey, provinces, 3600);
@@ -27,7 +27,7 @@ async function getCities(provinceCode?: string) {
   const cached = getCache(cacheKey);
   if (cached) return cached as Record<string, { code: string; name: string }[]>;
 
-  let sql = "SELECT code, name, type, parent_code FROM regions WHERE level = 2";
+  let sql = "SELECT code, name, parent_code FROM regions WHERE level = 2";
   const params: any[] = [];
   if (provinceCode) {
     sql += " AND parent_code = $1";
@@ -52,7 +52,7 @@ async function getDistricts(cityCode?: string) {
   const cached = getCache(cacheKey);
   if (cached) return cached as Record<string, { code: string; name: string }[]>;
 
-  let sql = "SELECT code, name, type, parent_code FROM regions WHERE level = 3";
+  let sql = "SELECT code, name, parent_code FROM regions WHERE level = 3";
   const params: any[] = [];
   if (cityCode) {
     sql += " AND parent_code = $1";
@@ -77,7 +77,7 @@ async function getStreets(districtCode?: string) {
   const cached = getCache(cacheKey);
   if (cached) return cached as Record<string, { code: string; name: string; type: string }[]>;
 
-  let sql = "SELECT code, name, type, parent_code FROM regions WHERE level = 4";
+  let sql = "SELECT code, name, parent_code FROM regions WHERE level = 4";
   const params: any[] = [];
   if (districtCode) {
     sql += " AND parent_code = $1";
