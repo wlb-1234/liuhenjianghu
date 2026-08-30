@@ -383,10 +383,14 @@ export default function HomeScreen({ onPostPress }: Props) {
   // 加载省份数据
   const loadProvinces = async () => {
     try {
-      const { data } = await api.getProvinces();
-      setProvinces(data);
+      console.log('[RegionPicker] 开始加载省份数据...');
+      const response = await api.getProvinces();
+      console.log('[RegionPicker] API 响应:', JSON.stringify(response));
+      const { data } = response;
+      console.log('[RegionPicker] 省份数据:', data?.length, '条');
+      setProvinces(data || []);
     } catch (error) {
-      console.error('加载省份失败:', error);
+      console.error('[RegionPicker] 加载省份失败:', error);
     }
   };
 
