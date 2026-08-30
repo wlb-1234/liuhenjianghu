@@ -840,43 +840,48 @@ export default function HomeScreen({ onPostPress }: Props) {
                 <Text style={styles.modalClose}>×</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalBody}>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
               {/* 全国选项 */}
-              {user?.member_level >= 4 && (
-                <TouchableOpacity
-                  style={styles.cascadeOption}
-                  onPress={() => {
-                    setSelectedRegionCode('0000000000');
-                    setSelectedRegionName('全国');
-                    setSelectedRegionLevel(0);
-                    setShowRegionModal(false);
-                  }}
-                >
-                  <Text style={styles.cascadeOptionText}>全国</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.cascadeOption}
+                onPress={() => {
+                  setSelectedRegionCode('0000000000');
+                  setSelectedRegionName('全国');
+                  setSelectedRegionLevel(0);
+                  setShowRegionModal(false);
+                  fetchPosts();
+                }}
+              >
+                <Text style={styles.cascadeOptionText}> 全国</Text>
+              </TouchableOpacity>
 
               {/* 省份选择 */}
-              <Text style={styles.cascadeLabel}>选择省份</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
-                {provinces.map((province) => (
-                  <TouchableOpacity
-                    key={province.code}
-                    style={[
-                      styles.cascadeItem,
-                      selectedProvince?.code === province.code && styles.cascadeItemSelected,
-                    ]}
-                    onPress={() => handleProvinceSelect(province)}
-                  >
-                    <Text style={[
-                      styles.cascadeItemText,
-                      selectedProvince?.code === province.code && styles.cascadeItemTextSelected,
-                    ]}>
-                      {province.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={styles.cascadeSection}>
+                <Text style={styles.cascadeLabel}>📍 选择省份</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
+                  {provinces.length === 0 ? (
+                    <Text style={styles.cascadeEmptyText}>加载中...</Text>
+                  ) : (
+                    provinces.map((province) => (
+                      <TouchableOpacity
+                        key={province.code}
+                        style={[
+                          styles.cascadeItem,
+                          selectedProvince?.code === province.code && styles.cascadeItemSelected,
+                        ]}
+                        onPress={() => handleProvinceSelect(province)}
+                      >
+                        <Text style={[
+                          styles.cascadeItemText,
+                          selectedProvince?.code === province.code && styles.cascadeItemTextSelected,
+                        ]}>
+                          {province.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </ScrollView>
+              </View>
 
               {/* 城市选择 */}
               {cities.length > 0 && (
@@ -1074,6 +1079,14 @@ const cascadeStyles = {
     color: '#8B7355',
     marginBottom: 8,
     marginTop: 16,
+  },
+  cascadeSection: {
+    marginBottom: 16,
+  },
+  cascadeEmptyText: {
+    fontSize: 14,
+    color: '#999',
+    padding: 8,
   },
   cascadeScroll: {
     marginBottom: 8,
