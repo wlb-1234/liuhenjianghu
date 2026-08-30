@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-08-23 21:30 (北京时间)**
+**最后更新：2026-08-24 17:30 (北京时间)**
 
 ## 项目概述
 
@@ -4001,3 +4001,35 @@ CREATE TABLE reports (
 - `client/screens/home/HomeScreen.tsx` - 首页（包含举报按钮和 Toast 组件）
 - `client/services/api.ts` - API 服务（包含 `reportPost` 方法）
 
+
+---
+
+### 2026-08-24 - 帖子详情页路由修复
+
+**问题**：点击评论图标后页面一直转圈，无法跳转到帖子详情页
+
+**原因分析**：
+1. 路由配置问题：`post-detail.tsx` 静态路由无法匹配 `/post-detail/123` 动态路径
+2. 导入错误：`post-detail/index.tsx` 中导入 `apiService`，但实际导出的是 `api`
+
+**修复方案**：
+1. 将 `client/app/post-detail.tsx` 改为 `client/app/post-detail/[id].tsx` 动态路由
+2. 删除 `client/app/_layout.tsx` 中的 `<Stack.Screen name="post-detail" />` 声明（避免路由冲突）
+3. 修复导入：`import { apiService }` → `import api`
+4. 修复调用：`apiService.getPost()` → `api.getPost()`
+
+**涉及文件**：
+- `client/app/post-detail/[id].tsx` - 动态路由文件（重导出 screen）
+- `client/app/_layout.tsx` - 删除 post-detail 声明
+- `client/screens/post-detail/index.tsx` - 修复 apiService 导入
+
+**提交记录**：
+- `ef2c2c2` - 改回 post-detail/[id].tsx 动态路由并删除 _layout.tsx 中的声明
+- `c122bcf` - 修复 post-detail 中 apiService 导入错误
+
+**验证结果**：
+- ✅ 点击评论图标正常跳转到帖子详情页
+- ✅ 页面正常加载并显示内容和评论区
+- ✅ 代码已推送到 GitHub
+
+---
