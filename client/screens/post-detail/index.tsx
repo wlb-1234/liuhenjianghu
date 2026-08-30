@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { useLocalSearchParams } from 'expo-router';
-import { apiService } from '@/services/api';
+import api from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -47,7 +47,7 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
     const fetchPost = async () => {
       try {
         console.log('[PostDetail] fetchPostDetail called with postId:', postId);
-        const data = await apiService.getPost(parseInt(postId));
+        const data = await api.getPost(parseInt(postId));
         console.log('[PostDetail] API response:', data);
         setPost(data.post);
         setComments(data.comments || []);
