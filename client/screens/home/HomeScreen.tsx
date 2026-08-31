@@ -44,6 +44,50 @@ interface Props {
   onPostPress: (post: Post) => void;
 }
 
+// 区域选择器组件（与注册页面相同风格）
+function renderPicker(
+  title: string,
+  items: any[],
+  selected: any,
+  onSelect: (item: any) => void,
+  placeholder: string
+) {
+  return (
+    <View style={styles.pickerSection}>
+      <Text style={styles.pickerTitle}>{title}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
+        <TouchableOpacity
+          style={[styles.pickerItem, !selected && styles.pickerItemSelected]}
+          disabled
+        >
+          <Text style={[styles.pickerText, !selected && styles.pickerTextSelected]}>
+            {selected ? selected.name : placeholder}
+          </Text>
+        </TouchableOpacity>
+        {items.map((item) => (
+          <TouchableOpacity
+            key={item.code}
+            style={[
+              styles.pickerItem,
+              selected?.code === item.code && styles.pickerItemSelected,
+            ]}
+            onPress={() => onSelect(item)}
+          >
+            <Text
+              style={[
+                styles.pickerText,
+                selected?.code === item.code && styles.pickerTextSelected,
+              ]}
+            >
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 // 滚动公告栏组件
 function RollingAnnouncement({ posts }: { posts: Post[] }) {
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -830,7 +874,7 @@ export default function HomeScreen({ onPostPress }: Props) {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* 区域选择 Modal - 级联选择器 */}
+      {/* 区域选择 Modal - 级联选择器（与注册页面相同风格） */}
       {showRegionModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -843,7 +887,7 @@ export default function HomeScreen({ onPostPress }: Props) {
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
               {/* 全国选项 */}
               <TouchableOpacity
-                style={styles.cascadeOption}
+                style={styles.nationwideOption}
                 onPress={() => {
                   setSelectedRegionCode('0000000000');
                   setSelectedRegionName('全国');
@@ -852,114 +896,47 @@ export default function HomeScreen({ onPostPress }: Props) {
                   fetchPosts();
                 }}
               >
-                <Text style={styles.cascadeOptionText}> 全国</Text>
+                <Text style={styles.nationwideText}>🌏 全国</Text>
               </TouchableOpacity>
 
               {/* 省份选择 */}
-              <View style={styles.cascadeSection}>
-                <Text style={styles.cascadeLabel}>📍 选择省份</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
-                  {provinces.length === 0 ? (
-                    <Text style={styles.cascadeEmptyText}>加载中...</Text>
-                  ) : (
-                    provinces.map((province) => (
-                      <TouchableOpacity
-                        key={province.code}
-                        style={[
-                          styles.cascadeItem,
-                          selectedProvince?.code === province.code && styles.cascadeItemSelected,
-                        ]}
-                        onPress={() => handleProvinceSelect(province)}
-                      >
-                        <Text style={[
-                          styles.cascadeItemText,
-                          selectedProvince?.code === province.code && styles.cascadeItemTextSelected,
-                        ]}>
-                          {province.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))
-                  )}
-                </ScrollView>
-              </View>
+              {renderPicker(
+                '省份',
+                provinces,
+                selectedProvince,
+                handleProvinceSelect,
+                '请选择省份'
+              )}
 
               {/* 城市选择 */}
-              {cities.length > 0 && (
-                <>
-                  <Text style={styles.cascadeLabel}>选择城市</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
-                    {cities.map((city) => (
-                      <TouchableOpacity
-                        key={city.code}
-                        style={[
-                          styles.cascadeItem,
-                          selectedCity?.code === city.code && styles.cascadeItemSelected,
-                        ]}
-                        onPress={() => handleCitySelect(city)}
-                      >
-                        <Text style={[
-                          styles.cascadeItemText,
-                          selectedCity?.code === city.code && styles.cascadeItemTextSelected,
-                        ]}>
-                          {city.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </>
-              )}
+              {cities.length > 0 &&
+                renderPicker(
+                  '城市',
+                  cities,
+                  selectedCity,
+                  handleCitySelect,
+                  '请选择城市'
+                )}
 
               {/* 区县选择 */}
-              {districts.length > 0 && (
-                <>
-                  <Text style={styles.cascadeLabel}>选择区县</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
-                    {districts.map((district) => (
-                      <TouchableOpacity
-                        key={district.code}
-                        style={[
-                          styles.cascadeItem,
-                          selectedDistrict?.code === district.code && styles.cascadeItemSelected,
-                        ]}
-                        onPress={() => handleDistrictSelect(district)}
-                      >
-                        <Text style={[
-                          styles.cascadeItemText,
-                          selectedDistrict?.code === district.code && styles.cascadeItemTextSelected,
-                        ]}>
-                          {district.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </>
-              )}
+              {districts.length > 0 &&
+                renderPicker(
+                  '区县',
+                  districts,
+                  selectedDistrict,
+                  handleDistrictSelect,
+                  '请选择区县'
+                )}
 
               {/* 乡镇选择 */}
-              {streets.length > 0 && (
-                <>
-                  <Text style={styles.cascadeLabel}>选择乡镇/街道</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cascadeScroll}>
-                    {streets.map((street) => (
-                      <TouchableOpacity
-                        key={street.code}
-                        style={[
-                          styles.cascadeItem,
-                          selectedStreet?.code === street.code && styles.cascadeItemSelected,
-                        ]}
-                        onPress={() => handleStreetSelect(street)}
-                      >
-                        <Text style={[
-                          styles.cascadeItemText,
-                          selectedStreet?.code === street.code && styles.cascadeItemTextSelected,
-                        ]}>
-                          {street.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </>
-              )}
+              {streets.length > 0 &&
+                renderPicker(
+                  '乡镇/街道',
+                  streets,
+                  selectedStreet,
+                  handleStreetSelect,
+                  '请选择乡镇'
+                )}
 
               {/* 已选区域显示 */}
               {(selectedProvince || selectedCity || selectedDistrict || selectedStreet) && (
@@ -1071,6 +1048,66 @@ const cascadeStyles = {
     fontSize: 16,
     fontWeight: '600',
     color: '#D4AF37',
+    textAlign: 'center',
+  },
+  pickerSection: {
+    marginBottom: 16,
+  },
+  pickerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7355',
+    marginBottom: 8,
+  },
+  pickerScroll: {
+    flexDirection: 'row',
+  },
+  pickerItem: {
+    backgroundColor: 'rgba(139,115,85,0.1)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(139,115,85,0.2)',
+  },
+  pickerItemSelected: {
+    backgroundColor: '#D4AF37',
+    borderColor: '#E8C97D',
+  },
+  pickerText: {
+    color: '#8B7355',
+    fontSize: 14,
+  },
+  pickerTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  nationwideOption: {
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.3)',
+  },
+  nationwideText: {
+    color: '#D4AF37',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    backgroundColor: '#D4AF37',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
   },
   cascadeLabel: {
