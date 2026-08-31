@@ -900,13 +900,38 @@ export default function HomeScreen({ onPostPress }: Props) {
               </TouchableOpacity>
 
               {/* 省份选择 */}
-              {renderPicker(
-                '省份',
-                provinces,
-                selectedProvince,
-                handleProvinceSelect,
-                '请选择省份'
-              )}
+              <View style={styles.pickerSection}>
+                <Text style={styles.pickerTitle}>省份</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
+                  <TouchableOpacity
+                    style={[styles.pickerItem, !selectedProvince && styles.pickerItemSelected]}
+                    disabled
+                  >
+                    <Text style={[styles.pickerText, !selectedProvince && styles.pickerTextSelected]}>
+                      {selectedProvince ? selectedProvince.name : '请选择省份'}
+                    </Text>
+                  </TouchableOpacity>
+                  {provinces.map((item) => (
+                    <TouchableOpacity
+                      key={item.code}
+                      style={[
+                        styles.pickerItem,
+                        selectedProvince?.code === item.code && styles.pickerItemSelected,
+                      ]}
+                      onPress={() => handleProvinceSelect(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerText,
+                          selectedProvince?.code === item.code && styles.pickerTextSelected,
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
               {/* 城市选择 */}
               {cities.length > 0 &&
