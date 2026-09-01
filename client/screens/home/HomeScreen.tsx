@@ -1087,8 +1087,8 @@ const cascadeStyles = {
     marginBottom: 8,
   },
   pickerScrollContainer: {
-    flexGrow: 0,
     paddingVertical: 8,
+    minHeight: 60,
   },
   pickerScroll: {
     flexDirection: 'row',
