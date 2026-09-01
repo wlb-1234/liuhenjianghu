@@ -1780,7 +1780,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '85%',
-    maxHeight: '70%',
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1802,7 +1802,7 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   modalBody: {
-    maxHeight: 400,
+    maxHeight: 500,
     paddingHorizontal: 8,
   },
   regionSection: {
