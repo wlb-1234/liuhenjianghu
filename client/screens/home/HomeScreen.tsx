@@ -903,7 +903,7 @@ export default function HomeScreen({ onPostPress }: Props) {
               <View style={styles.pickerSection}>
                 <Text style={styles.pickerTitle}>省份</Text>
                 <View style={styles.pickerScrollContainer}>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
+                  <View style={styles.pickerScroll}>
                     <TouchableOpacity
                       style={[styles.pickerItem, !selectedProvince && styles.pickerItemSelected]}
                       disabled
@@ -931,7 +931,7 @@ export default function HomeScreen({ onPostPress }: Props) {
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </ScrollView>
+                  </View>
                 </View>
               </View>
 
@@ -1092,6 +1092,8 @@ const cascadeStyles = {
   },
   pickerScroll: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   pickerItem: {
     backgroundColor: 'rgba(139,115,85,0.1)',
