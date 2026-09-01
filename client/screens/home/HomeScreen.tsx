@@ -936,34 +936,118 @@ export default function HomeScreen({ onPostPress }: Props) {
               </View>
 
               {/* 城市选择 */}
-              {cities.length > 0 &&
-                renderPicker(
-                  '城市',
-                  cities,
-                  selectedCity,
-                  handleCitySelect,
-                  '请选择城市'
-                )}
+              {cities.length > 0 && (
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerTitle}>城市</Text>
+                  <View style={styles.pickerScrollContainer}>
+                    <View style={styles.pickerScroll}>
+                      <TouchableOpacity
+                        style={[styles.pickerItem, !selectedCity && styles.pickerItemSelected]}
+                        disabled
+                      >
+                        <Text style={[styles.pickerText, !selectedCity && styles.pickerTextSelected]}>
+                          {selectedCity ? selectedCity.name : '请选择城市'}
+                        </Text>
+                      </TouchableOpacity>
+                      {cities.map((item) => (
+                        <TouchableOpacity
+                          key={item.code}
+                          style={[
+                            styles.pickerItem,
+                            selectedCity?.code === item.code && styles.pickerItemSelected,
+                          ]}
+                          onPress={() => handleCitySelect(item)}
+                        >
+                          <Text
+                            style={[
+                              styles.pickerText,
+                              selectedCity?.code === item.code && styles.pickerTextSelected,
+                            ]}
+                          >
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
 
               {/* 区县选择 */}
-              {districts.length > 0 &&
-                renderPicker(
-                  '区县',
-                  districts,
-                  selectedDistrict,
-                  handleDistrictSelect,
-                  '请选择区县'
-                )}
+              {districts.length > 0 && (
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerTitle}>区县</Text>
+                  <View style={styles.pickerScrollContainer}>
+                    <View style={styles.pickerScroll}>
+                      <TouchableOpacity
+                        style={[styles.pickerItem, !selectedDistrict && styles.pickerItemSelected]}
+                        disabled
+                      >
+                        <Text style={[styles.pickerText, !selectedDistrict && styles.pickerTextSelected]}>
+                          {selectedDistrict ? selectedDistrict.name : '请选择区县'}
+                        </Text>
+                      </TouchableOpacity>
+                      {districts.map((item) => (
+                        <TouchableOpacity
+                          key={item.code}
+                          style={[
+                            styles.pickerItem,
+                            selectedDistrict?.code === item.code && styles.pickerItemSelected,
+                          ]}
+                          onPress={() => handleDistrictSelect(item)}
+                        >
+                          <Text
+                            style={[
+                              styles.pickerText,
+                              selectedDistrict?.code === item.code && styles.pickerTextSelected,
+                            ]}
+                          >
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
 
               {/* 乡镇选择 */}
-              {streets.length > 0 &&
-                renderPicker(
-                  '乡镇/街道',
-                  streets,
-                  selectedStreet,
-                  handleStreetSelect,
-                  '请选择乡镇'
-                )}
+              {streets.length > 0 && (
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerTitle}>乡镇/街道</Text>
+                  <View style={styles.pickerScrollContainer}>
+                    <View style={styles.pickerScroll}>
+                      <TouchableOpacity
+                        style={[styles.pickerItem, !selectedStreet && styles.pickerItemSelected]}
+                        disabled
+                      >
+                        <Text style={[styles.pickerText, !selectedStreet && styles.pickerTextSelected]}>
+                          {selectedStreet ? selectedStreet.name : '请选择乡镇'}
+                        </Text>
+                      </TouchableOpacity>
+                      {streets.map((item) => (
+                        <TouchableOpacity
+                          key={item.code}
+                          style={[
+                            styles.pickerItem,
+                            selectedStreet?.code === item.code && styles.pickerItemSelected,
+                          ]}
+                          onPress={() => handleStreetSelect(item)}
+                        >
+                          <Text
+                            style={[
+                              styles.pickerText,
+                              selectedStreet?.code === item.code && styles.pickerTextSelected,
+                            ]}
+                          >
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              )}
 
               {/* 已选区域显示 */}
               {(selectedProvince || selectedCity || selectedDistrict || selectedStreet) && (
