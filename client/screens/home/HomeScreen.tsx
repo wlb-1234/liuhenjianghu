@@ -885,6 +885,11 @@ export default function HomeScreen({ onPostPress }: Props) {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
+              {/* 调试信息 */}
+              <Text style={{color: 'red', fontSize: 12, marginBottom: 8}}>
+                省份数据：{provinces.length} 条
+              </Text>
+
               {/* 全国选项 */}
               <TouchableOpacity
                 style={styles.nationwideOption}
