@@ -885,11 +885,6 @@ export default function HomeScreen({ onPostPress }: Props) {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
-              {/* 调试信息 */}
-              <Text style={{color: 'red', fontSize: 12, marginBottom: 8}}>
-                省份数据：{provinces.length} 条
-              </Text>
-
               {/* 全国选项 */}
               <TouchableOpacity
                 style={styles.nationwideOption}
@@ -907,35 +902,37 @@ export default function HomeScreen({ onPostPress }: Props) {
               {/* 省份选择 */}
               <View style={styles.pickerSection}>
                 <Text style={styles.pickerTitle}>省份</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
-                  <TouchableOpacity
-                    style={[styles.pickerItem, !selectedProvince && styles.pickerItemSelected]}
-                    disabled
-                  >
-                    <Text style={[styles.pickerText, !selectedProvince && styles.pickerTextSelected]}>
-                      {selectedProvince ? selectedProvince.name : '请选择省份'}
-                    </Text>
-                  </TouchableOpacity>
-                  {provinces.map((item) => (
+                <View style={styles.pickerScrollContainer}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
                     <TouchableOpacity
-                      key={item.code}
-                      style={[
-                        styles.pickerItem,
-                        selectedProvince?.code === item.code && styles.pickerItemSelected,
-                      ]}
-                      onPress={() => handleProvinceSelect(item)}
+                      style={[styles.pickerItem, !selectedProvince && styles.pickerItemSelected]}
+                      disabled
                     >
-                      <Text
-                        style={[
-                          styles.pickerText,
-                          selectedProvince?.code === item.code && styles.pickerTextSelected,
-                        ]}
-                      >
-                        {item.name}
+                      <Text style={[styles.pickerText, !selectedProvince && styles.pickerTextSelected]}>
+                        {selectedProvince ? selectedProvince.name : '请选择省份'}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                    {provinces.map((item) => (
+                      <TouchableOpacity
+                        key={item.code}
+                        style={[
+                          styles.pickerItem,
+                          selectedProvince?.code === item.code && styles.pickerItemSelected,
+                        ]}
+                        onPress={() => handleProvinceSelect(item)}
+                      >
+                        <Text
+                          style={[
+                            styles.pickerText,
+                            selectedProvince?.code === item.code && styles.pickerTextSelected,
+                          ]}
+                        >
+                          {item.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
               </View>
 
               {/* 城市选择 */}
@@ -1088,6 +1085,10 @@ const cascadeStyles = {
     fontWeight: '600',
     color: '#8B7355',
     marginBottom: 8,
+  },
+  pickerScrollContainer: {
+    flexGrow: 0,
+    paddingVertical: 8,
   },
   pickerScroll: {
     flexDirection: 'row',
