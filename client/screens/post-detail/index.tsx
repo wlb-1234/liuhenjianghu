@@ -80,7 +80,9 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
   };
 
   const handleComment = async () => {
+    console.log('[PostDetail] handleComment called, user:', user, 'commentText:', commentText);
     if (!user) {
+      console.log('[PostDetail] user is null, redirecting to login');
       router.push('/auth/login');
       return;
     }
@@ -88,7 +90,9 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
 
     setSubmitting(true);
     try {
+      console.log('[PostDetail] calling addComment, postId:', postId, 'content:', commentText);
       await apiService.addComment(parseInt(postId), commentText);
+      console.log('[PostDetail] addComment success');
       const newComment = {
         id: Date.now(),
         post_id: parseInt(postId),
