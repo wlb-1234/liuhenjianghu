@@ -88,7 +88,7 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
 
     setSubmitting(true);
     try {
-      await apiService.createComment(parseInt(postId), commentText);
+      await apiService.addComment(parseInt(postId), commentText);
       const newComment = {
         id: Date.now(),
         post_id: parseInt(postId),
