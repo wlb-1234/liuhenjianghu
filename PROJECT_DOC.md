@@ -4207,3 +4207,32 @@ pickerScroll: {
 - ✅ 代码已推送到 GitHub
 
 ---
+
+## 评论发送功能修复
+
+**修复时间**：2026-09-02 22:00
+
+**问题描述**：
+- 用户写完评论后点击发送按钮，评论无法发送
+- 前端 API 调用失败，没有网络请求发出
+
+**问题根因**：
+- **变量名不匹配**：导入的是 `api`，但使用的是 `apiService`
+- 导入：`import api from '@/services/api'`
+- 使用：`apiService.addComment(...)` ❌
+
+**修复方案**：
+- 将 `apiService.likePost` 改为 `api.likePost`
+- 将 `apiService.addComment` 改为 `api.addComment`
+
+**涉及文件**：
+- `client/screens/post-detail/index.tsx` - 帖子详情页评论功能
+
+**提交记录**：
+- `29f5980` - 修复 apiService 变量名错误（应为 api）
+
+**验证结果**：
+- ✅ 评论发送功能正常
+- ✅ 代码已推送到 GitHub
+
+---
