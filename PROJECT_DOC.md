@@ -4229,7 +4229,7 @@ pickerScroll: {
 - `client/screens/post-detail/index.tsx` - 帖子详情页评论功能
 
 **提交记录**：
-- `29f5980` - 修复 apiService 变量名错误（应为 api）
+- `2026-09-02 22:00` - `29f5980` - 修复 apiService 变量名错误（应为 api）
 
 **验证结果**：
 - ✅ 评论发送功能正常
