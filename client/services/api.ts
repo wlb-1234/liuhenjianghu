@@ -190,7 +190,7 @@ class ApiService {
 
   // 添加评论
   async addComment(postId: number, content: string, parentId?: number): Promise<{ comment_id: number }> {
-    return this.request(`/posts/${postId}/comment`, {
+    return this.request(`/posts/${postId}/comments`, {
       method: 'POST',
       body: { content, parent_id: parentId },
     });
