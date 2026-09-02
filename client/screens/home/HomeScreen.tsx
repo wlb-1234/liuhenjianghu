@@ -875,7 +875,12 @@ export default function HomeScreen({ onPostPress }: Props) {
       />
 
       {/* 区域选择 Modal - 级联选择器（与注册页面相同风格） */}
-      {showRegionModal && (
+      <Modal
+        visible={showRegionModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRegionModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -1074,7 +1079,7 @@ export default function HomeScreen({ onPostPress }: Props) {
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      </Modal>
 
       {/* 删除确认 Modal */}
       <Modal
