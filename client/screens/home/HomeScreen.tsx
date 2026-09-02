@@ -1061,17 +1061,17 @@ export default function HomeScreen({ onPostPress }: Props) {
                   </Text>
                 </View>
               )}
-
-              {/* 确认按钮 - 始终显示 */}
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirmRegion}
-              >
-                <Text style={styles.confirmButtonText}>
-                  {selectedProvince || selectedCity || selectedDistrict || selectedStreet ? '确认选择' : '查看全国留言'}
-                </Text>
-              </TouchableOpacity>
             </ScrollView>
+
+            {/* 确认按钮 - 在 ScrollView 外面，始终显示 */}
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirmRegion}
+            >
+              <Text style={styles.confirmButtonText}>
+                {selectedProvince || selectedCity || selectedDistrict || selectedStreet ? '确认选择' : '查看全国留言'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -1774,14 +1774,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: 20,
     zIndex: 1000,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '85%',
-    maxHeight: '80%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
