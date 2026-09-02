@@ -68,7 +68,7 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
       return;
     }
     try {
-      await apiService.likePost(parseInt(postId));
+      await api.likePost(parseInt(postId));
       setPost(prev => prev ? {
         ...prev,
         is_liked: !prev.is_liked,
@@ -91,7 +91,7 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
     setSubmitting(true);
     try {
       console.log('[PostDetail] calling addComment, postId:', postId, 'content:', commentText);
-      await apiService.addComment(parseInt(postId), commentText);
+      await api.addComment(parseInt(postId), commentText);
       console.log('[PostDetail] addComment success');
       const newComment = {
         id: Date.now(),
