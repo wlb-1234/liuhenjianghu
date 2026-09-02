@@ -1220,6 +1220,8 @@ const cascadeStyles = {
     paddingVertical: 14,
     marginTop: 16,
     marginBottom: 8,
+    marginHorizontal: 20,
+    alignItems: 'center',
   },
   confirmButtonText: {
     color: '#FFFFFF',
@@ -1782,6 +1784,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '85%',
     maxHeight: '85%',
+    paddingBottom: 20,
   },
   modalHeader: {
     flexDirection: 'row',
