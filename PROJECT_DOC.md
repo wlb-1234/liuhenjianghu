@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-08-24 17:30 (北京时间)**
+**最后更新：2026-09-02 15:30 (北京时间)**
 
 ## 项目概述
 
@@ -4030,6 +4030,180 @@ CREATE TABLE reports (
 **验证结果**：
 - ✅ 点击评论图标正常跳转到帖子详情页
 - ✅ 页面正常加载并显示内容和评论区
+- ✅ 代码已推送到 GitHub
+
+---
+
+### 2026-09-02 15:30 - 其他留言区域选择器修复
+
+**问题描述**：
+1. 点击"其他留言"按钮后，区域选择 Modal 中只显示"全国"，没有省份列表
+2. 确认按钮不显示，无法选择需要查看的区域
+3. 区域选择框位置靠下，最下面的区域名称被遮挡，无法滚动显示
+
+**根本原因**：
+1. 后端 API 查询了数据库中不存在的 `type` 字段，导致返回 500 错误
+2. 数据库中有 6 条城市记录被错误标记为省级（level=1）
+3. 使用自定义 View 模拟 Modal，布局计算有问题
+4. 确认按钮在 ScrollView 内部，被内容遮挡
+5. Modal 高度不够，区域列表无法完整滚动显示
+
+**修复内容**：
+
+**后端修复** (`server/src/routes/regions.ts`)：
+```typescript
+// 修复前 - 查询不存在的 type 字段
+SELECT * FROM regions WHERE type = 'province'
+
+// 修复后 - 移除 type 字段查询
+SELECT * FROM regions WHERE level = 1
+```
+
+**数据库修复**：
+```sql
+-- 修正 6 条城市记录的 level 字段
+UPDATE regions SET level = 2 WHERE code IN ('110000', '310000', '320500', '330100', '440100', '440300');
+```
+
+**前端修复** (`client/screens/home/HomeScreen.tsx`)：
+
+1. **使用 React Native 原生 Modal 组件**：
+```typescript
+// 修复前 - 自定义 View 模拟 Modal
+{showRegionModal && (
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      ...
+    </View>
+  </View>
+)}
+
+// 修复后 - 使用原生 Modal 组件
+<Modal
+  visible={showRegionModal}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowRegionModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      ...
+    </View>
+  </View>
+</Modal>
+```
+
+2. **确认按钮移到 ScrollView 外面**：
+```typescript
+<ScrollView style={styles.modalBody}>
+  {/* 全国选项、省份、城市、区县、乡镇选择器 */}
+</ScrollView>
+
+{/* 确认按钮 - 在 ScrollView 外面，始终显示 */}
+<TouchableOpacity style={styles.confirmButton} onPress={handleConfirmRegion}>
+  <Text style={styles.confirmButtonText}>
+    {selectedProvince || selectedCity || selectedDistrict || selectedStreet ? '确认选择' : '查看全国留言'}
+  </Text>
+</TouchableOpacity>
+```
+
+3. **调整 Modal 布局和样式**：
+```typescript
+modalOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'flex-start',  // 从顶部开始
+  alignItems: 'center',
+  paddingTop: 20,  // 上边距
+  zIndex: 1000,
+},
+modalContent: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  width: '85%',
+  maxHeight: '85%',  // 增加高度
+  paddingBottom: 20,  // 底部内边距
+},
+confirmButton: {
+  backgroundColor: '#D4AF37',
+  borderRadius: 12,
+  paddingVertical: 14,
+  marginTop: 16,
+  marginBottom: 8,
+  marginHorizontal: 20,  // 水平边距
+  alignItems: 'center',
+},
+```
+
+4. **省份、城市、区县、乡镇选择器使用 View 替代 ScrollView**：
+```typescript
+// 修复前 - 使用 ScrollView 导致内容不显示
+<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
+  {items.map(...)}
+</ScrollView>
+
+// 修复后 - 使用 View + flexWrap
+<View style={styles.pickerScroll}>
+  {items.map(...)}
+</View>
+
+pickerScroll: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',  // 换行显示
+  gap: 8,
+},
+```
+
+**修复后的交互流程**：
+1. 点击"其他留言" → 弹出区域选择 Modal（从顶部滑入）
+2. 显示"全国"选项和省份列表（34 个省份）
+3. 点击省份 → 显示对应城市列表
+4. 点击城市 → 显示对应区县列表
+5. 点击区县 → 显示对应乡镇列表
+6. 点击"确认选择" → 跳转到所选区域的留言
+7. 点击"查看全国留言" → 跳转到全国留言
+
+**技术要点**：
+- React Native：使用原生 Modal 组件而不是自定义 View，确保布局正确
+- 布局：确认按钮必须在 ScrollView 外面，避免被内容遮挡
+- 样式：Modal 需要设置 `paddingTop` 和 `maxHeight`，确保内容可滚动
+- 数据库：regions 表的 level 字段必须正确（1=省，2=市，3=区县，4=乡镇）
+
+**涉及文件**：
+- `server/src/routes/regions.ts` - 后端地区 API（移除 type 字段查询）
+- `client/screens/home/HomeScreen.tsx` - 首页区域选择 Modal
+- `client/services/api.ts` - API 服务（getProvinces, getCities, getDistricts, getTowns）
+
+**提交记录**：
+- `7c06c3e` - 使用 React Native Modal 组件替代自定义 View
+- `b3ecc2d` - 添加 paddingBottom 和 marginHorizontal 确保确认按钮可见
+- `c529cf6` - 添加 paddingBottom 和 marginHorizontal 确保确认按钮可见
+- `2a60f81` - 确认按钮移到 ScrollView 外，Modal 位置上移高度增加
+- `fedbe55` - 确认按钮移到 ScrollView 外，Modal 位置上移高度增加
+- `4ed689b` - 确认按钮移到 ScrollView 外，Modal 位置上移高度增加
+- `82ea2e3` - 确认按钮移到 ScrollView 外，Modal 位置上移高度增加
+- `c310d9c` - 确认按钮移到 ScrollView 外，Modal 位置上移高度增加
+- `83cdfb0` - 确认按钮始终显示，Modal 位置上移
+- `8710a44` - 确认按钮始终显示，Modal 位置上移
+- `d59cff6` - 添加城市、区县、乡镇选择器（使用 View 替代 ScrollView）
+- `1b3f2f1` - 使用 View 替代 ScrollView 渲染省份列表，添加 flexWrap 换行
+- `3955fe9` - 添加 minHeight 确保省份列表可见
+- `0670453` - 按照注册页面风格添加 pickerScrollContainer 包裹省份列表
+- `9f375d8` - 添加省份数据条数调试信息
+- `52d0f39` - 直接在 Modal 中渲染省份列表，不使用 renderPicker 函数
+- `ecf8e3a` - 按照注册页面风格重新设计其他留言区域选择 Modal
+
+**验证结果**：
+- ✅ 后端 API 正常返回省份数据（34 条）
+- ✅ Modal 正常显示（从顶部滑入）
+- ✅ 省份、城市、区县、乡镇级联选择正常
+- ✅ 确认按钮始终可见
+- ✅ 区域列表可完整滚动显示
+- ✅ 点击确认后正常跳转到所选区域留言
 - ✅ 代码已推送到 GitHub
 
 ---
