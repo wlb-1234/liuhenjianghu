@@ -63,8 +63,12 @@ router.post('/login', async (req: any, res: any) => {
       return res.status(400).json({ error: 'Missing credentials' });
     }
     
+    // 查询管理员
+    const result = await query('SELECT * FROM admins WHERE username = $1', [username]);
+    const admin = result.rows[0];
+    
     // 验证密码
-    if (!admin || !await bcrypt.compare(password, admin.password)) {
+    if (!admin || !await bcrypt.compare(password, admin.password_hash)) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
