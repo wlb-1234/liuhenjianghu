@@ -57,13 +57,14 @@ export default function RootLayout() {
       const isLoginRoute = segments.includes('login');
       const isRegisterRoute = segments.includes('register');
       const isForgotPasswordRoute = segments.includes('forgot-password');
+      const isAdminRoute = segments.includes('admin');
 
       console.log('>>> [Layout] 当前路由:', segments);
       console.log('>>> [Layout] token:', token);
       console.log('>>> [Layout] isLoginRoute:', isLoginRoute);
 
-      // 如果当前不在登录页、注册页或忘记密码页，且没有 token，则跳转
-      if (!token && !isLoginRoute && !isRegisterRoute && !isForgotPasswordRoute) {
+      // 如果当前不在登录页、注册页、忘记密码页或管理后台，且没有 token，则跳转
+      if (!token && !isLoginRoute && !isRegisterRoute && !isForgotPasswordRoute && !isAdminRoute) {
         console.log('>>> [Layout] 无 token，跳转到登录页');
         // 使用 setTimeout 确保在渲染周期后跳转
         setTimeout(() => {
