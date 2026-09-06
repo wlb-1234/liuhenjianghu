@@ -4236,3 +4236,115 @@ pickerScroll: {
 - ✅ 代码已推送到 GitHub
 
 ---
+
+## 管理后台登录功能修复
+
+**修复时间**：2026-09-06 21:30
+
+**问题描述**：
+- 用户访问管理后台 `/admin` 时无法登录
+- 前端请求发送到 `localhost:9091` 导致连接失败
+- Nginx 配置缺少 `/admin` 转发规则
+
+**问题根因**：
+1. **前端 adminService API_BASE 配置错误**：
+   - 使用 `process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9091'`
+   - 环境变量未配置，回退到 `localhost:9091`（浏览器无法访问）
+   
+2. **Nginx 配置缺少 `/admin` 转发规则**：
+   - 只有 `/` 和 `/api/` 的转发规则
+   - 访问 `/admin` 时返回前端 index.html（SPA 应用）
+
+3. **后端 admin.ts 登录代码 bug**：
+   - 缺少查询管理员的 SQL 语句
+   - 登录验证逻辑不完整
+
+4. **前端 admin.html 登录参数错误**：
+   - 发送 `{ phone, password }`
+   - 后端期望 `{ username, password }`
+
+5. **前端路由认证拦截**：
+   - 访问 `/admin` 时被前端路由重定向到登录页
+   - 需要将 `admin` 添加到认证豁免列表
+
+**修复方案**：
+
+1. **修改 adminService API_BASE 为相对路径**：
+```typescript
+// 修复前
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9091';
+
+// 修复后
+const API_BASE = ''; // 使用相对路径，通过 Nginx 代理
+```
+
+2. **添加 Nginx `/admin` 转发规则**：
+```nginx
+location /admin {
+    proxy_pass http://localhost:9091;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+3. **修复后端 admin.ts 登录代码**：
+```typescript
+// 添加管理员查询
+const result = await query('SELECT * FROM admins WHERE username = $1', [username]);
+```
+
+4. **修复前端 admin.html 登录参数**：
+```javascript
+// 修复前
+const response = await fetch('/api/v1/admin/login', {
+  method: 'POST',
+  body: JSON.stringify({ phone, password })
+});
+
+// 修复后
+const response = await fetch('/api/v1/admin/login', {
+  method: 'POST',
+  body: JSON.stringify({ username, password })
+});
+```
+
+5. **添加前端路由认证豁免**：
+```typescript
+// _layout.tsx
+const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
+```
+
+**涉及文件**：
+- `client/services/adminService.ts` - 管理后台 API 服务
+- `server/src/routes/admin.ts` - 后端管理员登录路由
+- `server/public/admin.html` - Web 管理后台页面
+- `client/app/_layout.tsx` - 根布局文件（认证豁免）
+- `/etc/nginx/conf.d/liuhen.conf` - Nginx 配置文件
+
+**提交记录**：
+- `2026-09-06 21:30` - `0edb581` - fix: adminService 使用相对路径 API_BASE
+- `2026-09-06 21:20` - `6d5a92c` - fix: adminService 使用相对路径 API_BASE
+- `2026-09-06 21:10` - `7f3e267` - 尝试直接访问后端 admin.html
+- `2026-09-06 21:00` - `590c4b8` - 检查 Nginx 配置和后端服务
+- `2026-09-06 20:50` - `f49d3ae` - 重新创建 Nginx 配置文件
+
+**验证结果**：
+- ✅ 后端 admin.ts 登录代码修复
+- ✅ 前端 admin.html 登录参数修复
+- ✅ adminService API_BASE 使用相对路径
+- ✅ Nginx 配置添加 `/admin` 转发规则
+- ✅ 前端路由认证豁免添加 `admin`
+- ✅ 管理后台登录功能正常
+- ✅ 代码已推送到 GitHub
+
+**访问地址**：
+- `https://liuhenjianghu.com/admin`
+- `https://47.116.142.121/admin`
+
+**测试账号**：
+- 用户名：`admin`
+- 密码：`admin123`
+
+---
