@@ -169,7 +169,7 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
     setLoading(true);
     setErrorMsg('');
     try {
-      await register({
+      const result = await register({
         phone,
         code,
         password,
@@ -179,6 +179,9 @@ export default function RegisterScreen({ onSwitchToLogin, onBack }: Props) {
         district_code: selectedDistrict?.code,
         town_code: selectedTown?.code,
       });
+      
+      // 显示注册成功提示
+      showSuccess(result.message || '注册成功');
     } catch (error: any) {
       const errorMsg = error.message || '注册失败，请稍后重试';
       showError(errorMsg);

@@ -99,16 +99,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: RegisterData): Promise<{ message?: string }> => {
     try {
-      const { token: newToken, user: newUser } = await api.register(data);
+      const result = await api.register(data);
       
-      setToken(newToken);
-      setUser(newUser);
-      api.setToken(newToken);
+      setToken(result.token);
+      setUser(result.user);
+      api.setToken(result.token);
       
-      await AsyncStorage.setItem(TOKEN_KEY, newToken);
-      await AsyncStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      await AsyncStorage.setItem(TOKEN_KEY, result.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(result.user));
+      
+      return { message: result.message };
     } catch (error) {
       console.error('注册失败:', error);
       throw error;

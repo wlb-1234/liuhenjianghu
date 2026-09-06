@@ -74,7 +74,7 @@ class ApiService {
     city_code?: string;
     district_code?: string;
     town_code?: string;
-  }): Promise<{ token: string; user: any }> {
+  }): Promise<{ token: string; user: any; message?: string }> {
     return this.request('/auth/register', {
       method: 'POST',
       body: data,
