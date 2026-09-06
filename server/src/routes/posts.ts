@@ -81,6 +81,9 @@ router.get('/:id', async (req: any, res: Response) => {
     
     const liked = req.userId ? await isLiked(req.userId, post.id) : false;
     
+    // 获取评论数据
+    const comments = await getComments(parseInt(req.params.id));
+    
     res.json({
       post: {
         ...post,
@@ -90,7 +93,8 @@ router.get('/:id', async (req: any, res: Response) => {
           nickname: post.author_nickname,
           avatar: post.author_avatar
         }
-      }
+      },
+      comments
     });
   } catch (error: any) {
     console.error('获取帖子错误:', error);
