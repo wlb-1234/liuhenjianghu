@@ -50,7 +50,7 @@ export default function PostDetailScreen({ postId: propPostId }: PostDetailScree
         const data = await api.getPost(parseInt(postId));
         console.log('[PostDetail] API response:', data);
         setPost(data.post);
-        setComments(data.comments || []);
+        setComments(data.post?.comments || []);
       } catch (error: any) {
         console.error('[PostDetail] fetchPostDetail error:', error);
         Alert.alert('加载失败', error.message);

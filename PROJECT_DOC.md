@@ -4348,3 +4348,30 @@ const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
 - 密码：`admin123`
 
 ---
+
+## 2026-09-08 23:17 - 修复帖子详情页评论无法显示
+
+**问题**：
+- 帖子详情接口 `GET /api/v1/posts/:id` 返回的评论是**嵌套在 post 内部**的字段（`{ "post": { ..., "comments": [...] } }`），顶层**没有** `comments` 字段。
+- 前端 `client/screens/post-detail/index.tsx` 第 53 行读取的是**不存在的顶层字段** `data.comments`，导致 `setComments([])`，评论列表一直显示为空（后端评论数据实际是正常的）。
+
+**修复**：
+- 将评论数据来源从 `data.comments` 改为 `data.post?.comments`：
+  ```js
+  setComments(data.post?.comments || []);
+  ```
+- 仅改动这一处数据来源，**未影响**帖子展示（`setPost(data.post)`）、提交评论、点赞、分享、评论渲染等其他功能。
+- 后端接口**无需改动**；主页列表、分享落地页（`app/post/[id].tsx`）本就使用 `data.post`，不受影响。
+
+**涉及文件**：
+- `client/screens/post-detail/index.tsx` - 第 53 行评论数据来源修复
+
+**验证结果**：
+- ✅ 后端详情接口确认返回 `post.comments`（含真实评论数据）
+- ✅ 前端修复后评论列表正常显示
+- ✅ 其他功能不受影响
+
+**提交记录**：
+- `2026-09-08 23:17` - fix(client): 修复帖子详情页评论无法显示
+
+---
