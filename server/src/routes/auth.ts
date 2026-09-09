@@ -249,7 +249,8 @@ router.get('/me/stats', authMiddleware, async (req: AuthRequest, res: Response) 
     const result = await pool.query(
       `SELECT
         u.total_posts AS total_posts,
-        u.total_likes AS total_likes,
+        (SELECT COUNT(*) FROM likes l JOIN posts p ON p.id = l.target_id
+          WHERE l.target_type = 'post' AND p.user_id = u.id) AS total_likes,
         (SELECT COUNT(*) FROM follows WHERE following_id = u.id) AS followers_count,
         (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) AS following_count
        FROM users u
