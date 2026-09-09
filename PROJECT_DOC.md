@@ -4376,7 +4376,7 @@ const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
 
 ---
 
-## 2026-09-09 - 修复「我的」页面：江湖数据统计与留言/点赞跳转
+## 2026-09-09 20:54 - 修复「我的」页面：江湖数据统计与留言/点赞跳转（评/赞可点击跳转）
 
 **问题**：
 - 「江湖数据」中「发布」「获赞」一直显示 `-`：`ProfileScreen.tsx` 的 `useFocusEffect` 只执行了 `setLoading(true)`，**从未请求数据也没有 `setLoading(false)`**，导致 `loading` 永远为 true，四个统计全显示 `-`。
@@ -4419,7 +4419,9 @@ const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
 - ✅ 路由一致性检查通过（新增路由已正确注册，未出现在缺失列表）
 
 **提交记录**：
-- `2026-09-09` - fix(client): 修复「我的」页面江湖数据统计与留言/点赞跳转
+- `2026-09-09 20:54` - fix(client): 修复「我的」页面江湖数据统计与留言/点赞跳转（提交 `b0d134d`）
+
+> 本记录重点覆盖「点 评 和 赞 不能跳转」的修复：`ProfileScreen.tsx` 中「我的留言」(评)、「我的点赞」(赞)两个菜单项原为 `TouchableOpacity` 且**缺少 `onPress`**，点击无反应；已补齐 `onPress={() => router.push('/my-messages')}` 与 `onPress={() => router.push('/my-likes')}`，并新增 `my-messages`/`my-likes` 两个列表页 + 路由（`getMyPosts`、`getMyLikedPosts`），使用户点击「评/赞」能正常进入对应帖子列表。
 
 ### 补充修复（同日）：沙箱登录页白屏 / 路由冲突
 
