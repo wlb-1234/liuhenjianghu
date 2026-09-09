@@ -4449,3 +4449,34 @@ resolves to both '_root > post/index' and '_root > post'.
 - `2026-09-09` - fix(client): 移除 app/post.tsx 重复路由，修复沙箱登录页白屏
 
 ---
+
+## 2026-09-09 23:59 - 修复「江湖数据」获赞/粉丝/关注计数不准确
+
+### 背景
+「发布」已正常计数，「赞」（我的点赞列表）可跳转且有内容，但「江湖数据」中「获赞」一直为 0，需确认「粉丝」「关注」是否同样正确计数。
+
+### 根因
+- 「获赞」错误地**直接读取 `users.total_likes` 静态列**，而该列从未被任何点赞逻辑维护（`total_posts` 有 `+1`，但 `total_likes` 完全没有写入），因此恒为 0。
+
+### 修复
+1. 点赞/取消点赞时同步增减对端作者获赞（`toggleLike`）：当点赞目标为帖子时
+   - 点赞：`UPDATE users SET total_likes = total_likes + 1 WHERE id = (SELECT user_id FROM posts WHERE id = $1)`
+   - 取消：`UPDATE users SET total_likes = GREATEST(total_likes - 1, 0) WHERE id = (SELECT user_id FROM posts WHERE id = $1)`
+   - 文件：`server/src/services/postService.ts`
+2. 统计实时化（关键）：`GET /api/v1/auth/me/stats` 的「获赞」改为**实时统计**——直接数该用户所有帖子收到的点赞数：
+   `SELECT COUNT(*) FROM likes l JOIN posts p ON p.id = l.target_id WHERE l.target_type = 'post' AND p.user_id = u.id`
+   ——使**已有历史获赞无需回填即立即正确**。文件：`server/src/routes/auth.ts`
+3. 「粉丝/关注」本身已是实时计数（数 `follows` 关系表），随同一次统计改动一并生效：
+   - 粉丝 `followers_count` = `COUNT(follows WHERE following_id = u.id)`（关注我的人）
+   - 关注 `following_count` = `COUNT(follows WHERE follower_id = u.id)`（我关注的人）
+
+### 验证
+- 统计 SQL 语法、`posts.user_id` / `users.total_likes` / `follows` 表字段均验证通过；本次改动文件无新增类型错误。
+- 用户线上确认「获赞」显示正确；「粉丝/关注」逻辑正确，用户将进行关注行为自测确认数字随关注关系增加。
+
+### 交付
+- `97ae4eb` - fix(server): 获赞计数改为实时统计并同步维护，历史获赞自动正确
+
+---
+
+以后若有新的改进/修复，将按同样的格式在此文档继续追加带日期时间的记录，并同步推送 GitHub。
