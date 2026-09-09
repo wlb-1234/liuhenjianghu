@@ -124,11 +124,15 @@ export async function toggleLike(userId: number, postId: number) {
     // 取消点赞
     await p.query("DELETE FROM likes WHERE user_id = $1 AND target_type = 'post' AND target_id = $2", [userId, postId]);
     await p.query('UPDATE posts SET like_count = like_count - 1 WHERE id = $1', [postId]);
+    // 同步减少帖子作者的总获赞数（不低于 0）
+    await p.query("UPDATE users SET total_likes = GREATEST(total_likes - 1, 0) WHERE id = (SELECT user_id FROM posts WHERE id = $1)", [postId]);
     return false;
   } else {
     // 添加点赞
     await p.query("INSERT INTO likes (user_id, target_type, target_id) VALUES ($1, 'post', $2)", [userId, postId]);
     await p.query('UPDATE posts SET like_count = like_count + 1 WHERE id = $1', [postId]);
+    // 同步增加帖子作者的总获赞数
+    await p.query("UPDATE users SET total_likes = total_likes + 1 WHERE id = (SELECT user_id FROM posts WHERE id = $1)", [postId]);
     return true;
   }
 }
