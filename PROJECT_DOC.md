@@ -4375,3 +4375,50 @@ const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
 - `2026-09-08 23:17` - fix(client): 修复帖子详情页评论无法显示
 
 ---
+
+## 2026-09-09 - 修复「我的」页面：江湖数据统计与留言/点赞跳转
+
+**问题**：
+- 「江湖数据」中「发布」「获赞」一直显示 `-`：`ProfileScreen.tsx` 的 `useFocusEffect` 只执行了 `setLoading(true)`，**从未请求数据也没有 `setLoading(false)`**，导致 `loading` 永远为 true，四个统计全显示 `-`。
+- 「我的留言」(评)、「我的点赞」(赞) 菜单项 `TouchableOpacity` **缺少 `onPress`**，点击无跳转。
+
+**修复方案**：
+
+1. **新增后端统计接口** `GET /api/v1/auth/me/stats`（鉴权，返回 `{ stats: { total_posts, total_likes, followers_count, following_count } }`）
+   - `server/src/routes/auth.ts`（在 `/me` 之后新增路由）
+   - SQL：`total_posts`/`total_likes` 直接读 `users` 表；`followers_count` 统计 `follows.following_id = 用户id`；`following_count` 统计 `follows.follower_id = 用户id`
+
+2. **新增后端「我的点赞」接口** `GET /api/v1/posts/my-liked`（鉴权，返回 `{ posts: [...] }`）
+   - `server/src/routes/posts.ts`（定义在 `/:id` 动态路由之前，符合路由顺序规范）
+   - `server/src/services/postService.ts` 新增 `getLikedPosts(userId)`：JOIN `likes(target_type='post', target_id=p.id, user_id=$1)`，按时间倒序
+
+3. **前端 API 封装** `client/services/api.ts`：
+   - `getMyStats()` → `/auth/me/stats`
+   - `getMyPosts()` → `/posts/mine`（复用既有接口，「我的留言」= 我的发布）
+   - `getMyLikedPosts()` → `/posts/my-liked`
+
+4. **前端「我的」页面** `client/screens/profile/ProfileScreen.tsx`：
+   - `useFocusEffect` 改为调用 `api.getMyStats()` → `setStats(data.stats)` + `setLoading(false)`，stats 正常显示
+   - 「我的留言」「我的点赞」菜单补上 `onPress`，分别跳转 `/my-messages`、`/my-likes`
+
+5. **新增两个列表页 + 路由**：
+   - `client/screens/my-messages/index.tsx`（我的留言，调 `getMyPosts`）
+   - `client/screens/my-likes/index.tsx`（我的点赞，调 `getMyLikedPosts`）
+   - `client/app/my-messages.tsx`、`client/app/my-likes.tsx`（re-export）
+   - `client/app/_layout.tsx` 注册对应 `Stack.Screen`（与 `favorites` 并列）
+
+**影响评估**：
+- 后端新增两个**只读**接口，未改动任何既有接口逻辑；`/posts/mine` 为复用
+- 前端仅新增页面/路由、补全 profile 现有页面的数据获取与跳转，**未改动**首页、帖子、收藏、聊天等其他功能
+- 静态检查：本次改动文件均无新增类型/ESLint 错误（项目存在的 admin/share/stats 等历史 lint 问题未在本次范围）
+
+**验证结果**：
+- ✅ 本次改动文件类型检查无错误
+- ✅ `GET /auth/me/stats`、`GET /posts/my-liked` 未带 token 返回 401（路由已注册并被鉴权拦截）
+- ✅ 字段名前后端完全一致（`total_posts/total_likes/followers_count/following_count`、`posts/stats`）
+- ✅ 路由一致性检查通过（新增路由已正确注册，未出现在缺失列表）
+
+**提交记录**：
+- `2026-09-09` - fix(client): 修复「我的」页面江湖数据统计与留言/点赞跳转
+
+---

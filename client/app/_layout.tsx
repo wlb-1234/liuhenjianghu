@@ -118,6 +118,8 @@ export default function RootLayout() {
           <Stack.Screen name="orders" options={{ title: "" }} />
           <Stack.Screen name="balance" options={{ title: "" }} />
           <Stack.Screen name="favorites" options={{ title: "" }} />
+          <Stack.Screen name="my-messages" options={{ title: "" }} />
+          <Stack.Screen name="my-likes" options={{ title: "" }} />
           <Stack.Screen name="notifications" options={{ title: "" }} />
           <Stack.Screen name="feedback" options={{ title: "" }} />
           <Stack.Screen name="about" options={{ title: "" }} />

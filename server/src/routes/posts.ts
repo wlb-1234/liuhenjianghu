@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { 
   getPosts, createPost, toggleLike, isLiked,
-  getComments, createComment, getPostById, deletePost
+  getComments, createComment, getPostById, deletePost, getLikedPosts
 } from '../services/postService';
 import { getUserById } from '../services/userService';
 import { getPool } from '../config/database';
@@ -66,6 +66,17 @@ router.get('/mine', authMiddleware, async (req: AuthRequest, res: Response) => {
     res.json({ posts: result.posts });
   } catch (error: any) {
     console.error('获取我的帖子错误:', error);
+    res.status(500).json({ error: error.message || '获取帖子列表失败' });
+  }
+});
+
+// 获取我点赞过的帖子（需登录）
+router.get('/my-liked', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const posts = await getLikedPosts(req.userId!);
+    res.json({ posts });
+  } catch (error: any) {
+    console.error('获取我点赞的帖子错误:', error);
     res.status(500).json({ error: error.message || '获取帖子列表失败' });
   }
 });

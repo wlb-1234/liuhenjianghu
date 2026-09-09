@@ -37,6 +37,21 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
+      let cancelled = false;
+      (async () => {
+        try {
+          const data = await api.getMyStats();
+          if (cancelled) return;
+          setStats(data.stats || {});
+        } catch (error) {
+          console.error('获取江湖数据失败:', error);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }, [])
   );
 
@@ -221,12 +236,12 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
             <Text style={styles.menuText}>我的收藏</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/my-messages')}>
             <Text style={styles.menuIcon}>评</Text>
             <Text style={styles.menuText}>我的留言</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/my-likes')}>
             <Text style={styles.menuIcon}>赞</Text>
             <Text style={styles.menuText}>我的点赞</Text>
             <Text style={styles.menuArrow}>›</Text>

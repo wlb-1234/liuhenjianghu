@@ -96,6 +96,21 @@ class ApiService {
     return this.request('/auth/me');
   }
 
+  // 我的统计数据（发布/获赞/粉丝/关注）
+  async getMyStats(): Promise<{ stats: any }> {
+    return this.request('/auth/me/stats');
+  }
+
+  // 我发布的帖子（我的留言）
+  async getMyPosts(page = 1, pageSize = 50): Promise<{ posts: any[] }> {
+    return this.request(`/posts/mine?page=${page}&pageSize=${pageSize}`);
+  }
+
+  // 我点赞过的帖子
+  async getMyLikedPosts(): Promise<{ posts: any[] }> {
+    return this.request('/posts/my-liked');
+  }
+
   // 更新用户信息
   async updateMe(data: { nickname?: string; avatar?: string }): Promise<{ user: any }> {
     return this.request('/auth/me', { method: 'PUT', body: data });

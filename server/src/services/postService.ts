@@ -199,3 +199,16 @@ export async function deletePost(postId: number) {
   await p.query('DELETE FROM comments WHERE post_id = $1', [postId]);
   await p.query('DELETE FROM posts WHERE id = $1', [postId]);
 }
+
+// 获取我点赞过的帖子列表
+export async function getLikedPosts(userId: number) {
+  const p = getPool();
+  const result = await p.query(`
+    SELECT p.*, u.nickname as author_nickname, u.avatar as author_avatar
+    FROM posts p
+    JOIN likes l ON l.target_type = 'post' AND l.target_id = p.id AND l.user_id = $1
+    JOIN users u ON p.user_id = u.id
+    ORDER BY p.created_at DESC
+  `, [userId]);
+  return result.rows;
+}

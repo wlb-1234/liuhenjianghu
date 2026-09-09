@@ -242,6 +242,30 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// 获取我的统计数据（发布/获赞/粉丝/关注）
+router.get('/me/stats', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT
+        u.total_posts AS total_posts,
+        u.total_likes AS total_likes,
+        (SELECT COUNT(*) FROM follows WHERE following_id = u.id) AS followers_count,
+        (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) AS following_count
+       FROM users u
+       WHERE u.id = $1`,
+      [req.userId!]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+    res.json({ stats: result.rows[0] });
+  } catch (error: any) {
+    console.error('获取我的统计数据错误:', error);
+    res.status(500).json({ error: error.message || '获取统计数据失败' });
+  }
+});
+
 // 更新用户信息
 router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
