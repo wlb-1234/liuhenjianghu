@@ -111,7 +111,7 @@ export default function RootLayout() {
           <Stack.Screen name="login" options={{ title: "" }} />
           <Stack.Screen name="register" options={{ title: "" }} />
           <Stack.Screen name="forgot-password" options={{ title: "" }} />
-          <Stack.Screen name="post" options={{ title: "" }} />
+          <Stack.Screen name="post/index" options={{ title: "" }} />
           <Stack.Screen name="chat" options={{ title: "" }} />
           <Stack.Screen name="settings" options={{ title: "" }} />
           <Stack.Screen name="vip" options={{ title: "" }} />

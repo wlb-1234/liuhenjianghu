@@ -4421,4 +4421,31 @@ const publicRoutes = ['login', 'register', 'admin', 'forgot-password'];
 **提交记录**：
 - `2026-09-09` - fix(client): 修复「我的」页面江湖数据统计与留言/点赞跳转
 
+### 补充修复（同日）：沙箱登录页白屏 / 路由冲突
+
+**现象**：功能逻辑修复后，沙箱**整个应用无法加载**（登录页白屏），控制台报错：
+```
+Found conflicting screens with the same pattern. The pattern 'post'
+resolves to both '_root > post/index' and '_root > post'.
+```
+
+**根因**：`client/app/` 下存在**两个指向同一 pattern 的路由文件**，导致 expo-router 在路由解析阶段直接抛错：
+- `client/app/post.tsx`（`/post`，re-export `@/screens/post`，来自 commit `dafcd6e`）
+- `client/app/post/index.tsx`（`/post`，**内容完全相同**，来自 commit `930a1a5`）
+
+两者内容一样（都 re-export `@/screens/post` 发布页），属历史遗留的重复文件冲突。应用因此无法初始化路由，登录页无法渲染。
+
+**修复**：
+- 删除文件式 `client/app/post.tsx`，保留目录式 `client/app/post/index.tsx`（与分享落地页 `post/[id].tsx` 同处 `post/` 目录，符合 expo-router 目录规范；两个文件内容一致，删除任一均安全）
+- 根布局 `client/app/_layout.tsx` 将 `<Stack.Screen name="post">` 修正为 `<Stack.Screen name="post/index">`，消除 "No route named post" 警告
+
+**注意（chat 未改）**：`client/app/chat.tsx`（`/chat?userId=`，query 传参）与 `client/app/chat/[userId].tsx`（`/chat/:userId`，路径传参）pattern **不同**，是两个合法导航入口，故不予删除。
+
+**验证结果**：
+- ✅ 删除后 HMR 重新编译成功，前台日志显示登录页正常渲染（`segments:["login"]`、`isLoginRoute:true`），无任何 conflict/error 警告
+- ✅ `post` 路由确认仅剩 `post/index` + `post/[id]` 并存
+
+**提交记录**：
+- `2026-09-09` - fix(client): 移除 app/post.tsx 重复路由，修复沙箱登录页白屏
+
 ---
