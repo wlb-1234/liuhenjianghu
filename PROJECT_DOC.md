@@ -4512,3 +4512,33 @@ resolves to both '_root > post/index' and '_root > post'.
 ---
 
 以后若有新的改进/修复，将按同样的格式在此文档继续追加带日期时间的记录，并同步推送 GitHub。
+
+---
+
+## 2026-09-10 实名认证提交始终 401：后端鉴权取值改用 req.userId
+
+### 问题现象
+实名认证页面「提交认证」填完信息后点击无跳转 / 提示出错（截图显示 `401 Unauthorized`）。
+
+### 根因
+后端 `server/src/routes/realname.ts` 的登录判断与查询使用 `req.user` / `req.user.id`，但认证中间件 `optionalAuth`（见 `server/src/middleware/auth.ts` 第 57/60 行）实际 **只设置 `req.userId`，从不设置 `req.user`**（`req.user` 仅由另一个强认证中间件在 85/86 行赋值）。因此即使携带有效 JWT token，`if (!req.user)` 也都恒为真：
+- `GET /status` 恒返回「未认证表单」；
+- `POST /` 恒返回 `401 请先登录`。
+
+（此前 405 已通过 API 域名兜底修复解决，此 401 为后续暴露的同链路后端 bug。）
+
+### 修复
+将 `server/src/routes/realname.ts` 全部 5 处 `req.user` / `req.user.id` 替换为认证中间件真实写入的 `req.userId`（表单中安全写为 `(req as any).userId`）：
+- `GET /status`：未登录 `if (!(req as any).userId)` → 返回 `{ verified:false, status:null }`；已登录按 `user_id` 查询。
+- `POST /`：未登录返回 `401 请先登录`；按 `user_id` 查询已有申请并 upsert 提交。
+
+### 验证
+- `server/src/routes/realname.ts` 已无 `req.user` 残留（grep 校验通过）。
+- 确认 `optionalAuth` 只写入 `req.userId`，修复方向与中间件实现一致。
+- 提交 `524a8ce`，已 push 远端 main，触发 GitHub Actions 自动重建并重启后端 `liuhen-api`。
+
+### 交付
+- `524a8ce` - fix(server): 实名认证鉴权改用 req.userId, 修复提交认证始终 401
+
+### 备注
+若重新测试仍提示 401，请先在「我的」退出后重新登录获取新 token（浏览器中旧 token 可能已过期，前端 `isAuthenticated` 在 token 过期时仍可能为 true）。
