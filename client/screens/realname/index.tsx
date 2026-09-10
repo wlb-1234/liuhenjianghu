@@ -11,12 +11,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { useAuthStore } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
 
 export default function RealnameScreen() {
-  const { user, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [status, setStatus] = useState<any>(null);
@@ -31,7 +31,7 @@ export default function RealnameScreen() {
     try {
       const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/realname/status`, {
         headers: {
-          'x-session': user?.session_token || '',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
       });
       const data = await response.json();
@@ -71,7 +71,7 @@ export default function RealnameScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-session': user?.session_token || '',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
           realName: realName.trim(),
