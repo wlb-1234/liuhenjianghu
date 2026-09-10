@@ -78,11 +78,11 @@ export default function AboutScreen() {
             <Text style={styles.vipTitle}>江湖会员体系</Text>
             <View style={styles.vipList}>
               {[
-                { name: '江湖散人', desc: '免费体验，本镇发布' },
-                { name: '县帮帮主', desc: '本县范围，9元/月' },
-                { name: '市盟盟主', desc: '本市范围，19元/月' },
-                { name: '省派掌门', desc: '本省范围，39元/月' },
-                { name: '天下会主', desc: '全国范围，69元/月' },
+                { name: '江湖散人', desc: '免费，本镇发布，3条/天，7天留存' },
+                { name: '县级会员', desc: '本县发布，30条/天，15天留存，20元/月' },
+                { name: '市级会员', desc: '本市发布，80条/天，30天留存，100元/月' },
+                { name: '省级会员', desc: '本省发布，200条/天，40天留存，500元/月' },
+                { name: '全国会员', desc: '全国发布，300条/天，50天留存，2000元/月' },
               ].map((item, index) => (
                 <View key={index} style={styles.vipItem}>
                   <Text style={styles.vipName}>{item.name}</Text>
