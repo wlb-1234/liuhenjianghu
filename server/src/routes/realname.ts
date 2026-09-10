@@ -36,13 +36,13 @@ router.get('/init-table', async (req: Request, res: Response) => {
  */
 router.get('/status', optionalAuth, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
+    if (!(req as any).userId) {
       return res.json({ verified: false, status: null });
     }
 
     const result = await getPool().query(
       'SELECT status, real_name, reject_reason FROM realname_verifications WHERE user_id = $1',
-      [req.user.id]
+      [(req as any).userId]
     );
 
     if (result.rows.length === 0) {
@@ -70,7 +70,7 @@ router.get('/status', optionalAuth, async (req: Request, res: Response) => {
  */
 router.post('/', optionalAuth, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
+    if (!(req as any).userId) {
       return res.status(401).json({ error: '请先登录' });
     }
 
@@ -88,7 +88,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
     // 检查是否有待审核或已通过的申请
     const existing = await getPool().query(
       'SELECT status FROM realname_verifications WHERE user_id = $1',
-      [req.user.id]
+      [(req as any).userId]
     );
 
     if (existing.rows.length > 0) {
@@ -108,7 +108,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
        ON CONFLICT (user_id) 
        DO UPDATE SET real_name = $2, id_card = $3, id_card_front = $4, id_card_back = $5, 
                      status = 'pending', reject_reason = NULL, reviewed_at = NULL, reviewed_by = NULL`,
-      [req.user.id, realName, idCard, idCardFront || null, idCardBack || null]
+      [(req as any).userId, realName, idCard, idCardFront || null, idCardBack || null]
     );
 
     return res.json({ success: true, message: '提交成功，请等待审核' });
