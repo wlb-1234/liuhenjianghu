@@ -74,14 +74,20 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       return res.status(401).json({ error: '请先登录' });
     }
 
-    const { realName, idCard, idCardFront, idCardBack } = req.body;
+    const { idCardFront, idCardBack } = req.body;
+    const realName = req.body.realName;
+    const idCard = req.body.idCard;
 
-    if (!realName || !idCard) {
+    // 统一清洗：去空格、身份证转大写
+    const cleanName = String(realName || '').trim();
+    const cleanCard = String(idCard || '').trim().toUpperCase();
+
+    if (!cleanName || !cleanCard) {
       return res.status(400).json({ error: '请填写完整信息' });
     }
 
-    // 简单验证身份证格式
-    if (!/^\d{17}[\dXx]$/.test(idCard)) {
+    // 身份证格式：15 位或 18 位
+    if (!/^(\d{15}|\d{17}[0-9X])$/.test(cleanCard)) {
       return res.status(400).json({ error: '身份证格式不正确' });
     }
 
@@ -108,7 +114,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
        ON CONFLICT (user_id) 
        DO UPDATE SET real_name = $2, id_card = $3, id_card_front = $4, id_card_back = $5, 
                      status = 'pending', reject_reason = NULL, reviewed_at = NULL, reviewed_by = NULL`,
-      [(req as any).userId, realName, idCard, idCardFront || null, idCardBack || null]
+      [(req as any).userId, cleanName, cleanCard, idCardFront || null, idCardBack || null]
     );
 
     return res.json({ success: true, message: '提交成功，请等待审核' });

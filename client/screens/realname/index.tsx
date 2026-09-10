@@ -24,6 +24,7 @@ export default function RealnameScreen() {
   const [status, setStatus] = useState<any>(null);
   const [realName, setRealName] = useState('');
   const [idCard, setIdCard] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     checkStatus();
@@ -46,24 +47,26 @@ export default function RealnameScreen() {
   };
 
   const handleSubmit = async () => {
+    setFormError('');
+
     if (!isAuthenticated) {
-      Alert.alert('提示', '请先登录');
+      setFormError('请先登录');
       return;
     }
 
-    if (!realName.trim()) {
-      Alert.alert('错误', '请输入真实姓名');
+    const name = realName.trim();
+    const card = (idCard || '').trim().toUpperCase();
+
+    if (!name) {
+      setFormError('请输入真实姓名');
       return;
     }
-
-    if (!idCard.trim()) {
-      Alert.alert('错误', '请输入身份证号');
+    if (!card) {
+      setFormError('请输入身份证号');
       return;
     }
-
-    // 简单验证
-    if (!/^\d{17}[\dXx]$/.test(idCard)) {
-      Alert.alert('错误', '身份证格式不正确');
+    if (!/^(\d{15}|\d{17}[0-9X])$/.test(card)) {
+      setFormError('身份证号格式不正确（需15位或18位）');
       return;
     }
 
@@ -76,14 +79,15 @@ export default function RealnameScreen() {
           'Authorization': token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
-          realName: realName.trim(),
-          idCard: idCard.trim(),
+          realName: name,
+          idCard: card,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || '提交失败');
+        setFormError(data.error || '提交失败');
+        return;
       }
 
       Alert.alert('提交成功', '您的实名认证申请已提交，请等待审核', [
@@ -92,7 +96,7 @@ export default function RealnameScreen() {
       setRealName('');
       setIdCard('');
     } catch (error: any) {
-      Alert.alert('提交失败', error.message);
+      setFormError(error.message || '网络错误，请重试');
     } finally {
       setLoading(false);
     }
@@ -216,6 +220,8 @@ export default function RealnameScreen() {
                 maxLength={18}
               />
             </View>
+            {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+
             <TouchableOpacity
               style={[styles.submitButton, loading && styles.submitButtonDisabled]}
               onPress={handleSubmit}
@@ -266,6 +272,8 @@ export default function RealnameScreen() {
               maxLength={18}
             />
           </View>
+
+          {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
           <TouchableOpacity
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
@@ -378,6 +386,11 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: {
     backgroundColor: '#ccc',
+  },
+  errorText: {
+    color: '#FF4D4F',
+    fontSize: 13,
+    marginBottom: 10,
   },
   submitButtonText: {
     color: '#fff',
