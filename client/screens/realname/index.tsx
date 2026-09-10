@@ -13,7 +13,9 @@ import {
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/contexts/AuthContext';
 
-const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL;
+// 线上该变量可能被注入成字面 "undefined"/"null"，回退为相对路径(同站 /api 代理)
+const __BASE_RAW = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '').trim();
+const EXPO_PUBLIC_BACKEND_BASE_URL = !__BASE_RAW || /undefined|null/i.test(__BASE_RAW) ? '' : __BASE_RAW;
 
 export default function RealnameScreen() {
   const { token, isAuthenticated } = useAuth();

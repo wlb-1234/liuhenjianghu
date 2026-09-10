@@ -2,7 +2,9 @@
 // 生产环境通过 server.js 代理 /api/* 到后端，使用相对路径即可
 // 开发环境通过 EXPO_PUBLIC_BACKEND_BASE_URL 指定后端地址
 // 构建时间戳：2026-07-18T21:45:00+08:00
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_BASE_URL ?? '';
+// 防御：线上该变量可能被注入成字面 "undefined"/"null"，回退为相对路径(同站 /api 代理)
+const __BASE_RAW = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '').trim();
+const API_BASE = !__BASE_RAW || /undefined|null/i.test(__BASE_RAW) ? '' : __BASE_RAW;
 
 interface RequestOptions {
   method?: string;
