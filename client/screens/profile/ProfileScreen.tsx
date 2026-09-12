@@ -99,6 +99,15 @@ export default function ProfileScreen({ onUpgrade, onSettings }: Props) {
             <View style={[styles.memberBadge, isVip && styles.memberBadgeVip]}>
               <Text style={styles.memberName}>{memberInfo.name}</Text>
             </View>
+            {(user as any)?.verified ? (
+              <View style={styles.verifiedBadge}>
+                <Text style={styles.verifiedBadgeText}>已实名</Text>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.unverifiedBadge} onPress={() => router.push('/realname')}>
+                <Text style={styles.unverifiedBadgeText}>未实名 · 去认证</Text>
+              </TouchableOpacity>
+            )}
             <Text style={styles.slogan}>人海为江湖，留言皆流痕</Text>
           </View>
         </LinearGradient>
@@ -329,6 +338,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#FDFBF7',
     fontWeight: '600',
+  },
+  verifiedBadge: {
+    backgroundColor: '#C9A96E',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  verifiedBadgeText: {
+    fontSize: 12,
+    color: '#2A1B08',
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  unverifiedBadge: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  unverifiedBadgeText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
+    letterSpacing: 1,
   },
   slogan: {
     fontSize: 12,

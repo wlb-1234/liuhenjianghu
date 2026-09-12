@@ -213,12 +213,27 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (!user) {
       return res.status(404).json({ error: '用户不存在' });
     }
-    
+
+    // 是否已通过实名认证
+    let verified = false;
+    try {
+      const pool = getPool();
+      const vr = await pool.query(
+        `SELECT 1 FROM realname_verifications WHERE user_id = $1 AND status = 'approved' LIMIT 1`,
+        [req.userId]
+      );
+      verified = (vr.rowCount ?? 0) > 0;
+    } catch (e) {
+      // 表不存在等异常时按未认证处理，不影响主流程
+      verified = false;
+    }
+
     const userInfo = {
       id: user.id,
       phone: user.phone,
       nickname: user.nickname,
       avatar: user.avatar,
+      verified,
       member_level: user.member_level,
       member_expire_at: user.member_expire_at,
       province_code: user.province_code,
