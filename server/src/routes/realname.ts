@@ -91,6 +91,20 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       return res.status(400).json({ error: '身份证格式不正确' });
     }
 
+    // 本地自动初审：18 位证件做校验位算法校验(GB 11643-1999)，并校验生日合法
+    if (cleanCard.length === 18) {
+      const check = isValidCNID18(cleanCard);
+      if (!check.valid) {
+        return res.status(400).json({ error: check.reason });
+      }
+    } else {
+      // 15 位证件按出生日期补全后校验生日是否合法
+      const birth = `19${cleanCard.substr(6, 6)}`;
+      if (!isValidDate(birth)) {
+        return res.status(400).json({ error: '身份证出生日期不正确' });
+      }
+    }
+
     // 检查是否有待审核或已通过的申请
     const existing = await getPool().query(
       'SELECT status FROM realname_verifications WHERE user_id = $1',
@@ -205,5 +219,45 @@ router.put('/admin/:id/review', verifyAdmin, async (req: Request, res: Response)
     return res.status(500).json({ error: '审核失败' });
   }
 });
+
+/** 判断 yyyymmdd/yyyy-mm-dd 是否为真实日期 */
+function isValidDate(birth: string): boolean {
+  const m = /^(\d{4})(\d{2})(\d{2})$/.exec(birth);
+  if (!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (y < 1900 || y > new Date().getFullYear() || mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(y, mo - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d;
+}
+
+/** 18 位身份证本地校验位校验(GB 11643-1999)，返回是否合法及原因 */
+function isValidCNID18(id: string): { valid: boolean; reason?: string } {
+  // 截取出生日期(第7-14位)
+  const birth = `${id.substr(6, 4)}${id.substr(10, 2)}${id.substr(12, 2)}`;
+  if (!isValidDate(birth)) {
+    return { valid: false, reason: '身份证出生日期不正确' };
+  }
+  // 出生年份前后合理范围
+  const y = +id.substr(6, 4);
+  if (y < 1930 || y > new Date().getFullYear() - 14) {
+    return { valid: false, reason: '身份证出生日期超出合理范围' };
+  }
+  // 前两位行政区划号段粗校验(11-82)
+  const region = +id.substr(0, 2);
+  if (region < 11 || region > 82) {
+    return { valid: false, reason: '身份证行政区划不正确' };
+  }
+  // 校验位算法
+  const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+  const codes = '10X98765432';
+  let sum = 0;
+  for (let i = 0; i < 17; i++) sum += +id[i] * weights[i];
+  const expect = codes[sum % 11];
+  const actual = id[17];
+  if (expect !== actual) {
+    return { valid: false, reason: '身份证校验位不正确，请核对证件号' };
+  }
+  return { valid: true };
+}
 
 export default router;
