@@ -14,6 +14,8 @@ import {
   generateAppPayParams 
 } from '../utils/wechatPay';
 import { query } from '../config/database';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { requireVerified } from '../middleware/requireRealname';
 import { ResultSetHeader } from 'mysql2/promise';
 import { NotificationService, MessagePriority } from '../services/notificationService.js';
 
@@ -162,19 +164,19 @@ router.get('/balances', async (req: Request, res: Response) => {
  * 统一下单接口
  * POST /api/v1/payment/create
  */
-router.post('/create', async (req: Request, res: Response) => {
+router.post('/create', authMiddleware, requireVerified, async (req: AuthRequest, res: Response) => {
   try {
     const { 
-      userId,           // 用户ID
       totalFee,         // 金额（分）
       orderType,        // 订单类型：recharge/vip/gift
       body,             // 商品描述
       relatedId,        // 关联ID（会员ID等）
       openid,           // 微信openid（JSAPI支付需要）
     } = req.body;
+    const userId = req.userId; // 从登录态获取用户ID（已通过实名认证校验）
 
     // 参数验证
-    if (!userId || !totalFee || !orderType || !body) {
+    if (!totalFee || !orderType || !body) {
       return res.status(400).json({ 
         success: false, 
         error: '缺少必要参数' 

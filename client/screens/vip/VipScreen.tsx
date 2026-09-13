@@ -65,6 +65,16 @@ export default function VipScreen() {
       Alert.alert('提示', '该等级无需购买');
       return;
     }
+    if (!user) {
+      Alert.alert('提示', '请先登录后再购买会员');
+      router.push('/login');
+      return;
+    }
+    if (!(user as any).verified) {
+      Alert.alert('提示', '购买会员需先完成实名认证');
+      router.push('/realname');
+      return;
+    }
     setSelectedLevel(level);
     setPayModalVisible(true);
   };

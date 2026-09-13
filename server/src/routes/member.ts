@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { requireVerified } from '../middleware/requireRealname';
 import { getUserById, updateUser } from '../services/userService';
 import { getAllMemberLevels, getMemberLevel } from '../services/memberService';
 
@@ -28,7 +29,7 @@ router.get('/levels', async (req: Request, res: Response) => {
 });
 
 // 升级会员（模拟支付）
-router.post('/upgrade', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/upgrade', authMiddleware, requireVerified, async (req: AuthRequest, res: Response) => {
   try {
     const { level } = req.body;
     
