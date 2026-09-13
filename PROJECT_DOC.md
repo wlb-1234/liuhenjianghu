@@ -4583,3 +4583,19 @@ resolves to both '_root > post/index' and '_root > post'.
 提交 `e780fed` 已推送远端 main。
 
 说明：后续可逐步为敏感/资金功能(订单下单、余额提现/充值、会员权益、担保结拜等)接入"未实名 403 + 前端引导"门槛；但因订单等旧接口当前无鉴权、改动有破坏风险，该项与用户对齐清单后再接入。他人作者认证徽标展示也可作为后续增强。
+
+---
+
+## 2026-09-12 实名认证产品化(第二步)：会员购买/充值强制实名
+
+目标：对"敏感/资金功能"加"未实名 403 + 前端跳转认证引导"，实现分层实名。
+
+改动：
+1. **新增 `server/src/middleware/requireRealname.ts`**：`requireVerified` 中间件（Postgres `getPool`）——校验 `req.userId` 对应 `realname_verifications` 是否存在 `status='approved'` 记录；未登录 401，未实名 **403 + `{code:'REQUIRE_REALNAME', error:'请先完成实名认证'}`**。
+2. **会员购买 `member.ts /upgrade`**：在原有 `authMiddleware` 后接入 `requireVerified`，未实名拦截。
+3. **充值/支付 `payment.ts /create`**：原先**无鉴权**（信任前端传 `body.userId`）→ 补 `authMiddleware` + `requireVerified`；用户改为取 `req.userId`（token），不再依赖前端传入的 userId（修复同源安全隐患）。
+4. **前端 `vip/VipScreen.tsx`**：会员购买/充值入口前置判断 `user.verified`，未实名时提示"请先完成实名认证"并 `router.push('/realname')` 引导；后端再兜底 403。
+
+验证：`node build.js` 通过；前端 vip/profile/realname 无新增类型错误（仅 admin 页既有 TS7006 历史遗留）。提交 `b772466` 已推送。
+
+说明：后端既有资金接口(如 `payment/create`)本无鉴权，此为配套安全加固。订单(`orders POST`)为内存模拟且无明确前端下单调用，提现接口后端尚未实现，本次未改动，避免误伤。
