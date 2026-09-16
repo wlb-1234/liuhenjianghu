@@ -4599,3 +4599,21 @@ resolves to both '_root > post/index' and '_root > post'.
 验证：`node build.js` 通过；前端 vip/profile/realname 无新增类型错误（仅 admin 页既有 TS7006 历史遗留）。提交 `b772466` 已推送。
 
 说明：后端既有资金接口(如 `payment/create`)本无鉴权，此为配套安全加固。订单(`orders POST`)为内存模拟且无明确前端下单调用，提现接口后端尚未实现，本次未改动，避免误伤。
+
+---
+## 2026-09-xx 阶段二：阿里云身份证二要素自动核验接入
+**改动文件**：`server/src/routes/realname.ts`、`server/.env.example`
+**内容**：
+1. 新增 `aliRealNameCheck()`：调用阿里云云市场「身份证二要素核验」`POST https://lfeid.market.alicloudapi.com/idcheck/lifePost`，AppCode 从 `.env` 的 `ALI_REALNAME_APPCODE` 注入（**不硬编码，密钥不入库**），超时 8s。
+   - 返回结构：`{ error_code, reason, result:{ isok, realname, idcard, IdCardInfor }, sn }`，以 `result.isok === true` 判匹配。
+2. `POST /realname` 提交链升级为：本地格式/校验位初审 → **阿里云自动核验**：
+   - 匹配 → 直接 `approved`（自动通过，`reviewed_by=0`，记录时间）
+   - 不匹配 → 直接 `rejected`（记录具体原因）
+   - 服务异常/无法判定 → 保留 `pending`，转人工复核（安全兜底，不误判）
+   - 未配置 AppCode → 保持原人工审核流程（向后兼容）
+3. **安全加固**：将 `server/.env` 从 git 跟踪移除并加入 `.gitignore`（原已被跟踪，含真实 DB/JWT 密钥，避免推送 GitHub）；修正既有 bug `req.adminId` → `req.adminUser?.id ?? 0`（verifyAdmin 实际注入的是 `adminUser.id`）。
+4. `realname.ts` 无新增类型错误；`node build.js` 通过。
+
+接口实测：`curl -X POST .../idcheck/lifePost`（APPCODE 认证）返回 `{"error_code":0,"reason":"证件格式错误","result":{"isok":false,...}}`，结构确认。
+
+**部署注意**：服务器需在 `/opt/liuhenjianghu/server/.env` 中手动添加 `ALI_REALNAME_APPCODE=4e671095fff24ba1b469a01aac16cf6d`（该文件已退出 git 跟踪，不再随 git pull 更新，需服务器本地维护）。

@@ -12,3 +12,4 @@ logs/
 node-compile-cache/
 .cozeproj/reduction
 .codegraph
+server/.env

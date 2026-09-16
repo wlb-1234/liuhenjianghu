@@ -5,6 +5,43 @@ import { verifyAdmin } from '../middleware/admin';
 
 const router = Router();
 
+// 阿里云实名核验接口（云市场「身份证二要素核验」）
+// 通过 .env 注入 ALI_REALNAME_APPCODE，未配置则保持原有「人工审核」流程
+const ALI_REALNAME_APPCODE = process.env.ALI_REALNAME_APPCODE || '';
+const ALI_REALNAME_URL = 'https://lfeid.market.alicloudapi.com/idcheck/lifePost';
+
+/**
+ * 调用阿里云身份证二要素核验
+ * @returns { matched: boolean | null } matched=true 匹配；false 不匹配；null 调用失败/无法判定（退回人工审核）
+ */
+async function aliRealNameCheck(realName: string, idCard: string): Promise<{ matched: boolean | null; reason?: string }> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const resp = await fetch(ALI_REALNAME_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `APPCODE ${ALI_REALNAME_APPCODE}`,
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      },
+      body: `cardNo=${encodeURIComponent(idCard)}&realName=${encodeURIComponent(realName)}`,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const data = (await resp.json()) as any;
+    // 返回结构: { error_code, reason, result:{ realname, idcard, isok, IdCardInfor }, sn }
+    const isok = data?.result?.isok === true;
+    const errCode = String(data?.error_code ?? '').trim();
+    if (isok) return { matched: true };
+    // error_code === '0' 且 result.isok === false → 明确不匹配
+    if (errCode === '0') return { matched: false, reason: data?.reason || '姓名与身份证号不匹配' };
+    return { matched: null, reason: data?.reason || '核验服务繁忙，请稍后重试' };
+  } catch (e: any) {
+    console.error('阿里云实名核验调用失败:', e?.message || e);
+    return { matched: null, reason: '核验服务繁忙，请稍后重试' };
+  }
+}
+
 // 初始化表结构
 router.get('/init-table', async (req: Request, res: Response) => {
   try {
@@ -119,19 +156,43 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       if (currentStatus === 'approved') {
         return res.status(400).json({ error: '您已完成实名认证' });
       }
+      // rejected：允许重新提交
+    }
+
+    // 阿里云自动核验（未配置 AppCode 时跳过，走人工审核）
+    let finalStatus = 'pending';
+    let finalReason: string | null = null;
+    let isAuto = false;
+    if (ALI_REALNAME_APPCODE) {
+      const check = await aliRealNameCheck(cleanName, cleanCard);
+      if (check.matched === true) {
+        finalStatus = 'approved';
+        isAuto = true;
+      } else if (check.matched === false) {
+        finalStatus = 'rejected';
+        finalReason = check.reason || '姓名与身份证号不匹配';
+      }
+      // matched === null：核验服务异常/无法判定 → 保留 pending，转人工复核
     }
 
     // 插入或更新认证申请
-    await getPool().query(
-      `INSERT INTO realname_verifications (user_id, real_name, id_card, id_card_front, id_card_back, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')
+    const insertResult = await getPool().query(
+      `INSERT INTO realname_verifications (user_id, real_name, id_card, id_card_front, id_card_back, status, reject_reason, reviewed_at, reviewed_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (user_id) 
        DO UPDATE SET real_name = $2, id_card = $3, id_card_front = $4, id_card_back = $5, 
-                     status = 'pending', reject_reason = NULL, reviewed_at = NULL, reviewed_by = NULL`,
-      [(req as any).userId, cleanName, cleanCard, idCardFront || null, idCardBack || null]
+                     status = $6, reject_reason = $7, reviewed_at = $8, reviewed_by = $9`,
+      [(req as any).userId, cleanName, cleanCard, idCardFront || null, idCardBack || null,
+       finalStatus, finalReason, isAuto ? new Date() : null, isAuto ? 0 : null]
     );
 
-    return res.json({ success: true, message: '提交成功，请等待审核' });
+    if (finalStatus === 'approved') {
+      return res.json({ success: true, status: 'approved', message: '核验通过，已完成实名认证' });
+    }
+    if (finalStatus === 'rejected') {
+      return res.status(400).json({ error: finalReason || '姓名与身份证号不匹配' });
+    }
+    return res.json({ success: true, status: 'pending', message: '提交成功，请等待审核' });
   } catch (error: any) {
     console.error('提交实名认证失败:', error);
     return res.status(500).json({ error: '提交失败，请稍后重试' });
@@ -206,7 +267,7 @@ router.put('/admin/:id/review', verifyAdmin, async (req: Request, res: Response)
        SET status = $1, reject_reason = $2, reviewed_at = NOW(), reviewed_by = $3
        WHERE id = $4
        RETURNING *`,
-      [status, rejectReason || null, req.adminId, id]
+      [status, rejectReason || null, (req as any).adminUser?.id ?? 0, id]
     );
 
     if (result.rows.length === 0) {
