@@ -4651,3 +4651,27 @@ resolves to both '_root > post/index' and '_root > post'.
 ### 四、后续建议项（未做，待用户决定）
 - 生产库正式数据若在阿里云 RDS 且需保存于生成的 RDS 表，需在 `.env` 启用 `rds.aliyuncs.com` 连接串并到 RDS 建表（`/api/v1/realname/init-table`）。
 - `.env` 现为服务器本地维护状态（不随 git 更新），后续新增服务器环境变量需手动在服务器 .env 追加并重启。
+
+---
+## 2026-09-17 00:31 修复：帖子详情页一直转圈（评论表结构冲突）
+**现象**（用户反馈）：首页点进帖子 → 帖子详情页中间箭头一直转、无法加载内容；但「江湖数据」里的「评」（my-messages，走 getMyPosts）能正常看到之前的评论。
+
+**根因定位**：
+- 沙箱库与生产库的 `comments` 表存在**两套并行结构**：旧的 `post_id` 结构（schema.ts / migrations）与 `item_id + item_type` 结构（通用评论系统 routes/comments.ts）。
+- `postService.ts` 的 `getComments` / `createComment` / `deletePost` 硬编码 `c.post_id`，而当前库无 `post_id` 列 → `GET /posts/:id` 抛 `column c.post_id does not exist` → 详情接口 HTTP 500 → 前端 `post` 保持 null → 页面永远转圈。
+- 另发现前端 bug：`post-detail/index.tsx` 从 `data.post?.comments` 取评论，而后端返回顶层 `data.comments`，即使接口正常评论也为空。
+
+**修复**（仅 postService.ts + post-detail/index.tsx，不影响其它功能）：
+1. `postService.ts`：新增 `detectCommentsSchema()`（查询 information_schema 判断 comments 表是否有 `post_id`，带内存缓存）。
+   - `getComments`：有 `post_id` → 用 post_id 查询；否则用 `item_id + item_type='post'` 查询。均兼容 status 过滤。
+   - `createComment`：按结构选择 INSERT 字段；评论计数 `comment_count+1` 不变。
+   - `deletePost`：按结构选择 DELETE comments 过滤条件。
+   - （改动均条件化，两种表结构都可用，向后兼容。）
+2. `client/screens/post-detail/index.tsx`：取评论改为 `data.comments || data.post?.comments`（用 `(data as any)` 规避类型），并与原 `setPost(data.post||null)` 一致化。
+
+**验证**（沙箱 volces 库，item_id 结构）：
+- `GET /posts/6`：HTTP **500 → 200**，`post` 正常返回，不再转圈（`post_id does not exist` 错误消失）。
+- `postService.ts` 经 tsc 检查 **0 错误**；改动行前端 lint **通过**（剩余 post-detail 的 71/72/108 为历史既有错误，非本次引入）。
+- server `node build.js` 构建成功。
+
+**部署注意**：需 `git pull` + `node build.js && pm2 restart liuhen-api`；前端需重新 `npm run build && pm2 restart liuhen-client`。

@@ -147,20 +147,49 @@ export async function isLiked(userId: number, postId: number) {
   return result.rows.length > 0;
 }
 
-// 获取评论
+// 评论表结构缓存：检测 comments 表是 post_id 结构还是 item_id/item_type 结构
+let _commentsSchema: 'post_id' | 'item_id' | null = null;
+async function detectCommentsSchema(p: any): Promise<'post_id' | 'item_id'> {
+  if (_commentsSchema) return _commentsSchema;
+  try {
+    const r = await p.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name='comments'"
+    );
+    const cols = r.rows.map((x: any) => x.column_name);
+    _commentsSchema = cols.includes('post_id') ? 'post_id' : 'item_id';
+  } catch (e) {
+    // 检测失败时默认 post_id（与 schema.ts / migrations 一致）
+    _commentsSchema = 'post_id';
+  }
+  return _commentsSchema;
+}
+
+// 获取评论（兼容 post_id 与 item_id/item_type 两种表结构）
 export async function getComments(postId: number) {
   const p = getPool();
-  const result = await p.query(`
-    SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
-    FROM comments c
-    JOIN users u ON c.user_id = u.id
-    WHERE c.post_id = $1 AND c.status = 1
-    ORDER BY c.created_at ASC
-  `, [postId]);
+  const schema = await detectCommentsSchema(p);
+  let result;
+  if (schema === 'post_id') {
+    result = await p.query(`
+      SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = $1 AND (c.status IS NULL OR c.status = 1)
+      ORDER BY c.created_at ASC
+    `, [postId]);
+  } else {
+    result = await p.query(`
+      SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.item_id = $1 AND c.item_type = $2 AND (c.status IS NULL OR c.status = 1)
+      ORDER BY c.created_at ASC
+    `, [postId, 'post']);
+  }
   return result.rows;
 }
 
-// 创建评论
+// 创建评论（兼容两种表结构）
 export async function createComment(data: {
   postId: number;
   userId: number;
@@ -168,15 +197,22 @@ export async function createComment(data: {
   parentId?: number;
 }) {
   const p = getPool();
-  const result = await p.query(`
-    INSERT INTO comments (post_id, user_id, content, parent_id, created_at)
-    VALUES ($1, $2, $3, $4, NOW())
-    RETURNING *
-  `, [data.postId, data.userId, data.content, data.parentId || null]);
-  
-  // 更新评论计数
+  const schema = await detectCommentsSchema(p);
+  let result;
+  if (schema === 'post_id') {
+    result = await p.query(`
+      INSERT INTO comments (post_id, user_id, content, parent_id, created_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      RETURNING *
+    `, [data.postId, data.userId, data.content, data.parentId || null]);
+  } else {
+    result = await p.query(`
+      INSERT INTO comments (item_id, item_type, user_id, content, parent_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING *
+    `, [data.postId, 'post', data.userId, data.content, data.parentId || null]);
+  }
   await p.query('UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1', [data.postId]);
-  
   return result.rows[0];
 }
 
@@ -200,7 +236,12 @@ export async function createReport(data: {
 export async function deletePost(postId: number) {
   const p = getPool();
   await p.query("DELETE FROM likes WHERE target_type = 'post' AND target_id = $1", [postId]);
-  await p.query('DELETE FROM comments WHERE post_id = $1', [postId]);
+  const schema = await detectCommentsSchema(p);
+  if (schema === 'post_id') {
+    await p.query('DELETE FROM comments WHERE post_id = $1', [postId]);
+  } else {
+    await p.query("DELETE FROM comments WHERE item_id = $1 AND item_type = 'post'", [postId]);
+  }
   await p.query('DELETE FROM posts WHERE id = $1', [postId]);
 }
 
