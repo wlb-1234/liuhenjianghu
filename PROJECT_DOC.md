@@ -4617,3 +4617,37 @@ resolves to both '_root > post/index' and '_root > post'.
 接口实测：`curl -X POST .../idcheck/lifePost`（APPCODE 认证）返回 `{"error_code":0,"reason":"证件格式错误","result":{"isok":false,...}}`，结构确认。
 
 **部署注意**：服务器需在 `/opt/liuhenjianghu/server/.env` 中手动添加 `ALI_REALNAME_APPCODE=4e671095fff24ba1b469a01aac16cf6d`（该文件已退出 git 跟踪，不再随 git pull 更新，需服务器本地维护）。
+
+---
+## 2026-09-17 00:16 阿里云实名自动核验完整打通（阶段二部署闭环）
+**背景**：前两次会议完成「分层实名」（发帖开放 + 敏感/资金功能强制实名）与「实名认证自动比对」需求后，用户购买阿里云云市场「身份证二要素核验」，本次完成真实部署与验证闭环。
+
+### 一、代码改动（已推送，含前序提交）
+1. **`server/src/routes/realname.ts`**：
+   - 新增 `aliRealNameCheck()`：调用阿里云「身份证二要素核验」`POST https://lfeid.market.alicloudapi.com/idcheck/lifePost`，请求头 `Authorization: APPCODE <AppCode>`，Body `cardNo`+`realName`，超时 8s。
+   - 返回结构确认：`{ error_code, reason, result:{ isok, realname, idcard, IdCardInfor }, sn }`，以 `result.isok === true` 判"匹配"。
+   - `POST /realname` 提交链升级：本地格式/校验位初审 → **阿里云自动核验**：
+     - 匹配 → 直接 `approved`（自动通过，`reviewed_by=0`）
+     - 不匹配 → 直接 `rejected`（记录具体原因，前端红字提示）
+     - 服务异常/无法判定 → 保留 `pending` 转人工复核（安全兜底）
+     - 未配置 AppCode → 保持原人工审核（向后兼容）
+2. **类型修复**：`data` 由 `unknown` 断言为 `any`；修正既有 bug `req.adminId` → `req.adminUser?.id ?? 0`（verifyAdmin 实际注入 `adminUser.id`）。
+3. **安全加固**：将 `server/.env` 移出 git 跟踪并加入 `.gitignore`（原含真实 DB/JWT 密钥，避免推送 GitHub）。
+
+### 二、服务器部署（已完成）
+1. `git pull origin main` → 因网络抖动多次 `Connection timed out`，重试后 `Already up to date`。
+2. **⚠️ 关键教训**：将 `server/.env` 移出 git 跟踪后，服务器 `git pull` 会按仓库删除记录**删掉本地 .env**，导致 `DATABASE_URL`/`JWT_SECRET` 丢失。
+   - 已通过 `git show f3a79b8^:server/.env > server/.env` 从 git 历史完整找回。
+   - 再追加 `ALI_REALNAME_APPCODE=4e671095fff24ba1b469a01aac16cf6d`。
+   - `cat .env` 确认：DATABASE_URL(volces/注释保留阿里云RDS行)、JWT_SECRET、ALI_REALNAME_APPCODE 三项齐全。
+   - **恢复后用回原 JWT_SECRET，已登录 token 不失效**。
+3. 构建重启：`node build.js && pm2 restart liuhen-api` → `Build complete!`，`liuhen-api(4)` online。
+
+### 三、验证结论（重要）
+- 后端实际监听 **9091** 端口（`[Server] started on port 9091`），生产后端经 pm2 注入连的是**阿里云 RDS 生产库**（`pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com`），非 volces 沙箱，已确认生产库健康。
+- 用 `curl http://localhost:9091/api/v1/realname` + 真实 token 提交可正确返回（认证有效则走核验）。注意：占位符（【真实用户token】【姓名】【证件号】）必须替换为真实未实名用户数据，否则返回 `{"error":"请先登录"}`（token 无效）或 `您已完成实名认证`（该用户已认证）。
+- AppCode 未硬编码，从 `.env` 的 `ALI_REALNAME_APPCODE` 注入；未配置时不调用核验、保持人工审核，向后兼容。
+
+### 四、后续建议项（未做，待用户决定）
+- 生产库正式数据若在阿里云 RDS 且需保存于生成的 RDS 表，需在 `.env` 启用 `rds.aliyuncs.com` 连接串并到 RDS 建表（`/api/v1/realname/init-table`）。
+- `.env` 现为服务器本地维护状态（不随 git 更新），后续新增服务器环境变量需手动在服务器 .env 追加并重启。
