@@ -147,34 +147,38 @@ export async function isLiked(userId: number, postId: number) {
   return result.rows.length > 0;
 }
 
-// 评论表结构缓存：检测 comments 表是 post_id 结构还是 item_id/item_type 结构
-let _commentsSchema: 'post_id' | 'item_id' | null = null;
-async function detectCommentsSchema(p: any): Promise<'post_id' | 'item_id'> {
-  if (_commentsSchema) return _commentsSchema;
+// 评论表结构检测：动态读取 comments 表实际存在的列（缓存）
+let _commentColsCache: Set<string> | null = null;
+async function getCommentColumns(p: any): Promise<Set<string>> {
+  if (_commentColsCache) return _commentColsCache;
   try {
     const r = await p.query(
       "SELECT column_name FROM information_schema.columns WHERE table_name='comments'"
     );
-    const cols = r.rows.map((x: any) => x.column_name);
-    _commentsSchema = cols.includes('post_id') ? 'post_id' : 'item_id';
+    _commentColsCache = new Set(r.rows.map((x: any) => x.column_name));
   } catch (e) {
-    // 检测失败时默认 post_id（与 schema.ts / migrations 一致）
-    _commentsSchema = 'post_id';
+    // 检测失败时兜底：两者都视为存在，query 可能因此报错并被上层捕获
+    _commentColsCache = new Set(['post_id', 'item_id', 'item_type', 'status']);
   }
-  return _commentsSchema;
+  return _commentColsCache;
+}
+
+// 拼装可选的状态过滤子句（仅当该表存在 status 列时才过滤已删除记录）
+function statusFilter(cols: Set<string>): string {
+  return cols.has('status') ? ' AND (c.status IS NULL OR c.status = 1)' : '';
 }
 
 // 获取评论（兼容 post_id 与 item_id/item_type 两种表结构）
 export async function getComments(postId: number) {
   const p = getPool();
-  const schema = await detectCommentsSchema(p);
+  const cols = await getCommentColumns(p);
   let result;
-  if (schema === 'post_id') {
+  if (cols.has('post_id')) {
     result = await p.query(`
       SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
       FROM comments c
       JOIN users u ON c.user_id = u.id
-      WHERE c.post_id = $1 AND (c.status IS NULL OR c.status = 1)
+      WHERE c.post_id = $1${statusFilter(cols)}
       ORDER BY c.created_at ASC
     `, [postId]);
   } else {
@@ -182,7 +186,7 @@ export async function getComments(postId: number) {
       SELECT c.*, u.nickname as author_nickname, u.avatar as author_avatar
       FROM comments c
       JOIN users u ON c.user_id = u.id
-      WHERE c.item_id = $1 AND c.item_type = $2 AND (c.status IS NULL OR c.status = 1)
+      WHERE c.item_id = $1 AND c.item_type = $2${statusFilter(cols)}
       ORDER BY c.created_at ASC
     `, [postId, 'post']);
   }
@@ -197,9 +201,9 @@ export async function createComment(data: {
   parentId?: number;
 }) {
   const p = getPool();
-  const schema = await detectCommentsSchema(p);
+  const cols = await getCommentColumns(p);
   let result;
-  if (schema === 'post_id') {
+  if (cols.has('post_id')) {
     result = await p.query(`
       INSERT INTO comments (post_id, user_id, content, parent_id, created_at)
       VALUES ($1, $2, $3, $4, NOW())
@@ -236,8 +240,8 @@ export async function createReport(data: {
 export async function deletePost(postId: number) {
   const p = getPool();
   await p.query("DELETE FROM likes WHERE target_type = 'post' AND target_id = $1", [postId]);
-  const schema = await detectCommentsSchema(p);
-  if (schema === 'post_id') {
+  const cols = await getCommentColumns(p);
+  if (cols.has('post_id')) {
     await p.query('DELETE FROM comments WHERE post_id = $1', [postId]);
   } else {
     await p.query("DELETE FROM comments WHERE item_id = $1 AND item_type = 'post'", [postId]);

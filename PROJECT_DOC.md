@@ -4675,3 +4675,26 @@ resolves to both '_root > post/index' and '_root > post'.
 - server `node build.js` 构建成功。
 
 **部署注意**：需 `git pull` + `node build.js && pm2 restart liuhen-api`；前端需重新 `npm run build && pm2 restart liuhen-client`。
+
+---
+
+### 2026-09-18 帖子详情转圈二次修复（生产环境 c.status 不存在）
+
+**现象**：上轮修复部署到生产（liuhenjianzhu.com）后，点进帖子详情仍 500 转圈，
+控制台报 `Error: column c.status does not exist`（`GET /api/v1/posts/70 500`）。
+
+**根因**：生产阿里云 RDS 的 comments 表实为 **`item_id/item_type` 通用评论结构**，
+该表**没有 `status` 列**。上一轮我虽然加了结构检测，但在 `item_id` 分支写死了
+`(c.status IS NULL OR c.status = 1)`，导致该分支执行时引用不存在的 `status` 列报 500。
+
+**修复**：重写 `postService.ts` 的评论兼容层——
+- 新增 `getCommentColumns()`：动态读取 `comments` 表实际存在的列集合（缓存）。
+- `getComments()` 按列集合决定走 `post_id` 分支还是 `item_id/item_type` 分支。
+- `statusFilter()`：仅当表存在 `status` 列时才拼装 `c.status` 过滤子句，否则完全省略。
+- `createComment()` / `deletePost()` 同步改用列集合检测。
+
+**验证**：沙箱 `GET /posts/6` → HTTP **200**，`post` 正常返回；`postService.ts` lint 0 错误；
+`node build.js` 构建通过（dist 已包含 `getCommentColumns`）。
+
+**部署注意**：需 `git pull` + `node build.js && pm2 restart liuhen-api`；前端无改动可跳过
+（post-detail 上轮已改，若服务器为旧版可一并 `npm run build && pm2 restart liuhen-client`）。
