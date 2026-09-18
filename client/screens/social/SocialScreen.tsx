@@ -37,7 +37,7 @@ interface Conversation {
 }
 
 interface Props {
-  onChatPress: (userId: number) => void;
+  onChatPress: (userId: number, userName: string, userAvatar: string | null) => void;
   onUserPress: (userId: number) => void;
 }
 
@@ -176,7 +176,7 @@ export default function SocialScreen({ onChatPress, onUserPress }: Props) {
   );
 
   const renderFriendItem = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.userItem} onPress={() => onChatPress(item.id)}>
+    <TouchableOpacity style={styles.userItem} onPress={() => onChatPress(item.id, item.nickname, item.avatar)}>
       <View style={styles.avatarContainer}>
         <Image
           source={{
@@ -205,7 +205,7 @@ export default function SocialScreen({ onChatPress, onUserPress }: Props) {
   );
 
   const renderConversationItem = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity style={styles.userItem} onPress={() => onChatPress(item.other_id)}>
+    <TouchableOpacity style={styles.userItem} onPress={() => onChatPress(item.other_id, item.nickname, item.avatar)}>
       <View style={styles.avatarContainer}>
         <Image
           source={{

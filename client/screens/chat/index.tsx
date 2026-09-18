@@ -11,6 +11,7 @@ import {
 import { useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { api } from '@/services/api';
 
 interface Conversation {
@@ -30,13 +31,14 @@ export default function ChatListScreen() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const router = useSafeRouter();
   const { isAuthenticated } = useAuth();
 
   const fetchConversations = useCallback(async () => {
     if (!isAuthenticated) return;
     
     try {
-      const res = await api.get<{ conversations: Conversation[] }>('/messages/conversations');
+      const res = await api.getConversations();
       setConversations(res.conversations || []);
     } catch (error) {
       console.error('获取会话列表失败:', error);
@@ -75,7 +77,11 @@ export default function ChatListScreen() {
   };
 
   const renderItem = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity style={styles.item} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.item}
+      activeOpacity={0.7}
+      onPress={() => router.push('/chat', { userId: item.userId, userName: item.nickname, userAvatar: item.avatar })}
+    >
       <View style={styles.avatarContainer}>
         {item.avatar ? (
           <Image source={{ uri: item.avatar }} style={styles.avatar} />

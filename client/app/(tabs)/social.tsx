@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSafeRouter } from '@/hooks/useSafeRouter';
 import SocialScreen from '@/screens/social/SocialScreen';
 
-interface Props {
-  onChatPress: (userId: number, userName: string, userAvatar: string | null) => void;
-  onUserPress: (userId: number) => void;
-}
+export default function SocialTab() {
+  const router = useSafeRouter();
 
-export default function SocialTab({ onChatPress, onUserPress }: Props) {
+  const handleChat = (userId: number) => {
+    router.push('/chat', { userId, userName: '', userAvatar: null });
+  };
+
   return (
     <SocialScreen
-      onChatPress={(userId) => onChatPress(userId, '', null)}
-      onUserPress={onUserPress}
+      onChatPress={handleChat}
+      onUserPress={(userId: number) => handleChat(userId)}
     />
   );
 }

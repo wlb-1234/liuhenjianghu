@@ -47,13 +47,9 @@ export default function ChatRoomScreen() {
     if (!otherUserId) return;
     
     try {
-      const res = await api.get<{
-        otherUser: OtherUser;
-        messages: Message[];
-        conversationId: number;
-      }>(`/messages/${otherUserId}`);
-      setOtherUser(res.otherUser);
-      setMessages(res.messages || []);
+      const res = await api.getMessages(parseInt(otherUserId), 1);
+      setOtherUser((res as any).otherUser || null);
+      setMessages((res as any).messages || []);
     } catch (error) {
       console.error('获取聊天记录失败:', error);
     } finally {
@@ -70,11 +66,8 @@ export default function ChatRoomScreen() {
     
     setSending(true);
     try {
-      const res = await api.post<{ message: Message }>('/messages', {
-        receiverId: parseInt(otherUserId),
-        content: inputText.trim(),
-      });
-      setMessages(prev => [...prev, res.message]);
+      const res = await api.sendMessage(parseInt(otherUserId), inputText.trim());
+      setMessages(prev => [...prev, (res as any).message]);
       setInputText('');
       flatListRef.current?.scrollToEnd({ animated: true });
     } catch (error) {

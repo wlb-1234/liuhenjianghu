@@ -4698,3 +4698,40 @@ resolves to both '_root > post/index' and '_root > post'.
 
 **部署注意**：需 `git pull` + `node build.js && pm2 restart liuhen-api`；前端无改动可跳过
 （post-detail 上轮已改，若服务器为旧版可一并 `npm run build && pm2 restart liuhen-client`）。
+
+---
+
+### 2026-09-18 加好友 + 私信 功能真正接通（前后端对齐）
+
+**背景**：社交页「好友/私信」与「聊天」Tab、帖子详情点作者发私信等入口，
+此前后端接口未实现/未挂载，前端跳转还因 props 未传而崩溃，导致入口点开即失败。
+
+**根因（多层）**：
+1. 前端 `app/(tabs)/social.tsx` 作为 Tabs.Screen 渲染，接收的 `onChatPress/onUserPress`
+   是 undefined，点好友/私信直接抛错。
+2. 前端 `api.ts` 走 `/social/*`、`/messages/conversations`，但后端 `social.ts` 只有
+   profile/mutual-followers/recommendations，其余接口缺失。
+3. 后端 `messages.ts`（Drizzle）依赖 `conversations` 表，但生产/沙箱库并无该表，
+   真实表结构为：`messages`(扁平 sender_id/receiver_id)、`friends`(user_id/friend_id/status)。
+4. 聊天Tab `chat/index.tsx`、帖内私信 `chat/[userId]/index.tsx` 调用了 ApiService
+   不存在的 `api.get/api.post` 通用方法。
+
+**修复**：
+- `server/src/services/socialService.ts`：补好友逻辑（addFriend/acceptFriend/removeFriend
+  /getFriendList/getFriendRequests），消息返回同时提供 snake_case + camelCase 字段
+  （兼容社交版与帖内版两个聊天 UI）。
+- `server/src/routes/social.ts`：补齐前端需要的全部 `/social/*` 接口（follow、friends、
+  message、messages、search、user），用 authMiddleware 鉴权；修正 users 列名（无
+  username/bio/avatar_url，用 nickname/avatar）。
+- 新增 `server/src/routes/conversations.ts`，挂 `/api/v1/messages/conversations`。
+- 前端 `app/(tabs)/social.tsx`：改用 useSafeRouter 处理跳转（修复崩溃）。
+- 前端 `screens/social/SocialScreen.tsx`：好友/私信项携昵称头像跳转。
+- 前端 `screens/chat/index.tsx`：改用 `api.getConversations()`，并补点按进入聊天。
+- 前端 `screens/chat/[userId]/index.tsx`：改用 `api.getMessages/sendMessage`。
+
+**验证（沙箱，curl 全链路）**：加好友申请→对方确认成为好友→互发消息→
+好友列表（含未读/最后消息）、会话列表、聊天记录均正常返回；未登录 401。
+lint：社交/聊天相关文件无新增错误（chat/index 与 chat/[userId] 的 api.get 消失）。
+
+**部署**：后端 `git pull` + `node build.js && pm2 restart liuhen-api`；
+前端 `git pull` + `npm run build && pm2 restart liuhen-client`。
