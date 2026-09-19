@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { JWT_SECRET, ADMIN_LOGIN_LIMIT } from '../config/security.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 // Create single pool instance using environment variable
 // 使用 .env 中的 DATABASE_URL（阿里云 RDS）
@@ -54,24 +54,132 @@ const verifyAdmin = async (req: any, res: any, next: Function) => {
 };
 
 // Admin login
+// ==================== 登录安全：验证码 + 失败锁定 ====================
+// 内存存储
+const adminLoginAttempts = new Map<string, { count: number; lastAttempt: number; lockedUntil: number }>();
+// 一次性验证码（key: 会话id，value: {code, expireAt}）
+const adminCaptcha = new Map<string, { code: string; expireAt: number }>();
+
+// 生成并缓存 admin 登录验证码（4位数字）
+function issueAdminCaptcha(sessionId: string): string {
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  adminCaptcha.set(sessionId, { code, expireAt: Date.now() + 5 * 60 * 1000 });
+  return code;
+}
+
+function verifyAdminCaptcha(sessionId: string, input: string): boolean {
+  const entry = adminCaptcha.get(sessionId);
+  if (!entry) return false;
+  if (entry.expireAt < Date.now()) {
+    adminCaptcha.delete(sessionId);
+    return false;
+  }
+  const ok = entry.code === input;
+  adminCaptcha.delete(sessionId);
+  return ok;
+}
+
+// 获取客户端 IP
+function clientIp(req: any): string {
+  return req.headers['x-forwarded-for'] || req.ip || 'unknown';
+}
+
+// 检查是否被锁定
+function adminIsLocked(ip: string): { locked: boolean; retryAfterSec: number } {
+  const entry = adminLoginAttempts.get(ip);
+  if (entry && entry.lockedUntil > Date.now()) {
+    return { locked: true, retryAfterSec: Math.ceil((entry.lockedUntil - Date.now()) / 1000) };
+  }
+  if (entry && entry.lockedUntil <= Date.now() && entry.lockedUntil > 0) {
+    // 锁定过期，重置
+    adminLoginAttempts.delete(ip);
+  }
+  return { locked: false, retryAfterSec: 0 };
+}
+
+// 记录失败（达到阈值则锁定）
+function adminRecordFailure(ip: string) {
+  const entry = adminLoginAttempts.get(ip) || { count: 0, lastAttempt: Date.now(), lockedUntil: 0 };
+  entry.count += 1;
+  entry.lastAttempt = Date.now();
+  if (entry.count >= ADMIN_LOGIN_LIMIT.failLimit) {
+    entry.lockedUntil = Date.now() + ADMIN_LOGIN_LIMIT.lockDurationMs;
+    entry.count = 0;
+  }
+  adminLoginAttempts.set(ip, entry);
+}
+
+// 清除失败记录（登录成功）
+function adminClearFailure(ip: string) {
+  adminLoginAttempts.delete(ip);
+}
+
+// 获取验证码（需先请求该接口）
+router.get('/login/captcha', (req: any, res: any) => {
+  try {
+    const sessionId = `${clientIp(req)}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const code = issueAdminCaptcha(sessionId);
+    // 生产环境不返回验证码（应接入短信/邮件），开发环境返回便于联调
+    const isDev = process.env.NODE_ENV !== 'production';
+    res.json({
+      success: true,
+      sessionId,
+      message: '验证码已生成',
+      ...(isDev ? { code } : {}),
+    });
+  } catch (error) {
+    res.status(500).json({ error: '生成验证码失败' });
+  }
+});
+
 router.post('/login', async (req: any, res: any) => {
   try {
     const username = req.body.username;
     const password = req.body.password;
-    
+    const sessionId = req.body.sessionId;
+    const captcha = req.body.captcha;
+
     if (!username || !password) {
       return res.status(400).json({ error: 'Missing credentials' });
     }
-    
+
+    const ip = clientIp(req);
+
+    // 1. 校验失败锁定
+    const lock = adminIsLocked(ip);
+    if (lock.locked) {
+      return res.status(429).json({
+        error: `失败次数过多，账号已锁定，请在 ${lock.retryAfterSec} 秒后重试`,
+        retryAfterSec: lock.retryAfterSec,
+      });
+    }
+
+    // 2. 校验验证码（会话ID + 验证码）
+    if (!sessionId || !captcha) {
+      return res.status(400).json({ error: '请先获取并填写验证码' });
+    }
+    if (!verifyAdminCaptcha(sessionId, captcha)) {
+      adminRecordFailure(ip);
+      return res.status(401).json({ error: '验证码错误或已过期，请重新获取' });
+    }
+
     // 查询管理员
     const result = await query('SELECT * FROM admins WHERE username = $1', [username]);
     const admin = result.rows[0];
-    
+
     // 验证密码
     if (!admin || !await bcrypt.compare(password, admin.password_hash)) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      adminRecordFailure(ip);
+      const remain = ADMIN_LOGIN_LIMIT.failLimit - (adminLoginAttempts.get(ip)?.count || 0);
+      return res.status(401).json({
+        error: '用户名或密码错误',
+        remainingAttempts: Math.max(remain, 0),
+      });
     }
-    
+
+    // 登录成功，清除失败记录
+    adminClearFailure(ip);
+
     // 生成 JWT token
     const token = jwt.sign(
       { adminId: admin.id, username: admin.username, role: admin.role },

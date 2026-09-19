@@ -18,8 +18,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { requireVerified } from '../middleware/requireRealname';
 import { ResultSetHeader } from 'mysql2/promise';
 import { NotificationService, MessagePriority } from '../services/notificationService.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
+import { JWT_SECRET } from '../config/security.js';
 
 const router = express.Router();
 

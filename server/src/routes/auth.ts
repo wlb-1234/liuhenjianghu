@@ -14,12 +14,13 @@ import {
   sendPasswordChangeNotification
 } from '../services/securityNotificationService';
 import { getPool } from '../config/database.js';
+import { JWT_SECRET, SMS_LIMIT } from '../config/security.js';
+import { smsRateLimit, loginRateLimit } from '../middleware/antiBruteForce.js';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'liuhen-jianghu-secret-key-2024';
 
 // 发送验证码
-router.post('/send-code', async (req: Request, res: Response) => {
+router.post('/send-code', smsRateLimit, async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
     
@@ -130,7 +131,7 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // 登录
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginRateLimit, async (req: Request, res: Response) => {
   try {
     const { phone, password } = req.body;
     const ip = req.ip || req.headers['x-forwarded-ip'] as string || 'unknown';

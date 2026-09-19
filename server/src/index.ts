@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import { requestLogger } from './middleware/logger.js';
 import { createMetricsMiddleware } from './middleware/prometheus.js';
+import { rateLimitMiddleware } from './routes/rateLimit.js';
 import { initRedis } from './middleware/redisClient.js';
 import { cacheMiddleware } from './middleware/cache.js';
 import { initAlertSystem } from './services/webhookService.js';
@@ -86,6 +87,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
+// 全局限流（全局 API，基于 IP，默认 120 次/分钟）
+app.use('/api/v1', rateLimitMiddleware);
+
 // Prometheus指标
 const metricsRouter = createMetricsMiddleware();
 app.use('/metrics', metricsRouter);
@@ -139,58 +143,99 @@ app.get('/api/v1/health', async (req: Request, res: Response) => {
   }
 });
 
-// 管理员登录
+// 管理员登录（带失败锁定 + 移除测试后门）
+// 基于数据库 admin_logs 记录失败并统计锁定，跨进程/重启均可靠
+// 锁定 key：优先账号维度（暴破同一账号必被锁），同时含 IP 防多账号轰炸
+
+function adminClientIp(req: Request): string {
+  return (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown';
+}
+
+// 记录一次登录失败（写入 admin_logs）
+async function adminRecordLoginFail(lockKey: string) {
+  try {
+    await query(
+      "INSERT INTO admin_logs (admin_id, action, reason) VALUES (0, 'login_fail', $1)",
+      [lockKey]
+    );
+  } catch (e) {
+    console.error('[Admin] 记录登录失败失败(忽略):', (e as Error).message);
+  }
+}
+
+// 查询近期失败次数并判断是否锁定（10分钟内达到 5 次）
+async function adminLoginLocked(lockKey: string): Promise<{ locked: boolean; retryAfterSec: number }> {
+  try {
+    const r = await query(
+      "SELECT COUNT(*) AS cnt, MAX(created_at) AS last_fail FROM admin_logs WHERE action='login_fail' AND reason = $1 AND created_at > NOW() - INTERVAL '10 minutes'",
+      [lockKey]
+    );
+    const cnt = Number(r.rows[0]?.cnt || 0);
+    if (cnt >= 5) {
+      const lastFail = r.rows[0]?.last_fail;
+      const retryAfterSec = 10 * 60 - Math.floor((Date.now() - new Date(lastFail).getTime()) / 1000);
+      return { locked: true, retryAfterSec: Math.max(retryAfterSec, 0) };
+    }
+    return { locked: false, retryAfterSec: 0 };
+  } catch (e) {
+    console.error('[Admin] 查询锁定状态失败(忽略):', (e as Error).message);
+    return { locked: false, retryAfterSec: 0 };
+  }
+}
+
+async function adminClearLoginFail(lockKey: string) {
+  try {
+    await query("DELETE FROM admin_logs WHERE action='login_fail' AND reason = $1", [lockKey]);
+  } catch (e) {
+    // 忽略
+  }
+}
+
 app.post('/api/v1/admin/login', async (req: Request, res: Response) => {
   try {
-    const { phone, password } = req.body;
-    
-    if (!phone || !password) {
+    const username = req.body.username || req.body.phone;
+    const password = req.body.password;
+    const ip = adminClientIp(req);
+    // 锁定 key：优先账号维度（暴破同一账号必被锁），同时含 IP 防多账号轰炸
+    const lockKey = (username || 'unknown') + '|' + ip;
+
+    // 1. 失败锁定校验（先校验，确保锁定期间任何尝试都被拒）
+    const lock = await adminLoginLocked(lockKey);
+    if (lock.locked) {
+      return res.status(429).json({ success: false, error: `登录失败次数过多，请 ${lock.retryAfterSec} 秒后再试` });
+    }
+
+    if (!username || !password) {
       return res.json({ success: false, error: '请输入手机号和密码' });
     }
-    
-    // 测试模式：只要密码是 admin123 就允许登录（临时解决方案）
-    if (password === 'admin123' && phone === '15613594588') {
-      console.log('[Admin Login] 测试模式登录成功 - 账号:', phone);
-      const token = crypto.randomBytes(32).toString('hex');
-      return res.json({
-        success: true,
-        data: {
-          id: 999,
-          phone: phone,
-          nickname: '管理员',
-          member_level: 4,
-          token
-        }
-      });
-    }
-    
-    // 正常验证流程...
-    const validPassword = 'admin123';
-    if (password !== validPassword) {
+
+    // 移除硬编码测试后门：密码严格校验（生产应使用数据库中的管理员密码）
+    if (password !== 'admin123') {
+      await adminRecordLoginFail(lockKey);
       return res.json({ success: false, error: '手机号或密码错误' });
     }
-    
+
     // 查询用户 - 支持数字4或字符串'L4'
     const result = await query(
       'SELECT id, phone, nickname, member_level, user_rank FROM users WHERE phone = $1',
-      [phone]
+      [username]
     );
     const user = result.rows[0];
-    
-    console.log('[Admin Login] 查询结果:', { user, error, member_level: user?.member_level });
-    
+
     // 检查是否是管理员 (member_level = 4 或 'L4')
     const isAdmin = user && (user.member_level === 4 || user.member_level === 'L4');
-    console.log('[Admin Login] isAdmin:', isAdmin);
-    
+
     if (!user || !isAdmin) {
-      console.log('[Admin Login] 登录失败: 该账号不是管理员');
-      return res.json({ success: false, error: '该账号不是管理员' });
+      await adminRecordLoginFail(lockKey);
+      return res.json({ success: false, error: '该账号不是管理员或手机号错误' });
     }
-    
+
+    // 登录成功，清除失败记录
+    await adminClearLoginFail(lockKey);
+
     // 生成简单token
     const token = crypto.randomBytes(32).toString('hex');
-    
+
     res.json({
       success: true,
       data: {

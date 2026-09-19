@@ -4763,3 +4763,62 @@ lint：社交/聊天相关文件无新增错误（chat/index 与 chat/[userId] �
 - `users`：昵称列用 `nickname`，头像列用 `avatar`（无 username / bio / avatar_url）。
 
 **待办提醒**：本功能已验收，服务器需部署后会话数据才可见；好友申请需双方互加后进入列表。
+
+---
+
+## 上架准备 · 安全加固（P0-2 / P0-3 / P1-4 / P1-7）
+
+> 实施时间：2026-09-19 17:40 CST
+
+**目标**：为应用上架运营消除高优先级安全阻塞项。
+
+### P1-4 密钥兜底硬化
+- 新增 `server/src/config/security.ts` 集中管理安全配置：`getJwtSecret()`（生产未配置
+  ≥32 位强 `JWT_SECRET` 时直接抛错，开发环境才使用内置开发密钥）、`JWT_SECRET`、
+  `SMS_LIMIT`、`LOGIN_LIMIT`、`ADMIN_LOGIN_LIMIT`、`GLOBAL_RATE_LIMIT`。
+- 将 5 处硬编码 `process.env.JWT_SECRET || '…'` 兜底全部替换为从 `config/security.js`
+  导入 `JWT_SECRET`：`middleware/auth.ts`、`routes/auth.ts`、`routes/admin.ts`、
+  `routes/payment.ts`、`routes/rateLimit.ts`。
+
+### P0-3 全局限流 + 短信防刷
+- 重写 `routes/rateLimit.ts`：实现真实全局 `rateLimitMiddleware`（按客户端 IP，120 req/min，
+  可通过 `GLOBAL_RATE_LIMIT` 配置），并导出 `blockIp()`（黑名单封禁）。
+- 在 `index.ts` 中 `app.use('/api/v1', rateLimitMiddleware)` 全局挂载。
+- 新增 `middleware/antiBruteForce.ts`：`smsRateLimit`（每手机号 60s 内 1 条、每 IP
+  10min 内 5 条、每手机号每日 10 条上限）与 `loginRateLimit`（每 IP 10min 内 20 次）。
+- `routes/auth.ts` 对 `POST /send-code` 与 `POST /login` 应用上述中间件。
+
+### P0-2 admin 登录加验证码 + 锁定
+- **关键发现**：此前 `routes/admin.ts` 从未在 `index.ts` 挂载，真实生效的是 `index.ts`
+  内联的 `POST /api/v1/admin/login`，其中存在硬编码密码 `admin123` 与手机号测试后门
+  （`admin123 && phone==='15613594588'` 直接成功），且无节流/锁定/验证码。
+- 重建 `index.ts` 的 admin 登录端点：
+  - 移除硬编码密码与手机号测试后门（已验证旧组合不再直接成功）。
+  - 支持 `username` 或 `phone` 登录。
+  - **DB 持久化锁定**：利用 `admin_logs` 表（`action='login_fail'`、`reason=lockKey`），
+    10 分钟内失败 ≥5 次则锁定 600 秒（返回 429），成功登录后清除失败记录。
+  - 采用数据库而非内存 Map 落锁，确保在 PM2 cluster / 沙箱 SO_REUSEPORT 多进程
+    分发下也跨进程/重启生效（内存 Map 在多进程下不共享，定位为失效根因）。
+  - `lockKey = (username||'unknown') + '|' + ip`；`adminClientIp` 读取
+    `x-forwarded-for || req.ip`。
+
+### P1-7 清理模板残留
+- 删除 `client/assets/images/` 下模板图标：`react-logo.png`、`react-logo@2x.png`、
+  `react-logo@3x.png`、`partial-react-logo.png`、`icon_new.png`（非法 17 字节占位）。
+
+### 验证（沙箱）
+- 类型检查：本次改动文件（antiBruteForce / rateLimit / auth / admin / payment /
+  middleware/auth / index）无新增错误；`index.ts:61 `import.meta`、`index.ts:133 `
+ISOString`` 及一批未挂载模块（apikeys/cache/checkIn/geo/logs/collections/prometheus/
+  redisClient/accountDeletion）的报错为历史遗留，非本次引入，保留。
+- 构建：`node build.js` 通过。
+- 全局限流：80 次内 429（`rate limit exceeded`）生效。
+- 短信防刷：第 2 次 `POST /send-code` 返回「验证码发送过于频繁，请 1 分钟后再试」。
+- admin 锁定（DB 持久化）：第 6 次错密返回 429「登录失败次数过多，请 600 秒后再试」。
+- 测试后门已移除：旧组合 `15613594588 + admin123` 返回「登录失败」。
+- health / posts 返回 200。
+
+**部署**：后端 `git pull` + `node build.js && pm2 restart liuhen-api`；
+前端如需 `npm run build && pm2 restart liuhen-client`（本次仅删图片，前端一般不改逻辑）。
+
+**待办提醒**：P0-1（VIP 支付「test」模式）与 P1 未实施/ P2 项仍待处理，见后续。
