@@ -4735,3 +4735,31 @@ lint：社交/聊天相关文件无新增错误（chat/index 与 chat/[userId] �
 
 **部署**：后端 `git pull` + `node build.js && pm2 restart liuhen-api`；
 前端 `git pull` + `npm run build && pm2 restart liuhen-client`。
+
+### 补充：本记录已提交推送确认（2026-09-19 15:00）
+
+> 上述「加好友 + 私信」功能完善步骤已全部提交至 GitHub，本地与远程同步于 `4171bee`，
+> 提交信息：`feat(social): 真正接通加好友与私信功能前后端链路`。
+
+**本次接通的后端完整接口清单（/api/v1 前缀）**：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /social/follow/:userId | 关注 / 取关（toggle） |
+| GET | /social/following | 关注列表 |
+| GET | /social/followers | 粉丝列表 |
+| POST | /social/friend/:userId | 发送加好友申请（对端可反向确认） |
+| GET | /social/friends | 好友列表（含未读/最后消息/头像/昵称） |
+| GET | /social/friend/requests | 收到的好友申请（status=0） |
+| POST | /social/message/:userId | 发送私信（body: content） |
+| GET | /social/messages/:userId | 聊天记录（返回 messages + otherUser） |
+| GET | /social/user/:userId | 用户资料 |
+| GET | /social/search?q= | 搜索用户（nickname） |
+| GET | /messages/conversations | 会话列表（未读数+最后一条） |
+
+**数据库真实结构对齐**（生产/沙箱一致）：
+- `messages`：扁平结构（sender_id / receiver_id / content / is_read / created_at），无 conversations 表。
+- `friends`：user_id / friend_id / status（0=待确认，1=已为好友），无 updated_at 列。
+- `users`：昵称列用 `nickname`，头像列用 `avatar`（无 username / bio / avatar_url）。
+
+**待办提醒**：本功能已验收，服务器需部署后会话数据才可见；好友申请需双方互加后进入列表。
