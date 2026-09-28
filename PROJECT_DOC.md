@@ -4822,3 +4822,40 @@ ISOString`` 及一批未挂载模块（apikeys/cache/checkIn/geo/logs/collection
 前端如需 `npm run build && pm2 restart liuhen-client`（本次仅删图片，前端一般不改逻辑）。
 
 **待办提醒**：P0-1（VIP 支付「test」模式）与 P1 未实施/ P2 项仍待处理，见后续。
+
+---
+
+## 独立记录 5 · 移动应用上架 + 官网搭建（2026-09-28 21:12 CST）
+
+**目标**：苹果 + 安卓双端上架；支付策略方案 A（iOS 走苹果 IAP 内购，安卓走微信支付），待微信 AppID 审核通过后落定。
+
+### A. 移动应用 AppID 申请前置 —— 官网搭建
+
+微信开放平台「移动应用」AppID 申请要求填写**应用官网**。此前 liuhenjianghu.com 仅为占位页，无法通过审核。
+
+**备案/主体核查结论（无需重新备案）**：
+- ICP 备案：冀ICP备2026026350号-1，主体「迁安市建昌营镇流痕营软件开发服务部（个体工商户）」，负责人吴立宾。
+- 开发者平台主体一致；官网复用 liuhenjianghu.com（已解析至阿里云 47.116.142.121），不重新备案。
+
+**已交付官网静态站（website/）**：
+- `index.html`：品牌 Hero / 核心功能 / 下载引导 / 关于我们 / 备案号 / 主体信息
+- `privacy.html`：隐私政策（对齐相机/相册/定位/通知权限及账号注销）
+- `terms.html`：用户协议（账号 / 内容规范 / 付费会员 / 注销）
+- `deploy_site.sh`：一键部署（拷贝到 /opt/site/liuhenjianghu + Nginx 80 端口托管）
+- 已推送 GitHub (`70a39d2`)，复用现有 SSH 部署链路。
+
+### B. 支付契约统一（配合后续 AppID 落地）
+
+- 后端补齐 `GET /payment/levels`（从 member_levels 读真实价格）；
+- `POST /payment/create` 兼容 `{level, method}` 会员购买，自动算价（元→分）并写入真实 `payment_orders` 表；
+- 修复支付链路运行时硬伤：PG 占位符 `?→$n`、`res.xml` 导致回调 500、`/orders` 返回 QueryResult 对象；
+- 前端 VipScreen 对接 `/payment/levels` + `/payment/create` + 轮询 `/payment/query`；
+- app.config 增加 iOS weixin/weixinULAPI scheme。
+- 此改动已随 d4c237c / 4203d74 提交。
+
+### C. 待办（阻塞项）
+
+1. **微信移动应用 AppID 前缀需为 `wx` 开头**；当前记录为 `wxa39303f2ff21a87c`（`wxa` 前缀疑为公众号，APP 支付不可用），需用户到 open.weixin.qq.com 核对。
+2. **原生构建方式待确认**：EAS Build 云构建 或 本地 Xcode/Android Studio。决定微信 APP 支付 / iOS IAP 的 SDK 接入写法。
+3. 原生 SDK 接入 + app.config 支付配置 + prebuild/EAS 步骤（todo 第 5 项）。
+4. 双端上架材料（图标/截图/App Store 描述——素材已备 APP_STORE_MATERIALS.md）与部署文档收尾。
