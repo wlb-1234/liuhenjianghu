@@ -114,7 +114,12 @@ export function generateAppPayParams(prepayId: string): {
   const sign = generateSign(params, WECHAT_PAY_CONFIG.API_KEY);
   
   return {
-    ...params,
+    appid: params.appid,
+    partnerid: params.partnerid,
+    prepayid: params.prepayid,
+    package: params.package,
+    noncestr: params.noncestr,
+    timestamp: params.timestamp,
     sign,
   };
 }

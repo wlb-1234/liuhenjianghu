@@ -16,7 +16,6 @@ import {
 import { query } from '../config/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { requireVerified } from '../middleware/requireRealname';
-import { ResultSetHeader } from 'mysql2/promise';
 import { NotificationService, MessagePriority } from '../services/notificationService.js';
 import { JWT_SECRET } from '../config/security.js';
 
@@ -49,6 +48,31 @@ router.get('/config', async (req: Request, res: Response) => {
 });
 
 /**
+ * 获取会员等级列表（充值/VIP 购买页使用）
+ * GET /api/v1/payment/levels
+ */
+router.get('/levels', async (req: Request, res: Response) => {
+  try {
+    const levels = await query(
+      'SELECT level, name, price, region_limit, daily_limit, retention_days, can_pin FROM member_levels ORDER BY level ASC'
+    );
+    const data = (levels.rows || []).map((lv: any) => ({
+      level: parseInt(lv.level, 10),
+      name: lv.name,
+      price: Math.round(Number(lv.price)), // numeric 以元返回（前端展示），下单时后端自动换分为分
+      region_limit: parseInt(lv.region_limit, 10) || 0,
+      daily_limit: parseInt(lv.daily_limit, 10) || 0,
+      retention_days: parseInt(lv.retention_days, 10) || 0,
+      can_pin: !!lv.can_pin,
+    }));
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error('获取会员等级失败:', error);
+    return res.status(500).json({ success: false, error: '服务器错误' });
+  }
+});
+
+/**
  * 查询订单列表（管理后台）
  * GET /api/v1/payment/orders
  */
@@ -61,8 +85,10 @@ router.get('/orders', async (req: Request, res: Response) => {
     const status = req.query.status as string;
     const authHeader = req.headers.authorization;
 
-    let whereClause = '1=1';
+    // 动态查询条件（PG 参数化，$n）
+    const conds: string[] = [];
     const params: any[] = [];
+    let whereClause = '';
 
     // 如果有 token，说明是用户端请求，只查询该用户的订单
     let userIdFromToken: number | null = null;
@@ -89,35 +115,37 @@ router.get('/orders', async (req: Request, res: Response) => {
     })();
 
     if (!isAdmin && userIdFromToken) {
-      whereClause += ' AND user_id = ?';
       params.push(userIdFromToken);
+      conds.push(`user_id = $${params.length}`);
     }
 
     if (search) {
-      whereClause += ' AND out_trade_no LIKE ?';
       params.push(`%${search}%`);
+      conds.push(`order_no LIKE $${params.length}`);
     }
     if (status) {
-      whereClause += ' AND status = ?';
       params.push(status);
+      conds.push(`status = $${params.length}`);
     }
+    whereClause = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
 
     // 查询总数
-    const countResult = await query<any[]>(
-      `SELECT COUNT(*) as total FROM payment_orders WHERE ${whereClause}`,
+    const countResult = await query(
+      `SELECT COUNT(*) as total FROM payment_orders ${whereClause}`,
       params
     );
-    const total = countResult[0]?.total || 0;
+    const total = countResult.rows?.[0]?.total || 0;
 
     // 查询列表
-    const orders = await query<any[]>(
-      `SELECT * FROM payment_orders WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+    const listParams = [...params, limit, offset];
+    const orders = await query(
+      `SELECT * FROM payment_orders ${whereClause} ORDER BY created_at DESC LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams
     );
 
     return res.json({
       success: true,
-      orders,
+      orders: (orders as any).rows || [],
       total,
       page,
       limit
@@ -137,7 +165,7 @@ router.get('/orders', async (req: Request, res: Response) => {
  */
 router.get('/balances', async (req: Request, res: Response) => {
   try {
-    const balances = await query<any[]>(
+    const balances = await query(
       `SELECT ub.*, u.phone 
        FROM user_balances ub 
        LEFT JOIN users u ON ub.user_id = u.id 
@@ -148,7 +176,7 @@ router.get('/balances', async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      data: balances
+      data: (balances as any).rows || balances
     });
   } catch (error) {
     console.error('查询余额列表失败:', error);
@@ -166,24 +194,61 @@ router.get('/balances', async (req: Request, res: Response) => {
 router.post('/create', authMiddleware, requireVerified, async (req: AuthRequest, res: Response) => {
   try {
     const { 
-      totalFee,         // 金额（分）
-      orderType,        // 订单类型：recharge/vip/gift
+      totalFee,         // 金额（分）—— 会员购买可省略，由 level 自动计算
+      orderType,        // 订单类型：recharge/vip/gift —— 会员购买传 level 时自动为 vip
       body,             // 商品描述
-      relatedId,        // 关联ID（会员ID等）
+      relatedId,        // 关联ID（会员等级等）
       openid,           // 微信openid（JSAPI支付需要）
+      level,            // 会员等级（前端 VipScreen 购买会员时传，1~4 对应可付费等级）
+      method,           // 支付方式：wechat/alipay（预留），当前仅微信；用于日志/告警，不影响下单
     } = req.body;
     const userId = req.userId; // 从登录态获取用户ID（已通过实名认证校验）
 
-    // 参数验证
-    if (!totalFee || !orderType || !body) {
+    // 统一契约：会员购买（前端传 level）自动计算金额/订单类型/关联ID
+    let finalTotalFee = totalFee;
+    let finalOrderType = orderType;
+    let finalBody = body;
+    let finalRelatedId = relatedId;
+
+    if (level !== undefined) {
+      const levelNum = parseInt(level, 10);
+      if (isNaN(levelNum) || levelNum <= 0) {
+        return res.status(400).json({ success: false, error: '无效的会员等级' });
+      }
+      // 从会员等级表读取价格（numeric，元）
+      const lvResult = await query(
+        'SELECT name, price FROM member_levels WHERE level = $1',
+        [levelNum]
+      );
+      const lv = (lvResult.rows || [])[0];
+      if (!lv) {
+        return res.status(400).json({ success: false, error: '会员等级不存在' });
+      }
+      const priceYuan = Number(lv.price);
+      if (!(priceYuan > 0)) {
+        return res.status(400).json({ success: false, error: '该等级无需购买' });
+      }
+      finalTotalFee = Math.round(priceYuan * 100); // 元 → 分
+      finalOrderType = 'vip';
+      finalBody = `${lv.name}会员`;
+      finalRelatedId = levelNum;
+    }
+
+    // 参数验证（会员购买已自动补齐；其余场景需显式传参）
+    if (!finalTotalFee || !finalOrderType || !finalBody) {
       return res.status(400).json({ 
         success: false, 
         error: '缺少必要参数' 
       });
     }
 
+    const totalFeeToUse = finalTotalFee;
+    const orderTypeToUse = finalOrderType;
+    const bodyToUse = finalBody;
+    const relatedIdToUse = finalRelatedId;
+
     // 检查金额（最小1分，最大10万）
-    if (totalFee < 1 || totalFee > 10000000) {
+    if (totalFeeToUse < 1 || totalFeeToUse > 10000000) {
       return res.status(400).json({
         success: false,
         error: '金额超出允许范围'
@@ -204,9 +269,9 @@ router.post('/create', authMiddleware, requireVerified, async (req: AuthRequest,
       mch_id: WECHAT_PAY_CONFIG.MCHID,
       nonce_str: nonceStr,
       sign_type: 'MD5',
-      body: body.substring(0, 128), // 限制长度
+      body: bodyToUse.substring(0, 128), // 限制长度
       out_trade_no: outTradeNo,
-      total_fee: totalFee.toString(),
+      total_fee: totalFeeToUse.toString(),
       spbill_create_ip: spbillCreateIp,
       notify_url: WECHAT_PAY_CONFIG.NOTIFY_URL,
       trade_type: tradeType,
@@ -252,12 +317,14 @@ router.post('/create', authMiddleware, requireVerified, async (req: AuthRequest,
       });
     }
 
-    // 保存订单到数据库
-    await query<ResultSetHeader>(
+    // 保存订单到数据库（真实 payment_orders 表，order_no 即微信 out_trade_no）
+    const expireTime = new Date();
+    expireTime.setMinutes(expireTime.getMinutes() + 30);
+    await query(
       `INSERT INTO payment_orders 
-       (order_id, out_trade_no, user_id, total_fee, order_type, related_id, status, trade_type, body, spbill_create_ip)
-       VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
-      [generateOrderId(), outTradeNo, userId, totalFee, orderType, relatedId || null, tradeType, body, spbillCreateIp]
+       (order_no, user_id, member_level, amount, payment_method, status, expire_time, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6, NOW())`,
+      [outTradeNo, userId, relatedIdToUse ?? 0, totalFeeToUse, (method === 'test' ? 'test' : 'wechat'), expireTime]
     );
 
     // 生成App端调起支付的参数
@@ -312,70 +379,58 @@ router.post('/notify', async (req: Request, res: Response) => {
 
     if (calculatedSign !== sign) {
       console.error('签名验证失败');
-      return res.xml({ return_code: 'FAIL', return_msg: '签名失败' });
+      return res.type('application/xml').send(objectToXml({ return_code: 'FAIL', return_msg: '签名失败' }));
     }
 
     // 处理支付结果
     if (notifyData.result_code === 'SUCCESS') {
       const { out_trade_no, transaction_id, total_fee, time_end } = notifyData;
 
-      // 更新订单状态
-      await query(
-        `UPDATE payment_orders 
-         SET status = 'SUCCESS', 
-             transaction_id = ?,
-             notify_data = ?,
-             notify_time = ?
-         WHERE out_trade_no = ?`,
-        [transaction_id, JSON.stringify(notifyData), new Date(), out_trade_no]
-      );
-
-      // 根据订单类型处理业务逻辑
-      const order = await query<any[]>(
-        'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+      // 根据订单号（微信 out_trade_no 即 order_no）查找订单
+      const order = await query(
+        'SELECT * FROM payment_orders WHERE order_no = $1',
         [out_trade_no]
       );
+      const orderRows = (order as any).rows || [];
 
-      if (order.length > 0) {
-        const orderData = order[0];
-        
-        // 会员充值处理
-        if (orderData.order_type === 'vip') {
+      if (orderRows.length > 0) {
+        const orderData = orderRows[0];
+
+        // 更新订单状态为已支付（幂等：仅 pending → paid）
+        const upd = await query(
+          `UPDATE payment_orders 
+           SET status = 'paid', transaction_id = $1, pay_time = COALESCE(pay_time, NOW())
+           WHERE order_no = $2 AND status = 'pending' RETURNING *`,
+          [transaction_id || null, out_trade_no]
+        );
+        const updatedRows = (upd as any).rows || [];
+        const effective = updatedRows.length > 0 ? updatedRows[0] : orderData;
+
+        // 会员购买处理：升级会员等级（member_level 即目标等级）
+        const levelTarget = parseInt(effective.member_level, 10) || 0;
+        if (levelTarget > 0) {
+          // 会员有效期：永久开通（或按需换算），给予足够长有效期
           await query(
-            'UPDATE users SET member_level = ?, member_expire_at = ? WHERE id = ?',
-            [orderData.related_id, new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), orderData.user_id]
+            'UPDATE users SET member_level = $1, member_expire_at = $2 WHERE id = $3',
+            [levelTarget, new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000), effective.user_id]
           );
         }
-        
-        // 余额充值处理
-        if (orderData.order_type === 'recharge') {
-          await query(
-            'UPDATE users SET balance = balance + ? WHERE id = ?',
-            [parseInt(total_fee), orderData.user_id]
-          );
-        }
 
-        // 发送充值到账通知
+        // 发送开通成功通知
         try {
-          const amountYuan = (parseInt(total_fee) / 100).toFixed(2);
-          let title = '充值到账通知';
-          let content = `您已成功充值 ${amountYuan} 元，余额已更新，感谢您的支持！`;
-          
-          if (orderData.order_type === 'vip') {
-            title = '会员开通成功';
-            const expireDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-            content = `您已成功开通会员，有效期至${expireDate.toLocaleDateString('zh-CN')}，感谢您的支持！`;
-          }
-          
+          const amountYuan = (parseInt(total_fee, 10) / 100).toFixed(2);
+          const title = '会员开通成功';
+          const expireDate = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000);
+          const content = `您已成为${effective.member_level ? '更高级别' : ''}江湖身份，感谢您的支持！`;
           await NotificationService.sendSystemMessage(
-            orderData.user_id,
+            effective.user_id,
             title,
             content,
-            { type: orderData.order_type, orderId: out_trade_no, amount: amountYuan },
+            { type: 'vip', orderId: out_trade_no, amount: amountYuan },
             MessagePriority.HIGH
           );
         } catch (notifError: any) {
-          console.error('发送充值通知失败(不影响支付流程):', notifError.message);
+          console.error('发送开通通知失败(不影响支付流程):', notifError.message);
         }
       }
 
@@ -383,11 +438,11 @@ router.post('/notify', async (req: Request, res: Response) => {
     }
 
     // 返回成功
-    return res.xml({ return_code: 'SUCCESS', return_msg: 'OK' });
+    return res.type('application/xml').send(objectToXml({ return_code: 'SUCCESS', return_msg: 'OK' }));
 
   } catch (error) {
     console.error('处理支付回调失败:', error);
-    return res.xml({ return_code: 'FAIL', return_msg: '处理失败' });
+    return res.type('application/xml').send(objectToXml({ return_code: 'FAIL', return_msg: '处理失败' }));
   }
 });
 
@@ -399,12 +454,13 @@ router.get('/query/:orderId', async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;
 
-    const orders = await query<any[]>(
-      'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+    const orders = await query(
+      'SELECT * FROM payment_orders WHERE order_no = $1',
       [orderId]
     );
+    const rows = (orders as any).rows || [];
 
-    if (orders.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: '订单不存在'
@@ -413,7 +469,7 @@ router.get('/query/:orderId', async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      data: orders[0]
+      data: rows[0]
     });
 
   } catch (error) {
@@ -441,35 +497,29 @@ router.post('/refund', async (req: Request, res: Response) => {
     }
 
     // 查询原订单
-    const orders = await query<any[]>(
-      'SELECT * FROM payment_orders WHERE out_trade_no = ?',
+    const orders = await query(
+      'SELECT * FROM payment_orders WHERE order_no = $1',
       [orderId]
     );
+    const rows = (orders as any).rows || [];
 
-    if (orders.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: '订单不存在'
       });
     }
 
-    const order = orders[0];
+    const order = rows[0];
 
-    if (order.status !== 'SUCCESS') {
+    if (order.status !== 'paid') {
       return res.status(400).json({
         success: false,
         error: '订单未支付，无法退款'
       });
     }
 
-    const refundFeeNum = refundFee || order.total_fee - order.refund_fee;
-
-    if (refundFeeNum > order.total_fee - order.refund_fee) {
-      return res.status(400).json({
-        success: false,
-        error: '退款金额超出可退金额'
-      });
-    }
+    const refundFeeNum = refundFee ? Math.round(Number(refundFee)) : Math.round(Number(order.amount) || 0);
 
     // 构造退款请求
     const nonceStr = generateNonceStr();
@@ -477,10 +527,10 @@ router.post('/refund', async (req: Request, res: Response) => {
       appid: WECHAT_PAY_CONFIG.APPID,
       mch_id: WECHAT_PAY_CONFIG.MCHID,
       nonce_str: nonceStr,
-      transaction_id: order.transaction_id,
+      transaction_id: order.transaction_id || '',
       out_refund_no: `REFUND${generateOrderId()}`,
-      total_fee: order.total_fee.toString(),
-      refund_fee: refundFeeNum.toString(),
+      total_fee: String(order.amount || 0),
+      refund_fee: String(refundFeeNum),
     };
 
     params.sign = generateSign(params, WECHAT_PAY_CONFIG.API_KEY);
@@ -489,21 +539,13 @@ router.post('/refund', async (req: Request, res: Response) => {
     // 实际生产环境需要使用微信支付证书
     console.log('退款请求参数:', params);
 
-    // 更新退款状态
+    // 更新退款状态（真实表无 refund_fee 列，以 status 标记）
     await query(
       `UPDATE payment_orders 
-       SET refund_fee = refund_fee + ?, status = 'REFUND'
-       WHERE out_trade_no = ?`,
-      [refundFeeNum, orderId]
+       SET status = 'refunded'
+       WHERE order_no = $1`,
+      [orderId]
     );
-
-    // 如果是余额充值退款
-    if (order.order_type === 'recharge') {
-      await query(
-        'UPDATE users SET balance = balance - ? WHERE id = ?',
-        [refundFeeNum, order.user_id]
-      );
-    }
 
     return res.json({
       success: true,

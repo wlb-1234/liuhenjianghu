@@ -38,9 +38,9 @@ export function getPool(): Pool {
   return poolInstance;
 }
 
-export async function query(text: string, params?: any[]) {
+export async function query<T extends import('pg').QueryResultRow = any>(text: string, params?: any[]): Promise<import('pg').QueryResult<T>> {
   const pool = getPool();
-  return pool.query(text, params);
+  return pool.query<T>(text, params);
 }
 
 export async function testConnection() {

@@ -40,10 +40,15 @@ export default function VipScreen() {
   // 获取会员等级列表
   const fetchLevels = useCallback(async () => {
     try {
+      /**
+       * 服务端文件：server/src/routes/payment.ts
+       * 接口：GET /api/v1/payment/levels
+       * 返回：{ success, data: [{ level:number, name, price(元), region_limit, daily_limit, retention_days, can_pin }] }
+       */
       const response = await fetch(`${API_BASE}/api/v1/payment/levels`);
       const data = await response.json();
-      if (data.levels) {
-        setLevels(data.levels);
+      if (data.success && Array.isArray(data.data)) {
+        setLevels(data.data);
       }
     } catch (error) {
       console.error('获取会员等级失败:', error);
@@ -85,7 +90,12 @@ export default function VipScreen() {
 
     setPaying(true);
     try {
-      // 1. 创建订单
+      /**
+       * 服务端文件：server/src/routes/payment.ts
+       * 接口：POST /api/v1/payment/create
+       * Body：{ level:number, method:'wechat'|'alipay'|'test' }  —— 会员购买传 level，后端自动按 member_levels 计价
+       * 返回：{ success, data:{ orderId, payParams?:{ appid, partnerid, prepayid, package, noncestr, timestamp, sign }, isConfigured } }
+       */
       const createRes = await fetch(`${API_BASE}/api/v1/payment/create`, {
         method: 'POST',
         headers: {
@@ -100,47 +110,85 @@ export default function VipScreen() {
       const createData = await createRes.json();
 
       if (!createData.success) {
-        Alert.alert('创建订单失败', createData.error);
+        Alert.alert('创建订单失败', createData.error || '请稍后重试');
+        return;
+      }
+      const { orderId, payParams, isConfigured } = createData.data;
+
+      // 微信 APP 支付（安卓）真实拉起由原生 SDK 完成：后端已返回 payParams，
+      // 通过项目支付接入层调用 WXApi.sendReq（见 PaymentNative 桥接，需 prebuild 原生构建后生效）。
+      if (paymentMethod === 'wechat') {
+        if (!payParams) {
+          // 微信支付尚未配置完整则降级：提示后走查询
+          setPayModalVisible(false);
+          Alert.alert('提示', '微信支付暂未开通，请稍后再试或联系客服');
+          return;
+        }
+        // —— 原生拉起接入点 ——
+        // 此处应由原生微信 SDK（react-native-wechat-lib 等）消费 payParams 拉起微信。
+        // 当前托管工作流未接入原生模块，真机需 prebuild 后调用：
+        //   await PaymentNative.wxPay(payParams)
+        // 微信拉起后结果与回调由 SDK 回调/订单轮询确认（见下方 pollOrder）。
+        setPayModalVisible(false);
+        Alert.alert('微信支付', '当前为托管运行，请通过原生构建（prebuild+EAS）拉起微信支付');
+        // 仍提供订单轮询，便于原生端回调后刷新状态
+        pollOrder(orderId);
         return;
       }
 
-      const orderNo = createData.order.order_no;
-
-      // 2. 模拟支付
-      if (paymentMethod === 'test') {
-        const payRes = await fetch(`${API_BASE}/api/v1/payment/pay/simulate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ order_no: orderNo }),
-        });
-        const payData = await payRes.json();
-
-        if (payData.success) {
-          Alert.alert('支付成功', `恭喜成为${payData.member.name}！`, [
-            {
-              text: '确定',
-              onPress: async () => {
-                await refreshUser();
-                setPayModalVisible(false);
-                setCurrentLevel(selectedLevel.level);
-              },
-            },
-          ]);
-        } else {
-          Alert.alert('支付失败', payData.error);
-        }
-      } else {
-        // 微信/支付宝支付（预留）
-        Alert.alert('支付提示', `${paymentMethod === 'wechat' ? '微信' : '支付宝'}支付接口预留中，请使用测试支付`);
+      // 支付宝（预留，需支付宝支付原生 SDK / 开放平台资质）
+      if (paymentMethod === 'alipay') {
+        setPayModalVisible(false);
+        Alert.alert('提示', '支付宝支付暂未开通，请使用微信支付或测试支付');
+        return;
       }
+
+      // 测试支付（后端未提供 simulate 时，用订单轮询模拟流程；真实联调微信后此分支可移除）
+      setPayModalVisible(false);
+      Alert.alert('支付测试', `已创建订单 ${orderId}。\n联调微信支付后此流程由微信拉起取代。`);
+      pollOrder(orderId);
+
     } catch (error) {
       console.error('支付错误:', error);
       Alert.alert('支付失败', '网络错误，请重试');
     } finally {
       setPaying(false);
+    }
+  };
+
+  // 轮询订单状态（微信拉起/原生回调后用于刷新；防止竞态）
+  const pollOrder = async (orderId: string, retries = 12) => {
+    /**
+     * 服务端文件：server/src/routes/payment.ts
+     * 接口：GET /api/v1/payment/query/:orderId
+     * 返回：{ success, data:{ order_no, status:'paid'|'pending'|..., member_level, amount } }
+     */
+    for (let i = 0; i < retries; i++) {
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/payment/query/${orderId}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const d = await r.json();
+        if (d.success && d.data && d.data.status === 'paid') {
+          Alert.alert('支付成功', '会员已开通！', [
+            {
+              text: '确定',
+              onPress: async () => {
+                await refreshUser();
+                const fresh = levels.find(l => l.level === selectedLevel?.level);
+                if (fresh) setCurrentLevel(fresh.level);
+              },
+            },
+          ]);
+          return;
+        }
+        if (d.success && d.data && (d.data.status === 'cancelled' || d.data.status === 'refunded')) {
+          return;
+        }
+      } catch (e) {
+        // 单次轮询失败忽略，继续
+      }
+      await new Promise(res => setTimeout(res, 3000));
     }
   };
 

@@ -18,7 +18,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.liuhen.jianghu",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "流痕江湖需要使用相机拍摄照片和视频用于发帖及实名认证。",
+        "NSPhotoLibraryUsageDescription": "流痕江湖需要访问相册以便选择图片上传。",
+        "NSMicrophoneUsageDescription": "流痕江湖需要使用麦克风录制视频的声音。",
+        "NSLocationWhenInUseUsageDescription": "流痕江湖需要获取您的位置以提供周边内容服务。",
+        "LSApplicationQueriesSchemes": ["weixin", "weixinULAPI"],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,8 +39,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "versionCode": 1,
       "permissions": [
         "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ]
@@ -40,9 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "favicon": "./assets/images/favicon.png"
     },
     "updates": {
-      "enabled": true,
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/YOUR_PROJECT_ID"
+      "enabled": false
     },
     "runtimeVersion": {
       "policy": "appVersion"
