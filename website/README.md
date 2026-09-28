@@ -1,6 +1,6 @@
 # 流痕江湖 官网（website/）
 
-本目录存放 `www.liuhenjianghu.com` 官网所需的 **纯静态页面**，用于：
+本目录存放 `info.liuhenjianghu.com` 官网所需的 **纯静态页面**，用于：
 - 微信开放平台「移动应用」AppID 申请时的**应用官网**；
 - 苹果 App Store / 安卓市场上架所需的**隐私政策**、**用户协议**公开页面。
 
@@ -26,7 +26,7 @@ bash deploy_site.sh
 
 脚本会：
 1. 将 3 个 HTML 拷贝到 `/opt/site/liuhenjianghu/`；
-2. 若检测到 Nginx，自动生成 `liuhenjianghu-sitelanding.conf` 站点配置（80 端口）并重载。
+2. 若检测到 Nginx，自动生成 `liuhenjianghu-sitelanding.conf` 站点配置（HTTP 80 跳转 HTTPS 443）并重载。证书需放在 `/etc/nginx/ssl/`（见脚本内注释）。
 
 > 若你的服务器用**宝塔面板**或已有 Nginx 站点，直接忽略脚本的 Nginx 步骤，将 `website/` 三个 HTML 上传到已有站点根目录即可，并确保该站点 root 指向含 `index.html` 的目录。
 

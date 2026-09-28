@@ -20,9 +20,11 @@ set -e
 SITE_SRC="./website"
 DEFAULT_ROOT="/opt/site/liuhenjianghu"
 SITE_ROOT="${SITE_ROOT:-$DEFAULT_ROOT}"
+# 官网域名（info 子域，与 App 业务/接口域名隔离）
+SITE_DOMAIN="info.liuhenjianghu.com"
 
 echo "=============================================="
-echo "  流痕江湖 官网部署"
+echo "  流痕江湖 官网部署  ($SITE_DOMAIN)"
 echo "=============================================="
 
 # 1. 校验源目录（允许在根目录或含 website 的任意上级执行）
@@ -47,11 +49,23 @@ if command -v nginx >/dev/null 2>&1; then
   NGINX_CONF="/etc/nginx/conf.d/liuhenjianghu-sitelanding.conf"
   echo "检测到 Nginx，生成站点配置：$NGINX_CONF"
   cat > "$NGINX_CONF" <<NGINX_EOF
+# 80 端口：HTTP 访问统一跳转 HTTPS（官网以 HTTPS 示审更规范）
 server {
     listen 80;
-    server_name liuhenjianghu.com www.liuhenjianghu.com;
+    server_name ${SITE_DOMAIN};
+    return 301 https://\${SITE_DOMAIN}\$request_uri;
+}
 
-    # 官网静态站（落地页 / 隐私政策 / 用户协议）
+# 443 端口：官网静态站（落地页 / 隐私政策 / 用户协议）
+server {
+    listen 443 ssl;
+    server_name ${SITE_DOMAIN};
+
+    # 需为 info.liuhenjianghu.com 配置有效证书（可复用主域名证书或申请子域通配证书）
+    ssl_certificate     /etc/nginx/ssl/liuhenjianghu.com.pem;   # 请替换为实际证书路径
+    ssl_certificate_key /etc/nginx/ssl/liuhenjianghu.com.key;   # 请替换为实际证书路径
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     root $SITE_ROOT;
     index index.html;
 
@@ -77,7 +91,7 @@ echo ""
 echo "----------------------------------------------"
 echo "  部署完成。"
 echo "  站点根目录：$SITE_ROOT"
-echo "  官网地址：https://liuhenjianghu.com"
+echo "  官网地址：https://$SITE_DOMAIN"
 echo "  提示：请确认 80 端口放行、DNS 解析、ICP 备案均已生效。"
 echo "  如你的站点由宝塔/云速建站托管，可忽略 Nginx 步骤，"
 echo "  直接将 website/ 三个 html 上传到站点根目录即可。"
