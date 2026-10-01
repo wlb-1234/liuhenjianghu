@@ -4859,3 +4859,33 @@ ISOString`` 及一批未挂载模块（apikeys/cache/checkIn/geo/logs/collection
 2. **原生构建方式待确认**：EAS Build 云构建 或 本地 Xcode/Android Studio。决定微信 APP 支付 / iOS IAP 的 SDK 接入写法。
 3. 原生 SDK 接入 + app.config 支付配置 + prebuild/EAS 步骤（todo 第 5 项）。
 4. 双端上架材料（图标/截图/App Store 描述——素材已备 APP_STORE_MATERIALS.md）与部署文档收尾。
+
+---
+
+## 独立记录 6 · SSL 证书恢复 + 官网子域名证书部署（2026-10-01 CST）
+
+**背景**：官网子域名证书准备期间，误删了 `/etc/nginx/ssl/` 下主域名证书 `liuhenjianghu.com.pem/.key`，导致生产环境 HTTPS（`liuhenjianghu.com`）一度中断，App/官网的 https 服务受影响。
+
+### A. 主域名证书恢复（已修复完成）
+
+- 主域名证书为原购买的单域名 WoSign 证书（SAN: `liuhenjianghu.com` + `www.liuhenjianghu.com`），有效期至 2027-02-04。
+- 从用户本地备份（桌面压缩包 `26191699_liuhenjianghu.com_nginx`）提取 `.pem`/`.key`，
+  经 SCP 重新上传至 `/etc/nginx/ssl/liuhenjianghu.com.pem(8835B)` / `liuhenjianghu.com.key(1675B)`。
+- 验证：`openssl` modulus 指纹一致（`e04a3e86...`），`nginx -t` 通过，`systemctl reload nginx` 无报错。
+- 生产确认：`curl -I https://liuhenjianghu.com` 返回 `HTTP/1.1 200 OK`，HTTPS 已恢复。
+
+### B. info 官网子域名证书部署就绪
+
+- info 官网域名选定为 `info.liuhenjianghu.com`，使用免费 90 天双域名 DV 证书（SAN: `info.liuhenjianghu.com` + `www.info.liuhenjianghu.com`）。
+- 已上传 `/etc/nginx/ssl/info.liuhenjianghu.com.pem(3862B)` / `info.liuhenjianghu.com.key(1675B)`，私钥权限收紧为 600。
+
+### C. 证书备份（已建立）
+
+- 主域名 + info 子域名证书均备份至 `/root/cert-backup/`（含 pem/key 各两份）。
+- ⚠️ 教训：证书文件是生产 HTTPS 命脉，下次任何改动前应先备份；涉及 `/etc/nginx/ssl/` 的操作务必谨慎。
+
+### D. 待办（继承自记录 5，未变）
+
+1. 微信移动应用 AppID 前缀需为 `wx` 开头，需用户到 open.weixin.qq.com 核对。
+2. 原生构建方式待确认（EAS Build 或本地原生工程）。
+3. info 官网 `info.liuhenjianghu.com` 是否现在在 nginx 上线（证书已就绪）。
