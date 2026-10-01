@@ -44,6 +44,16 @@ cp "$SITE_SRC/privacy.html" "$SITE_ROOT/"
 cp "$SITE_SRC/terms.html" "$SITE_ROOT/"
 echo "静态文件已拷贝到 $SITE_ROOT"
 
+# 2.5 校验 info 证书是否存在（私钥不入库，需手动放置）
+CERT="/etc/nginx/ssl/info.liuhenjianghu.com.pem"
+CRTKEY="/etc/nginx/ssl/info.liuhenjianghu.com.key"
+if [ -f "$CERT" ] && [ -f "$CRTKEY" ]; then
+  echo "检测到证书：$CERT 与 $CRTKEY"
+else
+  echo "⚠️ 未找到 info 证书：$CERT / $CRTKEY"
+  echo "   请手动将证书(.pem)与私钥(.key)上传到 /etc/nginx/ssl/ 后再部署 HTTPS。"
+fi
+
 # 3. 尝试用 Nginx 托管
 if command -v nginx >/dev/null 2>&1; then
   NGINX_CONF="/etc/nginx/conf.d/liuhenjianghu-sitelanding.conf"
@@ -61,9 +71,10 @@ server {
     listen 443 ssl;
     server_name ${SITE_DOMAIN};
 
-    # 需为 info.liuhenjianghu.com 配置有效证书（可复用主域名证书或申请子域通配证书）
-    ssl_certificate     /etc/nginx/ssl/liuhenjianghu.com.pem;   # 请替换为实际证书路径
-    ssl_certificate_key /etc/nginx/ssl/liuhenjianghu.com.key;   # 请替换为实际证书路径
+    # info 子域专用证书（双域名 DV 证书，SAN 覆盖 info/www.info）
+    # 请将证书文件放到服务器下方路径（私有密钥勿入库）
+    ssl_certificate     /etc/nginx/ssl/info.liuhenjianghu.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/info.liuhenjianghu.com.key;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     root $SITE_ROOT;
@@ -93,6 +104,7 @@ echo "  部署完成。"
 echo "  站点根目录：$SITE_ROOT"
 echo "  官网地址：https://$SITE_DOMAIN"
 echo "  提示：请确认 80 端口放行、DNS 解析、ICP 备案均已生效。"
+echo "  ⚠️ 证书为免费 90 天 DV 证书，到期需在证书商后台手动续期并更新 /etc/nginx/ssl/ 下文件。"
 echo "  如你的站点由宝塔/云速建站托管，可忽略 Nginx 步骤，"
 echo "  直接将 website/ 三个 html 上传到站点根目录即可。"
 echo "----------------------------------------------"
