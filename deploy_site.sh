@@ -67,7 +67,7 @@ if command -v nginx >/dev/null 2>&1; then
 server {
     listen 80;
     server_name ${SITE_DOMAIN};
-    return 301 https://\${SITE_DOMAIN}\$request_uri;
+    return 301 https://${SITE_DOMAIN}\$request_uri;
 }
 
 # 443 端口：官网静态站（落地页 / 隐私政策 / 用户协议）
