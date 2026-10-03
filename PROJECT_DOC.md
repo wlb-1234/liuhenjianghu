@@ -4943,3 +4943,35 @@ ISOString`` 及一批未挂载模块（apikeys/cache/checkIn/geo/logs/collection
 - ⚠️ 教训：生产环境 `.env` 必须核对该连的正确数据库；进程强 JWT 密钥硬化后需同步更新 `.env`；改数据库连接这类高风险操作前先备份。
 - 数据库可用 Node pg 查询（服务器 psql 客户端过旧，云库要求 SNI/endpoint-id）。
 - 待办：沿用记录 5/6 —— 微信移动应用 AppID（`wx` 前缀）核对、原生构建方式确认、info 官网上线。
+
+---
+
+## 独立记录 8 · 官网重构为精致正式版（2026-10-03 CST）
+
+**背景**：为申请微信开放平台「移动应用」AppID，微信要求提供**应用官网**。早期 website/ 为纯文字占位（无真实配图、UI 朴素），此次重制为精致落地页以提升审核通过率与品牌形象。
+
+### A. 交付内容（website/）
+
+- **index.html**：重构为现代"柔和卡片风"落地页（主色 #6C63FF→#896BFF 渐变、暖灰白底、大圆角 soft-card、渐变按钮）。含：固定毛玻璃导航、Hero（品牌主视觉+CTA）、数据亮点条、四大功能大图卡片（发布动态/内容发现/本地江湖/社交互动）、产品展示、下载区、关于我们、底部备案页脚。滚动浮现动画、平滑滚动。
+- **privacy.html / terms.html**：正文内容保持不变，外壳统一为与首页一致的导航+soft-card 容器+精致页脚。
+- **images/（新增）**：5 张品牌配图（AI 生成，贴合"江湖意境+现代生活"调性）—— hero 主视觉、feature-publish/social/discover/local。
+- **deploy_site.sh**：新增拷贝 images/ 目录逻辑，确保配图随站点发布。
+
+### B. 验证
+
+- 本地 HTTP 预览：index/privacy/terms 及 images/ 下 all 200 OK。
+- 已推送 GitHub：`6c2e2f8`（feat(website): 重构官网为精致落地页）。
+
+### C. 服务器上线步骤（用户需在阿里云 ECS 执行）
+
+```bash
+cd /opt/liuhenjianghu && git fetch origin && git reset --hard origin/main && bash deploy_site.sh
+```
+
+脚本将：拷贝 website/ 三页 + images/ 到 /opt/site/liuhenjianghu，检测 info.liuhenjianghu.com.pem 证书后生成 Nginx 443 站点（HTTP 80 跳 HTTPS），`nginx -t` 通过则 reload。
+
+### D. 待办（不变）
+
+1. 上线后核对 `https://info.liuhenjianghu.com` 可访问、备案展示正确。
+2. 微信移动应用 AppID 前缀需为 `wx`，用户到 open.weixin.qq.com 核对。
+3. 原生构建方式确认（EAS 或本地）；随后推进上架。
