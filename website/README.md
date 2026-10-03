@@ -34,5 +34,5 @@ bash deploy_site.sh
 
 1. **图片素材**：首页当前为纯色占位。建议替换为 App 真实截图（发布动态 / 社交互动 / 会员特权等）放入 `website/images/` 并引用，以提升审核通过率和转化。
 2. **备案号展示**：页脚已含「冀ICP备2026026350号-1」并链接到工信部备案查询，与你的备案一致。
-3. **邮箱**：`support@liuhenjianghu.com` 是对外联系邮箱，若有实际可用邮箱请替换。
+3. **邮箱**：对外客服邮箱已替换为真实可用地址 `15613594588@163.com`（已同步 index / privacy / terms）。将来若申请域名企业邮箱可统一改回 `support@liuhenjianghu.com`。
 4. **HTTPS（可选）**：微信与上架建议启用 HTTPS。若服务器已装 certbot，可在 Nginx 配置上追加 443 SSL 段（需在网站根目录提供 `.well-known/acme-challenge/`）。
