@@ -93,7 +93,7 @@ pm2 logs liuhen-api
 | 项目 | 配置 |
 |------|------|
 | 数据库类型 | PostgreSQL 14 |
-| 主机 | pgm-uf6sc0v55a1p3r7m.pg.rds.aliyuncs.com |
+| 主机 | pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com |
 | 端口 | 5432 |
 | 数据库名 | liuhenjianghu |
 | 用户名 | liuhenjianghu |
@@ -4889,3 +4889,57 @@ ISOString`` 及一批未挂载模块（apikeys/cache/checkIn/geo/logs/collection
 1. 微信移动应用 AppID 前缀需为 `wx` 开头，需用户到 open.weixin.qq.com 核对。
 2. 原生构建方式待确认（EAS Build 或本地原生工程）。
 3. info 官网 `info.liuhenjianghu.com` 是否现在在 nginx 上线（证书已就绪）。
+
+---
+
+## 独立记录 7 · 登录故障排查与数据库环境修复（2026-10-02 22:00 CST）
+
+**背景**：用户反馈登录失败。逐步排查发现这是**生产环境配置漂移**导致的多环节连锁故障，涉及 JWT 密钥硬化、PM2 进程托管、数据库连接指向三方面，最终定位为"生产连错开发环境"这一核心问题。
+
+### A. 第一层：后端 502 Bad Gateway（Nginx 无上游）
+
+- 现象：`POST /api/v1/auth/login` 返回 502；访问 `https://liuhenjianghu.com` 正常（Nginx SSL 无问题）。
+- 排查：`ss -tlnp | grep 9091` 无监听；`pm2 logs liuhen-api --err` 反复报 `Error: 生产环境必须设置强 JWT_SECRET（长度至少 32 位）`，来自 `getJwtSecret()`（`server/src/config/security.ts`，2026-09-19 起的硬化逻辑）。
+- 根因①：`.env` 中 `JWT_SECRET=liuhen-jianghu-secret-key-2024` 仅 30 位 < 32 位，生产校验抛错导致后端进程反复重启、未监听端口。
+- 修复：`openssl rand -hex 20` 生成 40 位随机密钥，`sed -i` 更新 `.env`。
+
+### B. 第二层：PM2 进程托管异常
+
+- 手动前台运行 `PORT=9091 NODE_ENV=production node dist/index.js` 验证代码/配置均正常、9091 正常监听，证明问题在 PM2 托管环境（cluster 模式环境变量未正确传递）。
+- 修复：`pm2 delete liuhen-api` 后用 `fork` 模式重建并显式注入端口：
+  `cd /opt/liuhenjianghu/server && PORT=9091 pm2 start dist/index.js --name liuhen-api --cwd /opt/liuhenjianghu/server`
+- 验证：`ss -tlnp | grep 9091` 出现 LISTEN；`curl http://127.0.0.1:9091/api/v1/health` 返回 `{"status":"ok","database":"postgres",...}`。
+- 固化：`pm2 save` + `pm2 startup`（生成 systemd 服务并 enable），保证重启自恢复。
+
+### C. 第三层：登录 401 Unauthorized（账号校验失败）
+
+- 后端恢复后登录返回 401。用 Node pg 库（服务器 psql 客户端过旧不支持云库 SNI，需用后端同款 Node 查询）核对数据库：
+  - 账号 `15613594588` 存在（id=2，腾讯云库 / id=1 昵称"壹号"，阿里云库），状态 active。
+- 根因②：数据库存的密码 hash 与输入不符（老账号历史格式问题），`bcrypt.compare` 失败。
+- 修复：用 bcryptjs 重置该账号 `password_hash` 为 `Liuhen2026App` 的标准 bcrypt 哈希，登录成功。
+
+### D. 第四层：留言"丢失" + 实名错乱（核心：生产连错开发库）
+
+- 现象：登录成功但原留言全无；个别界面实名显示"张***"（非本人"吴立宾"）、江湖数据为空。
+- 排查：对比两个库数据量——
+  - **腾讯云 volces**（`cp-brisk-fair-...volces.com/postgres`）：users=1、posts=7，几乎无业务数据。
+  - **阿里云 RDS 生产库**（`liuhenjianghu` 库）：users=6、posts=19、`壹号` total_posts=69，**真实生产数据在此**。
+- 根因③（核心）：生产服务器 `/opt/liuhenjianghu/server/.env` 的 `DATABASE_URL` 实际指向了**腾讯云 volces 开发库**（`git 记录 78e4c9e` 也记载"开发用 volces、生产应切阿里云 RDS"），导致登录到开发库账号、看不到生产库留言。实名/江湖数据显示为旧开发库数据的前端缓存。
+- 修复：备份 `.env` 后，将 `DATABASE_URL` 切回阿里云 RDS 生产库：
+  `postgresql://liuhenjianghu:...@pgm-uf6sc0v55a1p3r7muo.pg.rds.aliyuncs.com:5432/liuhenjianghu?sslmode=disable`
+  （顺带修正 Docker/.env 中主机名笔误：`pgm-uf6sc0v55a1p3r7m` → `...r7muo`）
+- 验证：`pm2 restart liuhen-api` 后，健康检查 `database` 字段由 `postgres` 变为 `liuhenjianghu`（确认已连生产库）；用户"壹号"（15613594588）与 69 条留言全部恢复。
+- 实名问题：经核对，生产库 `realname_verifications` 中 `user_id=1` 的实名本就是"吴立宾"（真实身份一致），"张***"为切库前旧缓存所致，刷新重登后恢复正常。
+
+### E. 量化确认
+
+| 库 | users | posts | 说明 |
+|----|-------|-------|------|
+| 腾讯云 volces（原连接） | 1 | 7 | 开发/测试库，业务数据少 |
+| 阿里云 RDS（生产正库） | 6 | 19（壹号留言 69） | 正式生产数据源 |
+
+### F. 经验与待办
+
+- ⚠️ 教训：生产环境 `.env` 必须核对该连的正确数据库；进程强 JWT 密钥硬化后需同步更新 `.env`；改数据库连接这类高风险操作前先备份。
+- 数据库可用 Node pg 查询（服务器 psql 客户端过旧，云库要求 SNI/endpoint-id）。
+- 待办：沿用记录 5/6 —— 微信移动应用 AppID（`wx` 前缀）核对、原生构建方式确认、info 官网上线。
