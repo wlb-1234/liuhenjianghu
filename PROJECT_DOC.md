@@ -1,6 +1,6 @@
 # 流痕江湖 - 项目文档
 
-**最后更新：2026-09-02 22:30 (北京时间)**
+**最后更新：2026-10-03 21:17 (北京时间)**
 
 ## 项目概述
 
@@ -4975,3 +4975,52 @@ cd /opt/liuhenjianghu && git fetch origin && git reset --hard origin/main && bas
 1. 上线后核对 `https://info.liuhenjianghu.com` 可访问、备案展示正确。
 2. 微信移动应用 AppID 前缀需为 `wx`，用户到 open.weixin.qq.com 核对。
 3. 原生构建方式确认（EAS 或本地）；随后推进上架。
+
+---
+
+## 独立记录 9 · 官网正式上线成功（2026-10-03 21:17 CST）
+
+**背景**：记录 8 的官网仅制作完成，尚未上线。本次在阿里云 ECS 完成部署并修复一个 Nginx 配置致命错误，网站现已正式对外可访问。
+
+### A. 上线执行（阿里云 ECS，/opt/liuhenjianghu）
+
+```bash
+git fetch origin && git reset --hard origin/main   # 落到远端 main（本次为 6e95004）
+bash deploy_site.sh
+```
+
+脚本结果：官网三页 + images/ 已拷贝到 /opt/site/liuhenjianghu，检测到 info 证书，生成了 /etc/nginx/conf.d/liuhenjianghu-sitelanding.conf。但末尾 `nginx -t` 校验失败、**站点未生效**。
+
+### B. 问题根因（Nginx 配置致命错误）
+
+- 现象：`nginx -t` 报 `[emerg] unknown &quot;site_domain&quot; variable`（另有一个不致命的 `duplicate MIME type &quot;text/html&quot;` 警告）。
+- 根因：deploy_site.sh 第 70 行 heredoc 将 `${SITE_DOMAIN}` 误写为 `\${SITE_DOMAIN}`，生成文件后 nginx 把 `${SITE_DOMAIN}` 当作**未定义的 nginx 变量**（`$site_domain`）去解析，触发 emerge 致命退出。
+- 证书文件正常（/etc/nginx/ssl/info.liuhenjianghu.com.pem + .key），server_name/ssl 均无误，仅此变量一处。
+
+### C. 修复
+
+- **服务器即时修复**（替换生成配置中的坏变量）+ 校验重载：
+  ```bash
+  sed -i 's#\${SITE_DOMAIN}#info.liuhenjianghu.com#g' /etc/nginx/conf.d/liuhenjianghu-sitelanding.conf \
+    && nginx -t 2>&1 && systemctl reload nginx
+  ```
+  结果：`syntax is ok / test is successful` + `RELOAD OK`。
+- **脚本根治**：deploy_site.sh 中 `\${SITE_DOMAIN}` → `${SITE_DOMAIN}`，已推送 `a82306c`（本次提交仅含脚本修复，误带截图已用 --amend 清除）。
+
+### D. 上线验证（均通过）
+
+| 检查 | 结果 |
+|------|------|
+| HTTPS 首页 | 200 OK，标题「流痕江湖 - 记录你的生活足迹，分享你的江湖故事」（17.4 KB） |
+| HTTP → HTTPS | 301 跳转正常 |
+| 图片素材 | /images/hero.jpg 返回 200 OK |
+| 域名/证书 | info.liuhenjianghu.com 解析与 SSL 均正常 |
+
+### E. 线上官网地址（微信审核填写用）
+
+`https://info.liuhenjianghu.com`
+
+### F. 经验与待办
+
+- ⚠️ 教训：**脚本 heredoc 里混用 `${VAR}` 与 `\${VAR}` 极易踩坑**——需转义（归 nginx 变量如 $request_uri）的必须用 `\$`，需 shell 展开的必须用裸 `${VAR}`，不可写反。
+- 待办：核对微信移动应用 AppID 需 `wx` 前缀（open.weixin.qq.com）、原生构建方式确认（EAS/本地）、备案展示二次核对（已含 ICP 冀ICP备2026026350号-1）。
