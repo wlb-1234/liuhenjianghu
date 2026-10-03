@@ -37,11 +37,15 @@ if [ ! -f "$SITE_SRC/index.html" ]; then
   exit 1
 fi
 
-# 2. 创建站点目录并拷贝静态文件
+# 2. 创建站点目录并拷贝静态文件（含图片素材目录）
 mkdir -p "$SITE_ROOT"
 cp "$SITE_SRC/index.html"  "$SITE_ROOT/"
 cp "$SITE_SRC/privacy.html" "$SITE_ROOT/"
 cp "$SITE_SRC/terms.html" "$SITE_ROOT/"
+if [ -d "$SITE_SRC/images" ]; then
+  cp -r "$SITE_SRC/images" "$SITE_ROOT/"
+  echo "图片素材已拷贝到 $SITE_ROOT/images"
+fi
 echo "静态文件已拷贝到 $SITE_ROOT"
 
 # 2.5 校验 info 证书是否存在（私钥不入库，需手动放置）

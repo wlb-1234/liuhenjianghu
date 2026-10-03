@@ -6,18 +6,41 @@
   <meta name="robots" content="noindex" />
   <title>用户协议 - 流痕江湖</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }</style>
+  <style>
+    :root{--brand:#6C63FF;--brand2:#896BFF;--bg:#F4F4F8;--ink:#2D3436;--muted:#636E72}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+    .btn-primary{background:linear-gradient(120deg,#6C63FF,#896BFF);box-shadow:0 10px 24px -8px rgba(108,99,255,.55)}
+    .glass-nav{background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .soft-card{background:#fff;border-radius:24px;box-shadow:12px 12px 32px -18px rgba(108,99,255,.35),-12px -12px 32px -18px rgba(255,255,255,1)}
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-    <a href="/" class="text-indigo-600 text-sm hover:underline">&larr; 返回首页</a>
-    <h1 class="text-3xl font-bold mt-6 mb-8 text-gray-900">流痕江湖 用户协议</h1>
-    <div class="text-sm text-gray-500 mb-8">更新日期：2024年1月 · 生效日期：2024年1月</div>
+<body>
+  <nav class="fixed top-0 inset-x-0 z-50 glass-nav border-b border-gray-100/70">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+      <a href="./" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl btn-primary flex items-center justify-center text-white font-bold text-lg">流</div>
+        <span class="text-lg font-bold text-gray-900 tracking-wide">流痕江湖</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="./#features" class="hover:text-indigo-600">核心功能</a>
+        <a href="./#download" class="hover:text-indigo-600">下载</a>
+        <a href="./#about" class="hover:text-indigo-600">关于我们</a>
+        <a href="privacy.html" class="hover:text-indigo-600">隐私政策</a>
+        <a href="terms.html" class="text-indigo-600">用户协议</a>
+      </div>
+      <a href="./#download" class="btn-primary text-white text-sm font-semibold px-5 py-2 rounded-full">立即下载</a>
+    </div>
+  </nav>
 
-    <div class="bg-white rounded-2xl p-8 sm:p-10 shadow-sm leading-relaxed space-y-6 text-[15px]">
+  <div class="max-w-3xl mx-auto px-5 sm:px-8 pt-28 pb-16">
+    <span class="text-sm font-semibold uppercase tracking-widest text-indigo-500">Terms of Service</span>
+    <h1 class="mt-2 text-3xl font-bold text-gray-900">流痕江湖 用户协议</h1>
+    <div class="mt-2 text-sm text-gray-400">更新日期：2024年1月 · 生效日期：2024年1月</div>
+
+    <div class="soft-card mt-8 p-8 sm:p-10 leading-relaxed space-y-8 text-[15px] text-gray-600">
       <section>
         <h2 class="text-xl font-semibold text-gray-900 mb-3">一、协议的接受</h2>
-        <p>欢迎您使用流痕江湖（以下简称"本应用"）。本用户协议（以下简称"本协议"）是您与<strong>迁安市建昌营镇流痕营软件开发服务部（个体工商户）</strong>之间就使用本应用所订立的协议。请您在使用本应用前仔细阅读并充分理解本协议全部内容。当您完成注册或开始使用本应用时，即视为您已阅读并同意接受本协议。</p>
+        <p>欢迎您使用流痕江湖（以下简称"本应用"）。本用户协议（以下简称"本协议"）是您与<strong class="text-gray-900">迁安市建昌营镇流痕营软件开发服务部（个体工商户）</strong>之间就使用本应用所订立的协议。请您在使用本应用前仔细阅读并充分理解本协议全部内容。当您完成注册或开始使用本应用时，即视为您已阅读并同意接受本协议。</p>
       </section>
 
       <section>
@@ -94,10 +117,7 @@
       </section>
     </div>
 
-    <div class="mt-8 text-center text-sm text-gray-500">
-      <p>© 2024 流痕江湖 · <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener" class="hover:text-gray-700">冀ICP备2026026350号-1</a></p>
-      <p class="mt-1"><a href="/" class="text-indigo-600 hover:underline">返回首页</a></p>
-    </div>
+    <p class="mt-12 text-center text-sm text-gray-500">© 2024 流痕江湖 · <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener" class="hover:text-gray-700">冀ICP备2026026350号-1</a> · <a href="./" class="text-indigo-600 hover:underline">返回首页</a></p>
   </div>
 </body>
 </html>

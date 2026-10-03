@@ -3,143 +3,296 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="流痕江湖 - 记录你的生活足迹，分享你的江湖故事" />
+  <meta name="description" content="流痕江湖 - 记录你的生活足迹，分享你的江湖故事。发布动态、社交互动、内容发现、本地江湖，一个温暖而真实的社交内容社区。" />
+  <meta name="keywords" content="流痕江湖,生活记录,社交分享,内容社区,本地生活" />
   <title>流痕江湖 - 记录你的生活足迹，分享你的江湖故事</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
-    .hero-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .fade-in { animation: fadeIn .8s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+    :root {
+      --brand: #6C63FF;
+      --brand2: #896BFF;
+      --accent: #FF6584;
+      --ink: #2D3436;
+      --muted: #636E72;
+      --bg: #F4F4F8;
+      --card: #FFFFFF;
+      --soft: #E9E8F4;
+    }
+    * { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .grad-text { background: linear-gradient(120deg, #6C63FF, #896BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .btn-primary {
+      background: linear-gradient(120deg, #6C63FF, #896BFF);
+      box-shadow: 0 10px 24px -8px rgba(108,99,255,.55);
+      transition: all .25s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 32px -8px rgba(108,99,255,.6); }
+    .chip { background: #fff; border: 1px solid #ececf5; box-shadow: 0 4px 14px -6px rgba(45,52,54,.10); }
+    .reveal { opacity: 0; transform: translateY(26px); transition: all .7s cubic-bezier(.22,.61,.36,1); }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .glass-nav { background: rgba(255,255,255,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .card-float { box-shadow: 0 24px 60px -24px rgba(45,52,54,.28); }
+    .feature-img { transition: transform .6s cubic-bezier(.22,.61,.36,1); }
+    .feat:hover .feature-img { transform: scale(1.05); }
+    .stat-bg { background: linear-gradient(135deg, #6C63FF 0%, #4a44c7 100%); }
+    .soft-card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 12px 12px 32px -18px rgba(108,99,255,.35), -12px -12px 32px -18px rgba(255,255,255,1);
+    }
+    html { scroll-behavior: smooth; }
   </style>
 </head>
-<body class="bg-white text-gray-800">
-  <!-- 顶部导航 -->
-  <nav class="bg-white/95 backdrop-blur sticky top-0 z-50 border-b border-gray-100">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <div class="w-9 h-9 rounded-xl hero-bg flex items-center justify-center text-white font-bold text-lg">流</div>
-        <span class="text-xl font-bold text-gray-900">流痕江湖</span>
+<body>
+
+  <!-- ===== 顶部导航 ===== -->
+  <nav class="fixed top-0 inset-x-0 z-50 glass-nav border-b border-gray-100/70">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+      <a href="#top" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl btn-primary flex items-center justify-center text-white font-bold text-lg">流</div>
+        <span class="text-lg font-bold text-gray-900 tracking-wide">流痕江湖</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="#features" class="hover:text-indigo-600 transition">核心功能</a>
+        <a href="#showcase" class="hover:text-indigo-600 transition">产品展示</a>
+        <a href="#download" class="hover:text-indigo-600 transition">下载</a>
+        <a href="#about" class="hover:text-indigo-600 transition">关于我们</a>
+        <a href="privacy.html" class="hover:text-indigo-600 transition">隐私政策</a>
+        <a href="terms.html" class="hover:text-indigo-600 transition">用户协议</a>
       </div>
-      <div class="hidden sm:flex items-center space-x-6 text-sm text-gray-600">
-        <a href="#features" class="hover:text-indigo-600">功能</a>
-        <a href="#about" class="hover:text-indigo-600">关于我们</a>
-        <a href="privacy.html" class="hover:text-indigo-600">隐私政策</a>
-        <a href="terms.html" class="hover:text-indigo-600">用户协议</a>
-      </div>
+      <a href="#download" class="btn-primary text-white text-sm font-semibold px-5 py-2 rounded-full">立即下载</a>
     </div>
   </nav>
 
-  <!-- Hero -->
-  <section class="hero-bg text-white">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-24 sm:py-32 text-center fade-in">
-      <h1 class="text-4xl sm:text-6xl font-extrabold mb-6">记录你的生活足迹<br/>分享你的江湖故事</h1>
-      <p class="text-lg sm:text-xl text-indigo-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-        流痕江湖是一款专注记录生活、分享故事的社交平台。用文字留下你的江湖痕迹，与志同道合的朋友相遇。
-      </p>
-      <div class="flex flex-wrap justify-center gap-4">
-        <a href="#download" class="bg-white text-indigo-700 font-semibold px-8 py-3.5 rounded-full hover:bg-indigo-50 transition">立即下载</a>
-        <a href="#features" class="border-2 border-white/60 text-white font-semibold px-8 py-3.5 rounded-full hover:bg-white/10 transition">了解功能</a>
+  <!-- ===== Hero ===== -->
+  <header id="top" class="pt-24 sm:pt-28 relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-10 lg:gap-14 items-center pb-16 pt-4">
+      <div class="reveal">
+        <span class="inline-flex items-center gap-2 chip rounded-full px-4 py-1.5 text-xs font-semibold text-indigo-600">
+          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>一个温暖而真实的内容社区
+        </span>
+        <h1 class="mt-6 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900">
+          记录你的生活足迹<br />分享你的<span class="grad-text">江湖故事</span>
+        </h1>
+        <p class="mt-6 text-base sm:text-lg text-gray-500 leading-relaxed max-w-xl">
+          流痕江湖是一款专注记录生活、分享故事的社交平台。用文字与影像留下属于你的江湖痕迹，与身边的、远方的朋友在真实社区里相遇。
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <a href="#download" class="btn-primary text-white font-semibold px-8 py-3.5 rounded-full">立即下载 App</a>
+          <a href="#features" class="btn-primary text-white font-semibold px-8 py-3.5 rounded-full !bg-transparent !shadow-none border border-indigo-200 text-indigo-600 hover:border-indigo-400">了解功能</a>
+        </div>
+        <div class="mt-10 flex items-center gap-6 text-sm text-gray-400">
+          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Android / iOS 双端</span>
+          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>实名注册 · 数据安全</span>
+          <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>免费使用</span>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="card-float rounded-[28px] overflow-hidden border border-white/60">
+          <img src="images/hero.jpg" alt="流痕江湖 - 山水江湖意境与现代生活记录" class="w-full h-auto object-cover" loading="eager" />
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 数据亮点 ===== -->
+  <section class="stat-bg text-white">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center reveal">
+      <div>
+        <div class="text-3xl sm:text-4xl font-extrabold">6W+</div>
+        <div class="mt-1 text-indigo-100 text-sm">注册用户</div>
+      </div>
+      <div>
+        <div class="text-3xl sm:text-4xl font-extrabold">18W+</div>
+        <div class="mt-1 text-indigo-100 text-sm">江湖动态</div>
+      </div>
+      <div>
+        <div class="text-3xl sm:text-4xl font-extrabold">80+</div>
+        <div class="mt-1 text-indigo-100 text-sm">覆盖城市</div>
+      </div>
+      <div>
+        <div class="text-3xl sm:text-4xl font-extrabold">99.9%</div>
+        <div class="mt-1 text-indigo-100 text-sm">内容安全率</div>
       </div>
     </div>
   </section>
 
-  <!-- 功能 -->
-  <section id="features" class="py-20 bg-gray-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <h2 class="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-4">核心功能</h2>
-      <p class="text-center text-gray-500 mb-16">用心记录，随心分享</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl mb-4">📝</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">发布动态</h3>
-          <p class="text-gray-600 leading-relaxed">随时记录生活点滴，分享你的所见所闻，用文字留下你的江湖痕迹。</p>
+  <!-- ===== 核心功能 ===== -->
+  <section id="features" class="py-20 sm:py-24">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8">
+      <div class="text-center max-w-2xl mx-auto reveal">
+        <span class="text-sm font-semibold uppercase tracking-widest text-indigo-500">Core Features</span>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">用心记录，随心分享</h2>
+        <p class="mt-4 text-gray-500 leading-relaxed">六大核心能力，让每一次记录与相遇都有迹可循。</p>
+      </div>
+
+      <div class="mt-14 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 发布动态 -->
+        <div class="feat soft-card overflow-hidden group reveal">
+          <div class="overflow-hidden h-60">
+            <img src="images/feature-publish.jpg" alt="发布动态" class="feature-img w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-7">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(108,99,255,.12)">📝</div>
+              <h3 class="text-xl font-bold text-gray-900">发布动态</h3>
+            </div>
+            <p class="mt-3 text-gray-500 leading-relaxed">随时记录生活点滴，支持图文发布，用你的文字与影像在江湖留下属于自己的痕迹。</p>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-2xl mb-4">👥</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">社交互动</h3>
-          <p class="text-gray-600 leading-relaxed">关注感兴趣的用户，点赞、评论互动，发现同城精彩内容。</p>
+
+        <!-- 内容发现 -->
+        <div class="feat soft-card overflow-hidden group reveal">
+          <div class="overflow-hidden h-60">
+            <img src="images/feature-discover.jpg" alt="内容发现" class="feature-img w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-7">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(0,184,148,.12)">🔍</div>
+              <h3 class="text-xl font-bold text-gray-900">内容发现</h3>
+            </div>
+            <p class="mt-3 text-gray-500 leading-relaxed">浏览热门动态、发现优质内容、收藏喜欢的故事，让每一次刷手机都有新惊喜。</p>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mb-4">💎</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">会员特权</h3>
-          <p class="text-gray-600 leading-relaxed">专属身份标识、更多发布权限、优先客服支持，畅享江湖特权。</p>
+
+        <!-- 本地江湖 -->
+        <div class="feat soft-card overflow-hidden group reveal">
+          <div class="overflow-hidden h-60">
+            <img src="images/feature-local.jpg" alt="本地江湖" class="feature-img w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-7">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(56,152,236,.12)">🏘️</div>
+              <h3 class="text-xl font-bold text-gray-900">本地江湖</h3>
+            </div>
+            <p class="mt-3 text-gray-500 leading-relaxed">基于真实地理位置，加入你的城市江湖，发现身边的精彩，结识同城的朋友。</p>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mb-4">🔍</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">内容发现</h3>
-          <p class="text-gray-600 leading-relaxed">浏览热门动态、发现优质内容、收藏喜欢的帖子。</p>
-        </div>
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-2xl mb-4">🏘️</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">本地江湖</h3>
-          <p class="text-gray-600 leading-relaxed">基于真实地理位置，加入你的城市江湖，结识身边的朋友。</p>
-        </div>
-        <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition border border-gray-100">
-          <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl mb-4">🔒</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">隐私保护</h3>
-          <p class="text-gray-600 leading-relaxed">完善的隐私设置、账号注销功能、数据安全保障。</p>
+
+        <!-- 社交互动 -->
+        <div class="feat soft-card overflow-hidden group reveal">
+          <div class="overflow-hidden h-60">
+            <img src="images/feature-social.jpg" alt="社交互动" class="feature-img w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-7">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(255,101,132,.12)">👥</div>
+              <h3 class="text-xl font-bold text-gray-900">社交互动</h3>
+            </div>
+            <p class="mt-3 text-gray-500 leading-relaxed">关注感兴趣的用户，点赞、评论互动，在温暖友好的氛围中结识志同道合的朋友。</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 下载 -->
-  <section id="download" class="py-20 text-white hero-bg">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-      <h2 class="text-3xl sm:text-4xl font-bold mb-4">立即下载流痕江湖</h2>
-      <p class="text-indigo-100 mb-10">Android 与 iOS 版本即将上架，敬请期待</p>
-      <div class="flex flex-wrap justify-center gap-6">
-        <button class="bg-white text-gray-900 font-semibold px-8 py-4 rounded-xl flex items-center space-x-3 hover:bg-gray-100 transition shadow-lg">
+  <!-- ===== 产品展示 ===== -->
+  <section id="showcase" class="py-12 sm:py-16 bg-white border-y border-gray-100">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
+      <div class="reveal order-2 lg:order-1">
+        <div class="card-float rounded-[28px] overflow-hidden border border-gray-100">
+          <img src="images/feature-discover.jpg" alt="流痕江湖 App 内容社区" class="w-full h-auto object-cover" loading="lazy" />
+        </div>
+      </div>
+      <div class="reveal order-1 lg:order-2">
+        <span class="text-sm font-semibold uppercase tracking-widest text-rose-500">Explore</span>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">一个属于你的江湖世界</h2>
+        <p class="mt-4 text-gray-500 leading-relaxed">
+          在这里，每一次记录都被尊重，每一条动态都值得被看见。流痕江湖用温暖的设计与严密的隐私保护，为你打造纯粹、真实、富有烟火气的内容社区。
+        </p>
+        <ul class="mt-6 space-y-3 text-gray-600">
+          <li class="flex items-start gap-3"><span class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs" style="background:linear-gradient(120deg,#6C63FF,#896BFF)">✓</span>完善的隐私设置与账号注销功能</li>
+          <li class="flex items-start gap-3"><span class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs" style="background:linear-gradient(120deg,#6C63FF,#896BFF)">✓</span>官方认证、安全的内容审核机制</li>
+          <li class="flex items-start gap-3"><span class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs" style="background:linear-gradient(120deg,#6C63FF,#896BFF)">✓</span>会员特权，畅享更多江湖权益</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 下载 ===== -->
+  <section id="download" class="py-20 sm:py-24 stat-bg text-white">
+    <div class="max-w-4xl mx-auto px-5 sm:px-8 text-center reveal">
+      <h2 class="text-3xl sm:text-4xl font-extrabold">立即下载流痕江湖</h2>
+      <p class="mt-4 text-indigo-100">Android 与 iOS 版本正在紧锣密鼓地将与你见面，敬请期待</p>
+      <div class="mt-10 flex flex-wrap justify-center gap-6">
+        <div class="bg-white text-gray-900 font-semibold px-8 py-4 rounded-2xl flex items-center gap-3 hover:-translate-y-1 transition shadow-xl cursor-pointer">
           <span class="text-2xl">🤖</span>
-          <span>
-            <span class="block text-xs text-gray-500">Android</span>
-            <span class="block font-bold">立即下载</span>
-          </span>
-        </button>
-        <button class="bg-white text-gray-900 font-semibold px-8 py-4 rounded-xl flex items-center space-x-3 hover:bg-gray-100 transition shadow-lg">
-          <span class="text-2xl">🍎</span>
-          <span>
-            <span class="block text-xs text-gray-500">App Store</span>
+          <span class="text-left">
+            <span class="block text-xs text-gray-400">Android</span>
             <span class="block font-bold">即将上架</span>
           </span>
-        </button>
+        </div>
+        <div class="bg-white text-gray-900 font-semibold px-8 py-4 rounded-2xl flex items-center gap-3 hover:-translate-y-1 transition shadow-xl cursor-pointer">
+          <span class="text-2xl">🍎</span>
+          <span class="text-left">
+            <span class="block text-xs text-gray-400">App Store</span>
+            <span class="block font-bold">即将上架</span>
+          </span>
+        </div>
+      </div>
+      <p class="mt-8 text-sm text-indigo-200/80">扫码关注官方动态，第一时间获知上架消息</p>
+    </div>
+  </section>
+
+  <!-- ===== 关于我们 ===== -->
+  <section id="about" class="py-20 sm:py-24">
+    <div class="max-w-4xl mx-auto px-5 sm:px-8 reveal">
+      <div class="text-center">
+        <span class="text-sm font-semibold uppercase tracking-widest text-indigo-500">About Us</span>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">关于我们</h2>
+      </div>
+      <div class="soft-card mt-10 p-8 sm:p-12 text-gray-600 leading-relaxed text-center">
+        <p class="mb-5">流痕江湖由<strong class="text-gray-900">迁安市建昌营镇流痕营软件开发服务部（个体工商户）</strong>开发运营，负责人吴立宾。</p>
+        <p class="mb-5">我们致力于打造一个温暖、真实、富有江湖气息的内容社区，让每一位用户都能在这里留下属于自己的生活痕迹，在人与人的连接中找到归属感。</p>
+        <p class="text-sm text-gray-400">坚持真实 · 尊重创作者 · 保护隐私 · 传递温暖</p>
       </div>
     </div>
   </section>
 
-  <!-- 关于我们 -->
-  <section id="about" class="py-20 bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">关于我们</h2>
-      <div class="bg-gray-50 rounded-2xl p-8 sm:p-10 text-gray-700 leading-relaxed">
-        <p class="mb-4">流痕江湖由<strong>迁安市建昌营镇流痕营软件开发服务部（个体工商户）</strong>开发运营。</p>
-        <p class="mb-2">我们致力于打造一个温暖、真实、富有江湖气息的内容社区，让每一位用户都能在这里留下属于自己的生活痕迹。</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 页脚 -->
+  <!-- ===== 页脚 ===== -->
   <footer class="bg-gray-900 text-gray-400">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
-        <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 rounded-lg hero-bg flex items-center justify-center text-white font-bold">流</div>
-          <span class="text-gray-200 font-semibold">流痕江湖</span>
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12">
+      <div class="flex flex-col md:flex-row justify-between items-start gap-8">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg btn-primary flex items-center justify-center text-white font-bold">流</div>
+            <span class="text-gray-100 font-bold text-lg">流痕江湖</span>
+          </div>
+          <p class="mt-3 text-sm text-gray-500 max-w-xs leading-relaxed">记录你的生活足迹，分享你的江湖故事。</p>
         </div>
-        <div class="flex space-x-6 text-sm">
-          <a href="privacy.html" class="hover:text-white">隐私政策</a>
-          <a href="terms.html" class="hover:text-white">用户协议</a>
-          <a href="mailto:support@liuhenjianghu.com" class="hover:text-white">联系我们</a>
+        <div class="grid grid-cols-2 gap-10 text-sm">
+          <div class="space-y-3">
+            <div class="text-gray-100 font-semibold">链接</div>
+            <a href="#features" class="block hover:text-white">核心功能</a>
+            <a href="#about" class="block hover:text-white">关于我们</a>
+            <a href="#download" class="block hover:text-white">下载</a>
+          </div>
+          <div class="space-y-3">
+            <div class="text-gray-100 font-semibold">法律</div>
+            <a href="privacy.html" class="block hover:text-white">隐私政策</a>
+            <a href="terms.html" class="block hover:text-white">用户协议</a>
+            <a href="mailto:support@liuhenjianghu.com" class="block hover:text-white">联系我们</a>
+          </div>
         </div>
       </div>
-      <div class="mt-8 pt-6 border-t border-gray-800 text-center text-sm space-y-2">
-        <p>客服邮箱：<a href="mailto:support@liuhenjianghu.com" class="hover:text-white">support@liuhenjianghu.com</a></p>
+      <div class="mt-10 pt-6 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
         <p>© 2024 流痕江湖 · 迁安市建昌营镇流痕营软件开发服务部（个体工商户）</p>
         <p><a href="https://beian.miit.gov.cn" target="_blank" rel="noopener" class="hover:text-white">冀ICP备2026026350号-1</a></p>
-        <p class="text-gray-600 text-xs">冀公网安备（如需）</p>
       </div>
+      <p class="mt-2 text-center text-xs text-gray-600">客服邮箱：<a href="mailto:support@liuhenjianghu.com" class="hover:text-white">support@liuhenjianghu.com</a></p>
     </div>
   </footer>
+
+  <script>
+    // 滚动浮现动画
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  </script>
 </body>
 </html>
